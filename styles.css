@@ -61,4 +61,10 @@ button:disabled { background: #24405a; color: var(--muted); cursor: not-allowed;
 .audio-block { display: grid; gap: 8px; }
 .audio-block audio { width: 480px; height: 48px; }
 .no-clip { color: var(--muted); font-style: italic; margin: 0; font-size: 28px; }
+.images-block { display: flex; gap: 16px; flex-wrap: wrap; }
+.images-block img {
+  max-width: 640px; max-height: 480px; width: auto; height: auto;
+  object-fit: contain; border-radius: 10px; background: var(--panel);
+}
+.no-image { color: var(--muted); font-style: italic; margin: 0; font-size: 28px; }
 .tally-row { background: var(--panel); padding: 16px 32px; border-radius: 10px; font-size: 36px; }

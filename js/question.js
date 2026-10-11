@@ -29,6 +29,26 @@ function audioBlock(question) {
   return wrap;
 }
 
+function imageBlock(images) {
+  if (!images || !images.length) return null;
+  const wrap = document.createElement("div");
+  wrap.className = "images-block";
+  for (const src of images) {
+    const img = document.createElement("img");
+    img.src = src; // relative path: works from /<repo>/ subpath
+    img.loading = "lazy";
+    img.alt = "";
+    img.addEventListener("error", () => {
+      const note = document.createElement("p");
+      note.className = "no-image";
+      note.textContent = "no image — show it from any device";
+      img.replaceWith(note);
+    });
+    wrap.append(img);
+  }
+  return wrap;
+}
+
 let current = null; // { ri, qi } — active jeopardy question
 let marks = new Map(); // teamIdx -> "green" | "red" (jeopardy marks)
 let revealed = false;
@@ -118,8 +138,9 @@ function renderQuestion() {
   qText.className = "question-text";
   qText.textContent = question.q.trim(); // block scalars fold to one paragraph
   const ab = audioBlock(question);
+  const ib = imageBlock(question.images);
 
-  wrap.append(cat, ...(ab ? [ab] : []), qText);
+  wrap.append(cat, ...(ab ? [ab] : []), ...(ib ? [ib] : []), qText);
   if (revealed) {
     const ans = document.createElement("p");
     ans.className = "answer-text";
@@ -208,8 +229,9 @@ function renderColumn() {
   qText.className = "question-text";
   qText.textContent = question.q.trim();
   const ab = audioBlock(question);
+  const ib = imageBlock(question.images);
 
-  wrap.append(cat, ...(ab ? [ab] : []), qText);
+  wrap.append(cat, ...(ab ? [ab] : []), ...(ib ? [ib] : []), qText);
   wrap.append(teamButtons(colMarks, (idx) => cycleColMark(idx)));
 
   const controls = document.createElement("div");
