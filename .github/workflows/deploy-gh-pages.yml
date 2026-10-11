@@ -17,5 +17,5 @@ jobs:
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          destination_branch: gh-pages
-          force_sync: true
+          publish_branch: gh-pages
+          publish_dir: .
