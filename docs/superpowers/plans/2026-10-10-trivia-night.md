@@ -479,6 +479,49 @@ One commit per implementation step (`feat(theme)`, `feat(question)`,
 
 ---
 
+### Task 7.6: Question media — images in the YAML
+
+Partner request (2026-10-11): a question must be able to carry text,
+audio, AND images, all specified in `questions.yaml`. Text (q/a) and audio
+already work; add images:
+
+- Schema: optional `images:` — list of relative paths (same convention as
+  `audio:`). Validated like audio: not a list, or a non-empty-string item
+  missing → schema error with the question's `where`.
+- Renderer: `imageBlock` in BOTH renderers (Jeopardy + trivia column),
+  between audio and question text; TV-sized (max 640×480, contain); a
+  missing image swaps for a "no image — show it from any device" note
+  (same graceful-degrade pattern as audio; question stays playable).
+- Demo: `tools/make-demo-images.mjs` generates 2 self-generated PNGs into
+  committed `images/demo/` (no deps: hand-built PNG + node:zlib); the stub
+  bank references one demo image and one MISSING image as the fallback
+  probe (mirrors the missing.wav probe; neither survives the Task 8 bank
+  replace — the shipped bank carries no media refs, the host supplies
+  content in folder mode).
+- Scope call: text/audio/images only; video or other media types can reuse
+  the same list-of-paths + renderer pattern later (not built now).
+
+**Files:**
+- Modify: `js/validate.js`, `test/validate.test.mjs`, `js/question.js`, `styles.css`, `questions.yaml` (stub)
+- Add: `tools/make-demo-images.mjs`, `images/demo/*.png`
+
+- [ ] **Step 1: Schema + tests** — images validation in `parseBank` + 3
+  test cases (list ok / not a list / bad item). `node --test` green.
+
+- [ ] **Step 2: Renderer** — `imageBlock` in both renderers + CSS
+  (`.images-block`, TV-sized img, no-image note).
+
+- [ ] **Step 3: Demo images + stub refs** — generator, 2 PNGs in
+  `images/demo/`, stub question refs (demo image + missing probe).
+
+- [ ] **Step 4: Verify (Playwright)** — Jeopardy question shows the demo
+  image (`naturalWidth > 0`); missing-image question shows the note;
+  trivia column renderer shows the image too.
+
+- [ ] **Step 5: Commit** — one commit per step + this plan update.
+
+---
+
 ### Task 8: Full starter question bank
 
 **Files:**
@@ -490,7 +533,7 @@ One commit per implementation step (`feat(theme)`, `feat(question)`,
 - [ ] **Step 1: Write the bank**
 
 Six rounds, deliberately hard (spec): Movies: Oscar (5), Movies: Cult Classics (5), Movies: Childhoods (5), Music (4 — placeholder questions, NO `audio:` references: spec ships music as placeholders until real clips are dropped into `audio/`; the generated demo clips stay in `audio/demo/` for folder-mode use), Nerd Culture (5 — e.g. "name the game by its fishing minigame"), Words (5 — e.g. "cartoon character by their nose"). Easy → hard within each round. Long questions use `>` block scalars.
-The stub's `missing.wav` fallback-test question does NOT survive this replace — the shipped bank has no broken references; the missing-clip path stays verified by Task 7's record.
+The stub's `missing.wav` fallback-test question does NOT survive this replace — the shipped bank has no broken references; the missing-clip path stays verified by Task 7's record. Same for Task 7.6: the shipped bank carries no `audio:`/`images:` refs at all (host content, copyright); the media renderers stay verified by the stub/demo record.
 
 - [ ] **Step 2: Verify**
 
@@ -521,7 +564,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [ ] **Step 1: Implement `js/folder.js`**
 
-Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio files via `URL.createObjectURL`. Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub), an `audio/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source). Audio files from the folder become object URLs — `URL.revokeObjectURL` all of them on every load/reset (no leaks across sources). A folder bank referencing audio that is NOT in the folder keeps the path as-is: 404 → the existing "no clip" note (graceful, no crash).
+Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio files via `URL.createObjectURL`. Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub, showing the optional `audio:` and `images:` keys), an `audio/` dir, an `images/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source). Audio files from the folder become object URLs — `URL.revokeObjectURL` all of them on every load/reset (no leaks across sources). A folder bank referencing audio that is NOT in the folder keeps the path as-is: 404 → the existing "no clip" note (graceful, no crash).
 app.js hooks for this task: `renderError(errors)` (exported — folder loads route to the same error panel) and `setLoader(fn)` (exported — "Try again" reloads the active source, not always the shipped file). `renderSetup`'s input listener is one-time wired at app.js init — do not re-add it per load. `loadBank` calls question.js `resetFlow()` on every successful bank load AND resets `state.scoring`/`state.used` to a fresh game (council fix 2026-10-11 — a mid-game source swap must not carry old-bank scores or old-index used cells into the new bank) — folder loads go through the same path; don't bypass it.
 
 - [ ] **Step 2: Verify with Playwright**
