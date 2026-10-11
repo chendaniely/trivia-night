@@ -436,25 +436,28 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 **Interfaces:**
 - Consumes: the static repo layout (no build)
-- Precondition: an empty orphan `gh-pages` branch exists on the remote (seeded before this task) so the first deploy has a target.
+- Precondition: `gh-pages` branch exists on the remote (seeded empty on 2026-10-10, repopulated by the first real deploy).
 
-- [x] **Step 1: Write the workflow** (done ahead of schedule at user request, 2026-10-10)
+- [x] **Step 1: Write the workflow** (done 2026-10-10; inputs fixed after council review)
 
-On push to `main` + `workflow_dispatch`: `actions/checkout@v4`, then `peaceiris/actions-gh-pages@v3` with `github_token: ${{ secrets.GITHUB_TOKEN }}`, `destination_branch: gh-pages`, `force_sync: true`. No build step — the repo root is the site.
+On push to `main` + `workflow_dispatch`: `actions/checkout@v4`, then `peaceiris/actions-gh-pages@v3` with `github_token: ${{ secrets.GITHUB_TOKEN }}`, `publish_branch: gh-pages`, `publish_dir: .`. No build step — the repo root is the site.
+Council fix 2026-10-11: the first deploy used `destination_branch`/`force_sync`, which the pinned v3 SHA silently ignores (its inputs are `publish_branch`/`publish_dir`); the branch ended up with only `.nojekyll`. Fixed, redeployed, verified live.
 
 - [x] **Step 2: Verify the workflow parses**
 
-Run: `node --input-type=module -e "import { readFileSync } from 'node:fs'; import { parse } from './js/yaml.js'; parse(readFileSync('.github/workflows/deploy-gh-pages.yml','utf8')); console.log('workflow yaml ok');"`
+Run: `npx -y js-yaml .github/workflows/deploy-gh-pages.yml > /dev/null && echo "workflow yaml ok"`
 Expected: `workflow yaml ok`
+(js-yaml is not vendored yet — Task 2 vendors it; npx is the pre-vendor substitute.)
 
-- [x] **Step 3: Commit + push** (per AGENTS.md)
+- [x] **Step 3: Verify the live deploy**
 
-```bash
-git add .github/workflows/deploy-gh-pages.yml
-git commit -m "ci: 🤖 add gh-pages deploy workflow"
-git push
-```
+Run: `git fetch origin gh-pages && git ls-tree --name-only origin/gh-pages | head`
+Expected: repo files (AGENTS.md, docs/, …) — not just `.nojekyll`.
+Run: `curl -s -o /dev/null -w '%{http_code}\n' https://chendaniely.github.io/trivia-night/AGENTS.md`
+Expected: `200`. (Site root 404s until Task 3 adds `index.html` — expected.)
+
+- [x] **Step 4: Commit + push** (per AGENTS.md, type(scope) format)
 
 - [ ] **Step: Handoff for the user (not agent work)**
 
-Remote already configured. Pushing `main` triggers the deploy. Set the repo's Pages source to the `gh-pages` branch (Settings → Pages → Branch: gh-pages). Site: `https://chendaniely.github.io/trivia-night/`. Until Task 3 lands, the site has no `index.html`.
+Remote already configured. Pushing `main` triggers the deploy. Set the repo's Pages source to the `gh-pages` branch (Settings → Pages → Branch: gh-pages). Site: `https://chendaniely.github.io/trivia-night/`. Until Task 3 lands, the site root has no `index.html`.
