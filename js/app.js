@@ -48,6 +48,10 @@ async function loadBank() {
     return;
   }
   state.bank = result.bank;
+  // Bank swap (retry / folder mode): previous game state no longer applies
+  // (used-cell keys and round logs refer to the old bank).
+  state.scoring = null;
+  state.used = new Map();
   resetFlow(); // no stale question state across bank loads (Task 9 folder mode)
   renderSetup();
   showScreen("setup");
