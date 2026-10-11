@@ -283,6 +283,9 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 ### Task 5: Question flow — Jeopardy mode
 
+> Superseded by Task 7.5 (2026-10-11): single-claim + Correct/Wrong
+> replaced by multi-win toggles (green/red/clear) with Reveal + Done.
+
 **Files:**
 - Create: `js/question.js`
 - Modify: `js/app.js` (cell click routing, back-to-board)
@@ -311,6 +314,9 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ---
 
 ### Task 6: Question flow — Trivia mode + column tally
+
+> Superseded by Task 7.5 (2026-10-11): single-tap auto-advance replaced
+> by green-toggle marks + Next.
 
 **Files:**
 - Modify: `js/question.js` (column mode + tally screen), `js/app.js` (setColumnClick), `js/board.js` (completed-column headers inert), `styles.css`
@@ -382,6 +388,70 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - [x] **Step: MILESTONE — MVP demo (no commit)**
 
 Start the server (`python3 -m http.server 8080 --bind 127.0.0.1` from repo root, background), hand the user `http://127.0.0.1:8080`, and **stop: wait for the user's demo feedback before Task 8**.
+
+---
+
+### Task 7.5: MVP feedback — multi-win, back to setup, NYC palette
+
+Partner feedback after the MVP demo (2026-10-11): (1) multiple teams can
+win one question in BOTH modes — Jeopardy team buttons cycle green
+(+points) → red (−points) → clear on click, with a manual "Reveal answer"
+button (the host doesn't know all the answers) and "Done" to apply marks;
+Trivia team buttons toggle green (+points) / clear, with "Next" (no taps =
+pass). (2) A "Setup" button on the board returns to the setup screen with
+names and mode prefilled; same team count keeps scores + played cells
+(rename in place, mode changeable), different count = fresh game.
+(3) Palette: NYC flag orange #F26522 + blue #236192 on a dark blue-black
+theme. Spec updated 2026-10-11 (Goals + Decided sections).
+
+**Files:**
+- Modify: `styles.css` (palette), `js/question.js` (toggles, Reveal/Done, Next), `js/board.js` (Setup button + actions row), `js/app.js` (setup prefill, keep/fresh on Start)
+
+- [ ] **Step 1: NYC palette in `styles.css`**
+
+Dark blue-black theme: bg #0a1620, panel #13242f; orange #F26522 as
+primary action / score accent (Start, Done/Next, score points, cell hover,
+answer text); blue #236192 as surfaces / secondary buttons (header hover,
+unmarked team buttons, Reset/Setup/Reveal); green/red reserved for team
+marks. Radio controls get `accent-color: orange`.
+Verify: Playwright computed styles — body background rgb(10,22,32), Start
+button background rgb(242,101,34).
+
+- [ ] **Step 2: Multi-win toggles in `js/question.js`**
+
+Jeopardy question screen: team buttons cycle green → red → clear;
+"Reveal answer" shows the answer (marks may be set before or after
+reveal); "Done" applies all marks (each green +pts, each red −pts), marks
+the cell used, back to board; zero marks + Done = nobody got it.
+Trivia column screen: team buttons toggle green / clear; "Next" applies
+greens (each +pts) and advances; no taps = pass; last question → tally.
+Verify with Playwright (sequences below).
+
+- [ ] **Step 3: Back to setup (`js/board.js`, `js/app.js`)**
+
+Board actions row: "Setup" + "Reset scores" (secondary/blue). Setup
+button → setup screen with team names + current mode prefilled. Start:
+same team count as the running game → rename in place, keep scores + used
+cells, mode may change; different count → fresh scoring + fresh board.
+Verify with Playwright (sequences below).
+
+- [ ] **Step 4: Verify with Playwright (full sequences)**
+
+1. Jeopardy: open Demo 300 → tap A (green "A ✓"), tap B (green), tap A
+   again (red "A ✕"), tap A again (clear) → "Reveal answer" → answer
+   shown → "Done" → board: A 0, B +300, cell used.
+2. Trivia: Demo 2 column — Q1: A✓ then B✓ then A cleared (B +100); Q2:
+   B✓ (+200); Q3: Next with no taps (pass); Q4: A✓ (+400); Q5: Next
+   (pass) → tally A 400, B 300 → back to board: column used, scores kept.
+3. Setup: from that board click "Setup" → names A/B + Trivia mode
+   prefilled → rename A to "Alpha" → Start → board shows "Alpha 400",
+   "B 300", Demo 2 still used. Add a third team → Start → fresh game:
+   all scores 0, board fresh.
+
+- [ ] **Step 5: Commit**
+
+One commit per implementation step (`feat(theme)`, `feat(question)`,
+`feat(board)`), then this plan update.
 
 ---
 
