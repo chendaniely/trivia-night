@@ -1,0 +1,24 @@
+title: "Trivia Night"
+rounds:
+  - name: "Demo"
+    questions:
+      - q: "Starter question"
+        a: "Answer"
+      - q: >
+          A longer question written with a block
+          scalar to check rendering.
+        a: "Answer two"
+      - q: "Third question"
+        a: "Answer three"
+  - name: "Demo 2"
+    questions:
+      - q: "Q1"
+        a: "A1"
+      - q: "Q2"
+        a: "A2"
+      - q: "Q3"
+        a: "A3"
+      - q: "Q4"
+        a: "A4"
+      - q: "Q5"
+        a: "A5"
