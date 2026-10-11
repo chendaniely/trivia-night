@@ -18,7 +18,7 @@ export function showScreen(id) {
   }
 }
 
-function renderError(errors) {
+export function renderError(errors) {
   const list = document.getElementById("error-list");
   list.replaceChildren(
     ...errors.map((e) => {
@@ -50,6 +50,14 @@ async function loadBank() {
   showScreen("setup");
 }
 
+function teamNames() {
+  return [1, 2, 3, 4]
+    .map((i) => document.getElementById(`team-${i}`))
+    .filter(Boolean)
+    .map((el) => el.value.trim())
+    .filter(Boolean);
+}
+
 function renderSetup() {
   const wrap = document.getElementById("team-inputs");
   wrap.replaceChildren(
@@ -62,11 +70,6 @@ function renderSetup() {
     })
   );
   const startBtn = document.getElementById("start-btn");
-  const teamNames = () =>
-    [1, 2, 3, 4].map((i) => document.getElementById(`team-${i}`).value.trim()).filter(Boolean);
-  wrap.addEventListener("input", () => {
-    startBtn.disabled = teamNames().length < 2;
-  });
   startBtn.disabled = teamNames().length < 2;
   startBtn.onclick = () => {
     state.teamNames = teamNames();
@@ -78,5 +81,16 @@ function renderSetup() {
   };
 }
 
-document.getElementById("retry-btn").addEventListener("click", loadBank);
+// One-time wiring (renderSetup runs again on folder loads — Task 9).
+document
+  .getElementById("team-inputs")
+  .addEventListener("input", () => {
+    document.getElementById("start-btn").disabled = teamNames().length < 2;
+  });
+
+// Task 9 folder mode swaps this via setLoader so "Try again" reloads the active source.
+let currentLoader = loadBank;
+export function setLoader(fn) { currentLoader = fn; }
+document.getElementById("retry-btn").addEventListener("click", () => currentLoader());
+
 loadBank();
