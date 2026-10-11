@@ -20,5 +20,11 @@ export function createScoring(teamNames) {
     return (log.get(roundName) ?? []).reduce((sum, e) => sum + e.points, 0);
   }
 
-  return { teams, give, reset, roundTotal };
+  function roundTeamTotal(roundName, teamIdx) {
+    return (log.get(roundName) ?? [])
+      .filter((e) => e.teamIdx === teamIdx)
+      .reduce((sum, e) => sum + e.points, 0);
+  }
+
+  return { teams, give, reset, roundTotal, roundTeamTotal };
 }

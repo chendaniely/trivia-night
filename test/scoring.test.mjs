@@ -33,4 +33,14 @@ assert.deepEqual(s.teams.map((t) => t.points), [0, 0]);
 assert.equal(s.roundTotal("Movies"), 0);
 assert.equal(s.roundTotal("Music"), 0);
 
+// roundTeamTotal: per-team slice of a round (Task 6 column tally)
+const t = createScoring(["A", "B"]);
+t.give(0, 300, "Movies");
+t.give(1, -200, "Movies");
+t.give(0, 500, "Movies");
+assert.equal(t.roundTeamTotal("Movies", 0), 800); // 300 + 500
+assert.equal(t.roundTeamTotal("Movies", 1), -200);
+assert.equal(t.roundTeamTotal("Music", 0), 0);
+assert.equal(t.roundTotal("Movies"), 600); // signed sum across teams
+
 console.log("scoring: all assertions passed");
