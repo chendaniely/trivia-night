@@ -1,6 +1,7 @@
 // Entry: state, screen switching, data loading, setup screen.
 import { parseBank } from "./validate.js";
 import { createScoring } from "./scoring.js";
+import { renderBoard } from "./board.js";
 
 export const state = {
   mode: "jeopardy", // "jeopardy" | "trivia"
@@ -77,7 +78,7 @@ function renderSetup() {
     state.used = new Map();
     state.scoring = createScoring(state.teamNames);
     showScreen("board");
-    // Board rendering lands in Task 4.
+    renderBoard();
   };
 }
 
