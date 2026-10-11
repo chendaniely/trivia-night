@@ -53,3 +53,5 @@ button:disabled { background: #30363d; color: var(--muted); cursor: not-allowed;
 .team-btns button.claimed { background: var(--good); }
 .btn-good { background: var(--good); }
 .btn-bad { background: var(--bad); color: #fff; }
+.btn-pass { background: #30363d; color: var(--text); }
+.tally-row { background: var(--panel); padding: 16px 32px; border-radius: 10px; font-size: 36px; }

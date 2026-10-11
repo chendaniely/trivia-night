@@ -40,7 +40,8 @@ export function renderBoard() {
     const h = document.createElement("div");
     h.className = "board-header";
     h.textContent = round.name;
-    if (mode === "trivia") {
+    const hasUnused = round.questions.some((_, qi) => !used.has(`${ri}:${qi}`));
+    if (mode === "trivia" && hasUnused) {
       h.classList.add("clickable");
       h.addEventListener("click", () => onColumnClick(ri));
     }

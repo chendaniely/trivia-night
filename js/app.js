@@ -1,8 +1,8 @@
 // Entry: state, screen switching, data loading, setup screen.
 import { parseBank } from "./validate.js";
 import { createScoring } from "./scoring.js";
-import { renderBoard, setCellClick } from "./board.js";
-import { startQuestion, resetFlow } from "./question.js";
+import { renderBoard, setCellClick, setColumnClick } from "./board.js";
+import { startQuestion, startColumn, resetFlow } from "./question.js";
 
 export const state = {
   mode: "jeopardy", // "jeopardy" | "trivia"
@@ -94,6 +94,10 @@ document
 setCellClick((ri, qi) => {
   if (state.mode !== "jeopardy") return; // trivia cells are not targets (Task 6)
   startQuestion(ri, qi);
+});
+setColumnClick((ri) => {
+  if (state.mode !== "trivia") return;
+  startColumn(ri);
 });
 
 // Task 9 folder mode swaps this via setLoader so "Try again" reloads the active source.
