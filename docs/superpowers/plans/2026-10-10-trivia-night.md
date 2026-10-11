@@ -486,16 +486,17 @@ audio, AND images, all specified in `questions.yaml`. Text (q/a) and audio
 already work; add images:
 
 - Schema: optional `images:` — list of relative paths (same convention as
-  `audio:`). Validated like audio: not a list, or a non-empty-string item
-  missing → schema error with the question's `where`.
+  `audio:`). Validated like audio: not a list, empty list, or a
+  non-empty-string item missing → schema error with the question's
+  `where`.
 - Renderer: `imageBlock` in BOTH renderers (Jeopardy + trivia column),
   between audio and question text; TV-sized (max 640×480, contain); a
   missing image swaps for a "no image — show it from any device" note
   (same graceful-degrade pattern as audio; question stays playable).
 - Demo: `tools/make-demo-images.mjs` generates 2 self-generated PNGs into
   committed `images/demo/` (no deps: hand-built PNG + node:zlib); the stub
-  bank references one demo image and one MISSING image as the fallback
-  probe (mirrors the missing.wav probe; neither survives the Task 8 bank
+  bank references one demo image per renderer (Jeopardy + trivia column)
+  and one MISSING image as the fallback probe (mirrors the missing.wav probe; neither survives the Task 8 bank
   replace — the shipped bank carries no media refs, the host supplies
   content in folder mode).
 - Scope call: text/audio/images only; video or other media types can reuse
@@ -562,11 +563,11 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 **Interfaces:**
 - Consumes: `parseBank`, `state`
-- Produces: `loadFolder(dirHandleOrFiles) -> parseBank result` (audio as object URLs; a malformed `questions.yaml` in the folder surfaces the same line-numbered error panel), `createNew(parentHandle, name) -> dirHandle`, both with graceful fallbacks
+- Produces: `loadFolder(dirHandleOrFiles) -> parseBank result` (audio AND images as object URLs — council 2026-10-11: folder-bank `images:` paths must resolve against the folder, not the site URL, or every folder image 404s into the "no image" note; a malformed `questions.yaml` in the folder surfaces the same line-numbered error panel), `createNew(parentHandle, name) -> dirHandle`, both with graceful fallbacks
 
 - [ ] **Step 1: Implement `js/folder.js`**
 
-Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio files via `URL.createObjectURL`. Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub, showing the optional `audio:` and `images:` keys), an `audio/` dir, an `images/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source). Audio files from the folder become object URLs — `URL.revokeObjectURL` all of them on every load/reset (no leaks across sources). A folder bank referencing audio that is NOT in the folder keeps the path as-is: 404 → the existing "no clip" note (graceful, no crash).
+Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio and image files via `URL.createObjectURL` (FSA: walk the directory handle per referenced path; webkitdirectory fallback: match on `webkitRelativePath`). Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub; the optional `audio:` and `images:` keys appear as COMMENTED example lines — an empty `images:` or `images: []` fails validation, so the template must parse on first load), an `audio/` dir, an `images/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source). Audio and image files from the folder become object URLs — `URL.revokeObjectURL` all of them on every load/reset (no leaks across sources). A folder bank referencing audio or an image that is NOT in the folder keeps the path as-is: 404 → the existing "no clip"/"no image" note (graceful, no crash).
 app.js hooks for this task: `renderError(errors)` (exported — folder loads route to the same error panel) and `setLoader(fn)` (exported — "Try again" reloads the active source, not always the shipped file). `renderSetup`'s input listener is one-time wired at app.js init — do not re-add it per load. `loadBank` calls question.js `resetFlow()` on every successful bank load AND resets `state.scoring`/`state.used` to a fresh game (council fix 2026-10-11 — a mid-game source swap must not carry old-bank scores or old-index used cells into the new bank) — folder loads go through the same path; don't bypass it.
 
 - [ ] **Step 2: Verify with Playwright**
