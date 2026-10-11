@@ -61,6 +61,7 @@ Scoring.teams: { name: string, points: number }[]
 Scoring.give(teamIdx: number, points: number, roundName: string)
 Scoring.reset()
 Scoring.roundTotal(roundName: string) -> number
+Scoring.roundTeamTotal(roundName: string, teamIdx: number) -> number
 
 // js/validate.js
 parseBank(text: string) -> { ok: true, bank: Bank } | { ok: false, errors: BankError[] }
@@ -87,7 +88,7 @@ showScreen(id: "setup" | "board" | "question" | "tally")
 - Consumes: nothing
 - Produces: `createScoring`, `Scoring` (shape above)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `test/scoring.test.mjs`, using `node:assert/strict`:
 
@@ -96,24 +97,25 @@ import { createScoring } from "../js/scoring.js";
 // - give(0, 300, "Movies") then teams[0].points === 300
 // - give(1, -200, "Movies") then teams[1].points === -200  (Jeopardy wrong answer)
 // - roundTotal("Movies") === 100 after give(0,300,"Movies"); give(1,-200,"Movies")
+// - roundTeamTotal("Movies", 0) === 300 / ("Movies", 1) === -200 (per-team slice; Task 6 tally)
 // - reset() zeroes every team and roundTotal returns 0
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node test/scoring.test.mjs`
 Expected: FAIL — `Cannot find module '../js/scoring.js'`
 
-- [ ] **Step 3: Implement `js/scoring.js`**
+- [x] **Step 3: Implement `js/scoring.js`**
 
 Plain object + closures. `give` records `{teamIdx, points}` into a per-round log so `roundTotal` can recompute. `reset` zeroes points and clears the log.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node test/scoring.test.mjs`
-Expected: PASS (no output, exit 0)
+Expected: PASS (prints `scoring: all assertions passed`, exit 0)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add js/scoring.js test/scoring.test.mjs
@@ -314,7 +316,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [ ] **Step 1: Implement the Trivia flow**
 
-Round header click → first question of the column. Per question: team buttons (tap = that team got it, `give(+points)`) plus a **Pass** button (`give` nothing, 0 points). Next → following question; used cells update as the column progresses. After the last question: tally screen — per-team points earned in this column via `scoring.roundTotal(round.name)` — then back to board. Invalid taps after a question is awarded are ignored (Review Focus 5).
+Round header click → first question of the column. Per question: team buttons (tap = that team got it, `give(+points)`) plus a **Pass** button (`give` nothing, 0 points). Next → following question; used cells update as the column progresses. After the last question: tally screen — per-team points earned in this column via `scoring.roundTeamTotal(round.name, teamIdx)` for each team — then back to board. Invalid taps after a question is awarded are ignored (Review Focus 5).
 
 - [ ] **Step 2: Verify with Playwright**
 
