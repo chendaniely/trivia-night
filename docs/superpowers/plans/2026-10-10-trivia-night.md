@@ -70,6 +70,11 @@ Bank = { title: string, rounds: Round[] }
 Round = { name: string, questions: Question[] }
 Question = { q: string, a: string, audio?: string, points?: number }
 
+// js/board.js
+renderBoard() -> void  (renders into #screen-board)
+setCellClick(fn: (roundIdx, qIdx) => void)
+setColumnClick(fn: (roundIdx) => void)
+
 // js/app.js (module-level, consumed by board.js / question.js / folder.js)
 state = { mode: "jeopardy" | "trivia", teamNames: string[], bank: Bank,
           used: Map /* "roundIdx:qIdx" -> true */, scoring: Scoring }
@@ -251,11 +256,11 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 **Files:**
 - Create: `js/board.js`
-- Modify: `js/app.js` (wire `renderBoard` into the board screen)
+- Modify: `js/app.js` (wire `renderBoard` into the board screen), `styles.css` (board styles)
 
 **Interfaces:**
 - Consumes: `state` (Task 3), `Scoring` (Task 1)
-- Produces: `renderBoard(rootEl: HTMLElement)` — grid + scoreboard + reset; cell click → `onCellClick(roundIdx, qIdx)` callback set by app.js
+- Produces: `renderBoard()` (renders into `#screen-board`) — grid + scoreboard + reset; `setCellClick(fn)` / `setColumnClick(fn)` hooks Tasks 5–6 wire (board.js module-level no-ops until then)
 
 - [x] **Step 1: Implement `js/board.js`**
 
@@ -316,7 +321,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [ ] **Step 1: Implement the Trivia flow**
 
-Round header click → first question of the column. Per question: team buttons (tap = that team got it, `give(+points)`) plus a **Pass** button (`give` nothing, 0 points). Next → following question; used cells update as the column progresses. After the last question: tally screen — per-team points earned in this column via `scoring.roundTeamTotal(round.name, teamIdx)` for each team — then back to board. Invalid taps after a question is awarded are ignored (Review Focus 5).
+Round header click → first question of the column. In Trivia mode cells are NOT individual click targets (header is); wire `setCellClick` to a no-op so they don't stay pointable. Per question: team buttons (tap = that team got it, `give(+points)`) plus a **Pass** button (`give` nothing, 0 points). Next → following question; used cells update as the column progresses. After the last question: tally screen — per-team points earned in this column via `scoring.roundTeamTotal(round.name, teamIdx)` for each team — then back to board. Invalid taps after a question is awarded are ignored (Review Focus 5).
 
 - [ ] **Step 2: Verify with Playwright**
 
