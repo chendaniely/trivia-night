@@ -26,7 +26,12 @@ export function parseBank(text) {
     errors.push({ where: "rounds", message: "rounds must be a list" });
     return { ok: false, errors };
   }
+  if (data.rounds.length === 0) {
+    errors.push({ where: "rounds", message: "rounds must contain at least one round" });
+    return { ok: false, errors };
+  }
 
+  const seenNames = new Set(); // Task 6 tallies key by round name
   for (let ri = 0; ri < data.rounds.length; ri++) {
     const round = data.rounds[ri];
     const where = `rounds[${ri}]`;
@@ -36,10 +41,17 @@ export function parseBank(text) {
     }
     if (typeof round.name !== "string" || !round.name.trim()) {
       errors.push({ where, message: "round.name must be a non-empty string" });
+    } else if (seenNames.has(round.name)) {
+      errors.push({ where, message: `duplicate round name "${round.name}"` });
+    } else {
+      seenNames.add(round.name);
     }
     if (!Array.isArray(round.questions)) {
       errors.push({ where, message: "round.questions must be a list" });
       continue;
+    }
+    if (round.questions.length === 0) {
+      errors.push({ where, message: "round.questions must contain at least one question" });
     }
     for (let qi = 0; qi < round.questions.length; qi++) {
       const q = round.questions[qi];

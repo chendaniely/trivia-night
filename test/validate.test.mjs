@@ -93,4 +93,39 @@ assert.equal(r6.ok, false);
 assert.equal(r6.errors[0].where, "rounds[0].questions[0]");
 assert.match(r6.errors[0].message, /q\b/);
 
+// duplicate round names -> error (Task 6 tallies key by name)
+const dupNames = `title: "T"
+rounds:
+  - name: "R"
+    questions:
+      - q: "Q"
+        a: "A"
+  - name: "R"
+    questions:
+      - q: "Q"
+        a: "A"
+`;
+const r7 = parseBank(dupNames);
+assert.equal(r7.ok, false);
+assert.match(r7.errors[0].where, /rounds\[1\]/);
+assert.match(r7.errors[0].message, /duplicate/);
+
+// zero-question round -> error (Task 6 column would have no first question)
+const emptyQ = `title: "T"
+rounds:
+  - name: "R"
+    questions: []
+`;
+const r8 = parseBank(emptyQ);
+assert.equal(r8.ok, false);
+assert.match(r8.errors[0].where, /rounds\[0\]/);
+
+// empty rounds list -> error
+const emptyR = `title: "T"
+rounds: []
+`;
+const r9 = parseBank(emptyR);
+assert.equal(r9.ok, false);
+assert.match(r9.errors[0].where, /rounds/);
+
 console.log("validate: all assertions passed");
