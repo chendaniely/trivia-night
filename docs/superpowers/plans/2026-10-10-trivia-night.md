@@ -505,20 +505,22 @@ already work; add images:
 - Modify: `js/validate.js`, `test/validate.test.mjs`, `js/question.js`, `styles.css`, `questions.yaml` (stub)
 - Add: `tools/make-demo-images.mjs`, `images/demo/*.png`
 
-- [ ] **Step 1: Schema + tests** — images validation in `parseBank` + 3
+- [x] **Step 1: Schema + tests** — images validation in `parseBank` + 3
   test cases (list ok / not a list / bad item). `node --test` green.
+  (367dd70)
 
-- [ ] **Step 2: Renderer** — `imageBlock` in both renderers + CSS
-  (`.images-block`, TV-sized img, no-image note).
+- [x] **Step 2: Renderer** — `imageBlock` in both renderers + CSS
+  (`.images-block`, TV-sized img, no-image note). (22e00ee)
 
-- [ ] **Step 3: Demo images + stub refs** — generator, 2 PNGs in
+- [x] **Step 3: Demo images + stub refs** — generator, 2 PNGs in
   `images/demo/`, stub question refs (demo image + missing probe).
 
-- [ ] **Step 4: Verify (Playwright)** — Jeopardy question shows the demo
+- [x] **Step 4: Verify (Playwright)** — Jeopardy question shows the demo
   image (`naturalWidth > 0`); missing-image question shows the note;
-  trivia column renderer shows the image too.
+  trivia column renderer shows the image too. (port 8083; 640x480 loaded
+  in both renderers, missing.png swapped for the note)
 
-- [ ] **Step 5: Commit** — one commit per step + this plan update.
+- [x] **Step 5: Commit** — one commit per step + this plan update.
 
 ---
 
