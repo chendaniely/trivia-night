@@ -406,8 +406,9 @@ theme. Spec updated 2026-10-11 (Goals + Decided sections).
 
 **Files:**
 - Modify: `styles.css` (palette), `js/question.js` (toggles, Reveal/Done, Next), `js/board.js` (Setup button + actions row), `js/app.js` (setup prefill, keep/fresh on Start)
+- Add: `tools/local-server.py` (no-store dev server — see execution note)
 
-- [ ] **Step 1: NYC palette in `styles.css`**
+- [x] **Step 1: NYC palette in `styles.css`**
 
 Dark blue-black theme: bg #0a1620, panel #13242f; orange #F26522 as
 primary action / score accent (Start, Done/Next, score points, cell hover,
@@ -417,7 +418,7 @@ marks. Radio controls get `accent-color: orange`.
 Verify: Playwright computed styles — body background rgb(10,22,32), Start
 button background rgb(242,101,34).
 
-- [ ] **Step 2: Multi-win toggles in `js/question.js`**
+- [x] **Step 2: Multi-win toggles in `js/question.js`**
 
 Jeopardy question screen: team buttons cycle green → red → clear;
 "Reveal answer" shows the answer (marks may be set before or after
@@ -427,7 +428,7 @@ Trivia column screen: team buttons toggle green / clear; "Next" applies
 greens (each +pts) and advances; no taps = pass; last question → tally.
 Verify with Playwright (sequences below).
 
-- [ ] **Step 3: Back to setup (`js/board.js`, `js/app.js`)**
+- [x] **Step 3: Back to setup (`js/board.js`, `js/app.js`)**
 
 Board actions row: "Setup" + "Reset scores" (secondary/blue). Setup
 button → setup screen with team names + current mode prefilled. Start:
@@ -435,7 +436,7 @@ same team count as the running game → rename in place, keep scores + used
 cells, mode may change; different count → fresh scoring + fresh board.
 Verify with Playwright (sequences below).
 
-- [ ] **Step 4: Verify with Playwright (full sequences)**
+- [x] **Step 4: Verify with Playwright (full sequences)**
 
 1. Jeopardy: open Demo 300 → tap A (green "A ✓"), tap B (green), tap A
    again (red "A ✕"), tap A again (clear) → "Reveal answer" → answer
@@ -448,10 +449,33 @@ Verify with Playwright (sequences below).
    "B 300", Demo 2 still used. Add a third team → Start → fresh game:
    all scores 0, board fresh.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 One commit per implementation step (`feat(theme)`, `feat(question)`,
 `feat(board)`), then this plan update.
+
+> 2026-10-11 execution note: verified on `tools/local-server.py` (sends
+> `Cache-Control: no-store`) using a FRESH port per code change (8081 for
+> steps 1-2, 8082 for step 3). Plain `http.server` + a persistent Chrome
+> profile held stale JS well past Last-Modified revalidation, and CDP cache
+> controls (setCacheDisabled, clearBrowserCache) had no effect — a port the
+> browser already loaded can keep serving old bytes. Rule: verify on a port
+> that has never been loaded in the browser profile. Setup verification
+> also covered the same-count mode-change case (state kept, trivia headers
+> activate).
+>
+> Council notes (2026-10-11, after implementation): backward pass clean
+> (palette values exact, v1 dead code gone, commits conform). Forward pass
+> found 2 majors, both fixed before Task 8: (1) `loadBank` kept the old
+> game's scoring/used across bank reloads → now resets both (fix: app);
+> (2) the column flow re-awarded used cells after a supported mid-game
+> mode switch → `startColumn`/`nextQuestion` advance over the first
+> unused question (fix: question, Playwright-verified: column resumes at
+> "question 2 of 3", no double award). Plus: `pointsFor` de-duplicated
+> (board.js exports, question.js imports). Skipped: an early-exit "Board"
+> button on the trivia column (not requested — a mis-tapped header forces
+> the host through the remaining questions; revisit if it bothers at the
+> event).
 
 ---
 
@@ -472,7 +496,7 @@ The stub's `missing.wav` fallback-test question does NOT survive this replace �
 
 Run: `node --input-type=module -e "import { readFileSync } from 'node:fs'; import { parseBank } from './js/validate.js'; const r = parseBank(readFileSync('questions.yaml','utf8')); if (!r.ok) { console.error(r.errors); process.exit(1); } console.log(r.bank.rounds.length + ' rounds,', r.bank.rounds.reduce((n, x) => n + x.questions.length, 0) + ' questions');"`
 Expected: `6 rounds, 29 questions`
-MCP: reload (reuse the running 8080 server from the milestone — do not rebind the port), Start → board shows 6 columns.
+MCP: reload against the running no-store server (`tools/local-server.py`, port 8080), Start → board shows 6 columns. If the browser profile already loaded files that changed since its last visit, verify on a fresh port (see Task 7.5 execution note).
 
 - [ ] **Step 3: Commit**
 
@@ -498,7 +522,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - [ ] **Step 1: Implement `js/folder.js`**
 
 Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio files via `URL.createObjectURL`. Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub), an `audio/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source). Audio files from the folder become object URLs — `URL.revokeObjectURL` all of them on every load/reset (no leaks across sources). A folder bank referencing audio that is NOT in the folder keeps the path as-is: 404 → the existing "no clip" note (graceful, no crash).
-app.js hooks for this task: `renderError(errors)` (exported — folder loads route to the same error panel) and `setLoader(fn)` (exported — "Try again" reloads the active source, not always the shipped file). `renderSetup`'s input listener is one-time wired at app.js init — do not re-add it per load. `loadBank` calls question.js `resetFlow()` on every successful bank load — folder loads go through the same path; don't bypass it.
+app.js hooks for this task: `renderError(errors)` (exported — folder loads route to the same error panel) and `setLoader(fn)` (exported — "Try again" reloads the active source, not always the shipped file). `renderSetup`'s input listener is one-time wired at app.js init — do not re-add it per load. `loadBank` calls question.js `resetFlow()` on every successful bank load AND resets `state.scoring`/`state.used` to a fresh game (council fix 2026-10-11 — a mid-game source swap must not carry old-bank scores or old-index used cells into the new bank) — folder loads go through the same path; don't bypass it.
 
 - [ ] **Step 2: Verify with Playwright**
 
