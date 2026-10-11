@@ -356,7 +356,7 @@ Recorded deviation: the spec prefers m4a/mp3 for REAL clips (TV-browser support)
 - [x] **Step 2: Generate and check the clips**
 
 Run: `node tools/make-demo-audio.mjs` then `ls -la audio/demo/`
-Expected: three files, each a few hundred KB, RIFF header (`xxd -l 4` shows `RIFF`).
+Expected: three files, each ~130 KB, RIFF header (`xxd -l 4` shows `RIFF`).
 
 - [x] **Step 3: Wire playback into the question screen**
 
@@ -379,7 +379,7 @@ git commit -m "feat(audio): 🤖 add audio playback with generated demo clips
 Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ```
 
-- [ ] **Step: MILESTONE — MVP demo (no commit)**
+- [x] **Step: MILESTONE — MVP demo (no commit)**
 
 Start the server (`python3 -m http.server 8080 --bind 127.0.0.1` from repo root, background), hand the user `http://127.0.0.1:8080`, and **stop: wait for the user's demo feedback before Task 8**.
 
@@ -427,7 +427,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [ ] **Step 1: Implement `js/folder.js`**
 
-Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio files via `URL.createObjectURL`. Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub), an `audio/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source).
+Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio files via `URL.createObjectURL`. Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub), an `audio/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source). Audio files from the folder become object URLs — `URL.revokeObjectURL` all of them on every load/reset (no leaks across sources). A folder bank referencing audio that is NOT in the folder keeps the path as-is: 404 → the existing "no clip" note (graceful, no crash).
 app.js hooks for this task: `renderError(errors)` (exported — folder loads route to the same error panel) and `setLoader(fn)` (exported — "Try again" reloads the active source, not always the shipped file). `renderSetup`'s input listener is one-time wired at app.js init — do not re-add it per load. `loadBank` calls question.js `resetFlow()` on every successful bank load — folder loads go through the same path; don't bypass it.
 
 - [ ] **Step 2: Verify with Playwright**
