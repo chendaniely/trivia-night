@@ -136,12 +136,12 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - Consumes: `js/yaml.js` (js-yaml `parse`)
 - Produces: `parseBank` (shape above)
 
-- [ ] **Step 1: Vendor js-yaml**
+- [x] **Step 1: Vendor js-yaml** (js-yaml 5.4.3)
 
 Run: `npm i -D js-yaml` then copy `node_modules/js-yaml/dist/js-yaml.mjs` to `js/yaml.js`, prepending a one-line header: `// Vendored js-yaml — refresh: npm i -D js-yaml && cp node_modules/js-yaml/dist/js-yaml.mjs js/yaml.js`
 Note: js-yaml exports `load` (verified v4 and v5) — there is no `parse` export. `validate.js` imports `{ load }`.
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 `test/validate.test.mjs`, using `node:assert/strict`:
 
@@ -156,21 +156,21 @@ import { parseBank } from "../js/validate.js";
 // - `points` must be a positive integer when present
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `node test/validate.test.mjs`
 Expected: FAIL — module not found
 
-- [ ] **Step 4: Implement `js/validate.js`**
+- [x] **Step 4: Implement `js/validate.js`**
 
 `load` in try/catch: on syntax error return `errors: [{ line: err.mark.line + 1, where: "yaml", message: err.reason }]` (mark is 0-based; for mid-file errors that is the offending line). On success, walk the structure; collect every schema error with `where` like `rounds[1].questions[2]`. Return `{ ok: errors.length === 0, ... }`.
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `node test/validate.test.mjs`
-Expected: PASS
+Expected: PASS (prints `validate: all assertions passed`, exit 0)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add js/yaml.js js/validate.js test/validate.test.mjs package.json package-lock.json
