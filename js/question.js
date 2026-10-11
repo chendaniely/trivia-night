@@ -1,7 +1,27 @@
 // Question flow. Jeopardy: show -> claim -> reveal -> correct/wrong -> board.
 // Taps after reveal are ignored (phase guards). Trivia column flow: Task 6.
+// Audio: questions with q.audio get a player in EVERY renderer (both modes);
+// a missing clip swaps the player for a "no clip" note (Review Focus 3).
 import { state, showScreen } from "./app.js";
 import { renderBoard } from "./board.js";
+
+function audioBlock(question) {
+  if (!question.audio) return null;
+  const wrap = document.createElement("div");
+  wrap.className = "audio-block";
+  const a = document.createElement("audio");
+  a.controls = true;
+  a.preload = "auto";
+  a.src = question.audio; // relative path: works from /<repo>/ subpath
+  a.addEventListener("error", () => {
+    const note = document.createElement("p");
+    note.className = "no-clip";
+    note.textContent = "no clip — play it from any device";
+    wrap.replaceChildren(note);
+  });
+  wrap.append(a);
+  return wrap;
+}
 
 let phase = "idle"; // "claim" | "reveal" | "column"
 let current = null; // { ri, qi }
@@ -91,6 +111,7 @@ function renderColumnPhase() {
   const qText = document.createElement("p");
   qText.className = "question-text";
   qText.textContent = question.q.trim();
+  const ab = audioBlock(question);
 
   const btns = document.createElement("div");
   btns.className = "team-btns";
@@ -108,7 +129,7 @@ function renderColumnPhase() {
   pass.addEventListener("click", () => award(-1));
   btns.append(pass);
 
-  wrap.append(cat, qText, btns);
+  wrap.append(cat, ...(ab ? [ab] : []), qText, btns);
   root.replaceChildren(wrap);
 }
 
@@ -167,7 +188,8 @@ function renderPhase() {
       return b;
     })
   );
-  wrap.append(cat, qText, btns);
+  const ab = audioBlock(question);
+  wrap.append(cat, ...(ab ? [ab] : []), qText, btns);
 
   if (phase === "reveal") {
     const ans = document.createElement("p");

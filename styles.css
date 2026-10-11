@@ -54,4 +54,7 @@ button:disabled { background: #30363d; color: var(--muted); cursor: not-allowed;
 .btn-good { background: var(--good); }
 .btn-bad { background: var(--bad); color: #fff; }
 .btn-pass { background: #30363d; color: var(--text); }
+.audio-block { display: grid; gap: 8px; }
+.audio-block audio { width: 480px; height: 48px; }
+.no-clip { color: var(--muted); font-style: italic; margin: 0; font-size: 28px; }
 .tally-row { background: var(--panel); padding: 16px 32px; border-radius: 10px; font-size: 36px; }
