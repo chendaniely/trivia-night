@@ -4,6 +4,9 @@ rounds:
     questions:
       - q: "Starter question"
         a: "Answer"
+        images:
+          - "images/demo/orange-solid.png"
+          - "images/demo/missing.png"
       - q: >
           A longer question written with a block
           scalar to check rendering.
@@ -14,6 +17,8 @@ rounds:
     questions:
       - q: "Q1"
         a: "A1"
+        images:
+          - "images/demo/blue-checker.png"
       - q: "Q2"
         a: "A2"
       - q: "Q3"
