@@ -59,7 +59,8 @@ export function renderBoard() {
       cell.textContent = pointsFor(round, qi);
       if (used.has(`${ri}:${qi}`)) {
         cell.classList.add("used");
-      } else {
+      } else if (mode !== "trivia") {
+        // trivia: the header is the click target, cells are not pointable
         cell.classList.add("clickable");
         cell.addEventListener("click", () => onCellClick(ri, qi));
       }

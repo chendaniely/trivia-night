@@ -12,6 +12,12 @@ function points() {
   return question.points !== undefined ? question.points : (current.qi + 1) * 100;
 }
 
+export function resetFlow() {
+  phase = "idle";
+  current = null;
+  claimedIdx = -1;
+}
+
 export function startQuestion(ri, qi) {
   current = { ri, qi };
   claimedIdx = -1;

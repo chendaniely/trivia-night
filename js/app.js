@@ -2,7 +2,7 @@
 import { parseBank } from "./validate.js";
 import { createScoring } from "./scoring.js";
 import { renderBoard, setCellClick } from "./board.js";
-import { startQuestion } from "./question.js";
+import { startQuestion, resetFlow } from "./question.js";
 
 export const state = {
   mode: "jeopardy", // "jeopardy" | "trivia"
@@ -48,6 +48,7 @@ async function loadBank() {
     return;
   }
   state.bank = result.bank;
+  resetFlow(); // no stale question state across bank loads (Task 9 folder mode)
   renderSetup();
   showScreen("setup");
 }
