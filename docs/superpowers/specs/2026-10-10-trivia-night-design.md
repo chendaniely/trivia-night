@@ -40,6 +40,9 @@ styles of play (see modes below).
 - Music round: a question may reference an audio clip; the question screen
   plays it through the TV speakers (host-triggered, then the question is
   answered as usual).
+- Any question may reference images (`images:` — list of relative paths,
+  same convention as `audio:`); the question screen shows them TV-sized
+  above the question text, in both modes.
 - Demo data in the repo (questions + a few safe self-generated clips) so
   the Pages deployment works out of the box.
 - Local folder mode: host loads questions + audio from a folder on their
@@ -80,17 +83,22 @@ styles of play (see modes below).
   box. The app degrades gracefully when a referenced clip is missing —
   the question stays playable and the host can sound the clip from any
   other device.
+- Images: host images are NOT committed (copyright); a few demo images
+  (self-generated) ARE committed so the image path works out of the box.
+  A missing image degrades to a "no image" note; the question stays
+  playable.
 - Local folder mode: host picks a trivia-night folder on their own
   computer (File System Access API on Chromium, `webkitdirectory`
   fallback). "Create new" scaffolds the structure: `questions.yaml`
-  template, `audio/`, README.
+  template, `audio/`, `images/`, README.
 - Offline deps: every JS dependency vendored locally. No CDN.
 - Runtimes available on the Mac: Node v25, python3 3.9. If Python is used
   for tooling, it must be uv-managed in a project-local `.venv/`
   (gitignored) — never installed into the user's global or active
   environment.
-- Question content: one `questions.yaml` plus an `audio/` folder. The app
-  validates the file on load and reports bad lines with line numbers.
+- Question content: one `questions.yaml` plus `audio/` and `images/`
+  folders. The app validates the file on load and reports bad lines with
+  line numbers.
 - Long question/answer text should use YAML block scalars (`>` folded, `|`
   literal) so colons and quotes need no escaping. Parser must handle them.
 - Audio clips: prefer `.m4a`/`.mp3` (widest TV-browser support).
