@@ -1,9 +1,11 @@
 :root {
-  --bg: #0d1117;
-  --panel: #161b22;
-  --text: #f0f6fc;
-  --muted: #8b949e;
-  --accent: #58a6ff;
+  --bg: #0a1620;        /* blue-black, hue of NYC blue */
+  --panel: #13242f;
+  --text: #f5f9fc;
+  --muted: #9fb3c8;
+  --orange: #f26522;    /* NYC flag orange — primary action, score */
+  --blue: #236192;      /* NYC flag blue — surfaces, secondary */
+  --accent: #f26522;
   --good: #3fb950;
   --bad: #f85149;
 }
@@ -15,45 +17,50 @@ h1 { font-size: 56px; margin: 0 0 8px; }
 .screen { max-width: 1280px; margin: 0 auto; padding: 40px; }
 input[type="text"], input:not([type]) {
   font-size: 28px; padding: 12px 16px; width: 100%; max-width: 480px;
-  background: var(--panel); color: var(--text); border: 2px solid #30363d; border-radius: 8px;
+  background: var(--panel); color: var(--text); border: 2px solid #2c4a66; border-radius: 8px;
 }
 input:focus { outline: 3px solid var(--accent); border-color: transparent; }
+input[type="radio"] { accent-color: var(--orange); width: 28px; height: 28px; }
 button {
   font-size: 32px; padding: 14px 32px; border: 0; border-radius: 10px;
-  background: var(--accent); color: #0d1117; cursor: pointer; font-weight: 600;
+  background: var(--orange); color: #0a1620; cursor: pointer; font-weight: 600;
 }
-button:disabled { background: #30363d; color: var(--muted); cursor: not-allowed; }
+button:disabled { background: #24405a; color: var(--muted); cursor: not-allowed; }
+.btn-secondary { background: var(--blue); color: #fff; }
+.btn-row { display: flex; gap: 24px; justify-content: center; margin-top: 24px; }
 #team-inputs { display: grid; gap: 16px; margin: 32px 0; }
 #mode-pick { display: flex; gap: 48px; margin: 24px 0; font-size: 32px; }
-#mode-pick input { width: 24px; height: 24px; }
 #error-list { font-size: 28px; color: var(--bad); padding-left: 24px; }
 .scoreboard { display: flex; gap: 40px; justify-content: center; font-size: 32px; margin-bottom: 24px; }
 .score-team { background: var(--panel); padding: 12px 28px; border-radius: 10px; }
-.score-points { font-weight: 700; color: var(--accent); }
+.score-points { font-weight: 700; color: var(--orange); }
 .board-grid { display: grid; gap: 10px; }
 .board-header {
   font-size: 30px; font-weight: 700; text-align: center;
   padding: 14px 8px; background: var(--panel); border-radius: 10px;
   overflow-wrap: break-word; min-width: 0;
 }
+.board-header.clickable:hover { background: var(--blue); }
 .board-cell {
   font-size: 36px; font-weight: 700; text-align: center;
   padding: 26px 8px; background: var(--panel); border-radius: 10px;
 }
 .clickable { cursor: pointer; }
-.board-cell.clickable:hover { background: #1f6feb; }
-.board-cell.used { color: var(--muted); background: transparent; border: 2px dashed #30363d; }
+.board-cell.clickable:hover { background: var(--orange); color: #0a1620; }
+.board-cell.used { color: var(--muted); background: transparent; border: 2px dashed #2c4a66; }
 .board-gap { visibility: hidden; }
 .question-wrap { display: grid; gap: 32px; justify-items: start; }
 .question-wrap h2 { font-size: 40px; color: var(--muted); margin: 0; }
 .question-text { font-size: 48px; margin: 0; white-space: pre-line; }
-.answer-text { font-size: 44px; color: var(--good); margin: 0; }
+.answer-text { font-size: 44px; color: var(--orange); margin: 0; }
 .team-btns { display: flex; gap: 24px; flex-wrap: wrap; }
-.team-btns button { font-size: 36px; padding: 20px 40px; }
+.team-btns button { font-size: 36px; padding: 20px 40px; background: var(--blue); color: #fff; }
 .team-btns button.claimed { background: var(--good); }
+.team-btns button.marked-green { background: var(--good); }
+.team-btns button.marked-red { background: var(--bad); }
 .btn-good { background: var(--good); }
 .btn-bad { background: var(--bad); color: #fff; }
-.btn-pass { background: #30363d; color: var(--text); }
+.btn-pass { background: #24405a; color: var(--text); }
 .audio-block { display: grid; gap: 8px; }
 .audio-block audio { width: 480px; height: 48px; }
 .no-clip { color: var(--muted); font-style: italic; margin: 0; font-size: 28px; }
