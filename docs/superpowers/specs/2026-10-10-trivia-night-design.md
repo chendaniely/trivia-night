@@ -19,14 +19,22 @@ styles of play (see modes below).
 - Jeopardy-style board: categories as columns, difficulty tiers as rows,
   easy → hard top to bottom. All content comes from one editable
   plain-text YAML file.
-- Two game modes on the same board:
+- Two game modes on the same board (revised 2026-10-11 after the MVP demo —
+  multiple teams can win one question):
   - **Jeopardy mode** — host clicks any cell → question screen → host taps
-    the claiming team → answer flips → host marks correct (that team gains
-    the cell's points) or wrong (that team loses them).
+    team buttons to mark who got it: click cycles green (correct, gains the
+    cell's points) → red (wrong, loses them) → clear (misclick). A "Reveal
+    answer" button shows the answer (the host doesn't know all the answers;
+    marks can be set before or after revealing). "Done" applies all marks,
+    consumes the cell, back to the board; zero marks = nobody got it.
   - **Trivia mode** — host clicks a category → its questions run in order
-    (easy → hard), one at a time → host taps the team that got it → next
-    question → column tally shown at the end of the column.
-- Setup screen at launch: enter team names, pick mode.
+    (easy → hard), one at a time → host taps every team that got it (green,
+    each gains the tier points; click again to clear) → "Next" (no taps =
+    pass) → column tally shown at the end of the column.
+- Setup screen at launch: enter team names, pick mode. The board has a
+  "Setup" button that returns to it with names and mode prefilled; starting
+  with the same team count keeps scores and played cells (names update in
+  place, mode can change), a different count starts a fresh game.
 - Team scoreboard with points; score reset available, and loading
   another folder set starts a fresh board.
 - Music round: a question may reference an audio clip; the question screen
@@ -92,11 +100,16 @@ styles of play (see modes below).
 - Board structure: category × difficulty grid, easy → hard.
 - Modes named **Jeopardy mode** and **Trivia mode**; both run on the same
   board; mode chosen once on the setup screen.
-- Core loop exactly as confirmed:
+- Core loop (original, as first confirmed):
   - Jeopardy: click cell → question → tap claiming team → reveal →
     correct (gain) / wrong (lose).
   - Trivia: click category → questions in order → tap team that got it →
     next → column tally at end.
+- Revised 2026-10-11 after the MVP demo (partner): multiple teams can win
+  one question in both modes — Jeopardy buttons cycle green (gain) → red
+  (lose) → clear with a manual "Reveal answer" button and "Done"; trivia
+  buttons toggle green with "Next" (no taps = pass). The Goals section
+  above is the current loop.
 - Setup screen: team names + mode pick, at startup.
 - Question bank in YAML, plain-text editable.
 - One board per night: the app always renders exactly one board from the
@@ -118,7 +131,13 @@ styles of play (see modes below).
   (no ffmpeg, no copyrighted material).
 - Trivia-mode scoring (settled by builder): the team that got it earns
   the tier points; the column tally shows the column's point total; host
-  may pass a question (0 points).
+  may pass a question (0 points). Revised 2026-10-11: any NUMBER of teams
+  can earn a question (multiple green marks); per-team tally math
+  unchanged.
+- Visual theme (partner's signature colors, 2026-10-11): dark blue-black
+  background with NYC flag orange #F26522 as primary action / score accent
+  and NYC blue #236192 as surfaces / secondary buttons; green and red stay
+  reserved for correct / wrong team marks.
 - Teams: 2–4 names accepted (partner said 2–3; +1 headroom for uncertain
   headcount).
 - Points: default tier values 100/200/300/400/500 by position, overridable
