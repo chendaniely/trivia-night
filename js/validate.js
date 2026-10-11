@@ -72,6 +72,15 @@ export function parseBank(text) {
       if (q.audio !== undefined && (typeof q.audio !== "string" || !q.audio.trim())) {
         errors.push({ where: qwhere, message: "question.audio must be a non-empty string" });
       }
+      if (q.images !== undefined) {
+        const imgsOk =
+          Array.isArray(q.images) &&
+          q.images.length > 0 &&
+          q.images.every((s) => typeof s === "string" && s.trim());
+        if (!imgsOk) {
+          errors.push({ where: qwhere, message: "question.images must be a list of non-empty strings" });
+        }
+      }
     }
   }
 

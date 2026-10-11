@@ -14,6 +14,8 @@ rounds:
         a: "Second answer"
         points: 250
         audio: "audio/demo/note.wav"
+        images:
+          - "images/demo/orange.png"
   - name: "Demo 2"
     questions:
       - q: "Q1"
@@ -29,6 +31,7 @@ assert.equal(
 );
 assert.equal(r.bank.rounds[0].questions[1].points, 250);
 assert.equal(r.bank.rounds[0].questions[1].audio, "audio/demo/note.wav");
+assert.deepEqual(r.bank.rounds[0].questions[1].images, ["images/demo/orange.png"]);
 
 // question missing `a` -> error with where pointing at the question
 const noA = `title: "T"
@@ -127,5 +130,35 @@ rounds: []
 const r9 = parseBank(emptyR);
 assert.equal(r9.ok, false);
 assert.match(r9.errors[0].where, /rounds/);
+
+// images must be a list of non-empty strings (Task 7.6): not a list
+const imgsNotList = `title: "T"
+rounds:
+  - name: "R"
+    questions:
+      - q: "Q"
+        a: "A"
+        images: "images/demo/orange.png"
+`;
+const r10 = parseBank(imgsNotList);
+assert.equal(r10.ok, false);
+assert.equal(r10.errors[0].where, "rounds[0].questions[0]");
+assert.match(r10.errors[0].message, /images/);
+
+// images with a non-string item -> same where
+const imgsBadItem = `title: "T"
+rounds:
+  - name: "R"
+    questions:
+      - q: "Q"
+        a: "A"
+        images:
+          - "images/demo/orange.png"
+          - 42
+`;
+const r11 = parseBank(imgsBadItem);
+assert.equal(r11.ok, false);
+assert.equal(r11.errors[0].where, "rounds[0].questions[0]");
+assert.match(r11.errors[0].message, /images/);
 
 console.log("validate: all assertions passed");
