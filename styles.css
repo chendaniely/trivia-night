@@ -55,12 +55,9 @@ button:disabled { background: #24405a; color: var(--muted); cursor: not-allowed;
 .answer-text { font-size: 44px; color: var(--orange); margin: 0; }
 .team-btns { display: flex; gap: 24px; flex-wrap: wrap; }
 .team-btns button { font-size: 36px; padding: 20px 40px; background: var(--blue); color: #fff; }
-.team-btns button.claimed { background: var(--good); }
 .team-btns button.marked-green { background: var(--good); }
 .team-btns button.marked-red { background: var(--bad); }
-.btn-good { background: var(--good); }
-.btn-bad { background: var(--bad); color: #fff; }
-.btn-pass { background: #24405a; color: var(--text); }
+.btn-primary { background: var(--orange); color: #0a1620; }
 .audio-block { display: grid; gap: 8px; }
 .audio-block audio { width: 480px; height: 48px; }
 .no-clip { color: var(--muted); font-style: italic; margin: 0; font-size: 28px; }

@@ -1,5 +1,11 @@
-// Question flow. Jeopardy: show -> claim -> reveal -> correct/wrong -> board.
-// Taps after reveal are ignored (phase guards). Trivia column flow: Task 6.
+// Question flow (MVP feedback 2026-10-11): multiple teams can win one
+// question in both modes.
+// Jeopardy: tap cell -> question + team toggles (click cycles green = +pts
+// -> red = -pts -> clear) + "Reveal answer" (manual: host doesn't know all
+// answers; marks may be set before or after) + "Done" (applies all marks,
+// consumes the cell, back to board; zero marks = nobody got it).
+// Trivia column: team toggles (green = +pts, click again clears) + "Next"
+// (applies greens, advances; no taps = pass); last question -> tally.
 // Audio: questions with q.audio get a player in EVERY renderer (both modes);
 // a missing clip swaps the player for a "no clip" note (Review Focus 3).
 import { state, showScreen } from "./app.js";
@@ -23,82 +29,167 @@ function audioBlock(question) {
   return wrap;
 }
 
-let phase = "idle"; // "claim" | "reveal" | "column"
-let current = null; // { ri, qi }
-let claimedIdx = -1;
+let current = null; // { ri, qi } — active jeopardy question
+let marks = new Map(); // teamIdx -> "green" | "red" (jeopardy marks)
+let revealed = false;
 let col = null; // { ri, qi } — active trivia column
+let colMarks = new Map(); // teamIdx -> "green" (trivia marks)
 
-function points() {
-  const question = state.bank.rounds[current.ri].questions[current.qi];
-  return question.points !== undefined ? question.points : (current.qi + 1) * 100;
+function pointsFor(round, qi) {
+  const q = round.questions[qi];
+  return q.points !== undefined ? q.points : (qi + 1) * 100;
+}
+
+// Team buttons shared by both renderers: colored by mark state, ✓ / ✕ suffix.
+function teamButtons(markMap, onMark) {
+  const btns = document.createElement("div");
+  btns.className = "team-btns";
+  btns.append(
+    ...state.teamNames.map((name, idx) => {
+      const b = document.createElement("button");
+      const m = markMap.get(idx);
+      b.textContent = m === "green" ? `${name} ✓` : m === "red" ? `${name} ✕` : name;
+      if (m) {
+        b.classList.add(m === "green" ? "marked-green" : "marked-red");
+        b.setAttribute("aria-pressed", "true");
+      }
+      b.addEventListener("click", () => onMark(idx));
+      return b;
+    })
+  );
+  return btns;
 }
 
 export function resetFlow() {
-  phase = "idle";
   current = null;
-  claimedIdx = -1;
+  marks = new Map();
+  revealed = false;
   col = null;
+  colMarks = new Map();
 }
+
+// --- Jeopardy -------------------------------------------------------------
 
 export function startQuestion(ri, qi) {
   current = { ri, qi };
-  claimedIdx = -1;
-  phase = "claim";
+  marks = new Map();
+  revealed = false;
   showScreen("question");
-  renderPhase();
+  renderQuestion();
 }
 
-function claim(idx) {
-  if (phase !== "claim") return; // Review Focus 5: ignore stale taps
-  claimedIdx = idx;
-  phase = "reveal";
-  renderPhase();
+function cycleMark(idx) {
+  if (!current) return; // guard stale taps (Review Focus 5)
+  // green -> red -> clear
+  const next = { undefined: "green", green: "red", red: undefined }[marks.get(idx)];
+  if (next === undefined) marks.delete(idx);
+  else marks.set(idx, next);
+  renderQuestion();
 }
 
-function resolve(correct) {
-  if (phase !== "reveal") return;
-  const round = state.bank.rounds[current.ri];
-  const pts = points();
-  state.scoring.give(claimedIdx, correct ? pts : -pts, round.name);
-  state.used.set(`${current.ri}:${current.qi}`, true);
-  phase = "idle";
+function reveal() {
+  if (!current || revealed) return;
+  revealed = true;
+  renderQuestion();
+}
+
+function done() {
+  if (!current) return;
+  const { ri, qi } = current;
+  const round = state.bank.rounds[ri];
+  const pts = pointsFor(round, qi);
+  for (const [idx, m] of marks) {
+    state.scoring.give(idx, m === "green" ? pts : -pts, round.name);
+  }
+  state.used.set(`${ri}:${qi}`, true);
   current = null;
+  marks = new Map();
+  revealed = false;
   renderBoard();
   showScreen("board");
 }
 
-// Trivia column: one tap awards (or passes), auto-advances, ends on the tally.
+function renderQuestion() {
+  const { ri, qi } = current;
+  const round = state.bank.rounds[ri];
+  const question = round.questions[qi];
+  const root = document.getElementById("screen-question");
+
+  const wrap = document.createElement("div");
+  wrap.className = "question-wrap";
+  const cat = document.createElement("h2");
+  cat.textContent = round.name;
+  const qText = document.createElement("p");
+  qText.className = "question-text";
+  qText.textContent = question.q.trim(); // block scalars fold to one paragraph
+  const ab = audioBlock(question);
+
+  wrap.append(cat, ...(ab ? [ab] : []), qText);
+  if (revealed) {
+    const ans = document.createElement("p");
+    ans.className = "answer-text";
+    ans.textContent = question.a.trim();
+    wrap.append(ans);
+  }
+  wrap.append(teamButtons(marks, (idx) => cycleMark(idx)));
+
+  const controls = document.createElement("div");
+  controls.className = "team-btns";
+  if (!revealed) {
+    const rv = document.createElement("button");
+    rv.className = "btn-secondary";
+    rv.textContent = "Reveal answer";
+    rv.addEventListener("click", reveal);
+    controls.append(rv);
+  }
+  const dn = document.createElement("button");
+  dn.className = "btn-primary";
+  dn.textContent = "Done";
+  dn.addEventListener("click", done);
+  controls.append(dn);
+  wrap.append(controls);
+  root.replaceChildren(wrap);
+}
+
+// --- Trivia column ----------------------------------------------------------
+
 export function startColumn(ri) {
   // ignore fully-used columns (Review Focus 5: no re-awarding)
   const round = state.bank.rounds[ri];
   if (round.questions.every((_, qi) => state.used.has(`${ri}:${qi}`))) return;
   col = { ri, qi: 0 };
-  phase = "column";
+  colMarks = new Map();
   showScreen("question");
-  renderColumnPhase();
+  renderColumn();
 }
 
-function award(idx) { // idx === -1 -> pass (0 points)
-  if (phase !== "column") return; // Review Focus 5: ignore stale taps
+function cycleColMark(idx) {
+  if (!col) return; // guard stale taps (Review Focus 5)
+  if (colMarks.get(idx) === "green") colMarks.delete(idx);
+  else colMarks.set(idx, "green");
+  renderColumn();
+}
+
+function nextQuestion() {
+  if (!col) return;
   const { ri, qi } = col;
   const round = state.bank.rounds[ri];
-  const question = round.questions[qi];
-  const pts = question.points !== undefined ? question.points : (qi + 1) * 100;
-  if (idx >= 0) state.scoring.give(idx, pts, round.name);
+  const pts = pointsFor(round, qi);
+  for (const idx of colMarks.keys()) state.scoring.give(idx, pts, round.name);
   state.used.set(`${ri}:${qi}`, true);
+  colMarks = new Map();
   if (qi + 1 < round.questions.length) {
     col = { ri, qi: qi + 1 };
-    renderColumnPhase();
+    renderColumn();
     return;
   }
   const roundName = round.name; // capture before clearing (tally needs it)
   col = null;
-  phase = "idle";
   renderTally(roundName);
   showScreen("tally");
 }
 
-function renderColumnPhase() {
+function renderColumn() {
   const { ri, qi } = col;
   const round = state.bank.rounds[ri];
   const question = round.questions[qi];
@@ -113,23 +204,17 @@ function renderColumnPhase() {
   qText.textContent = question.q.trim();
   const ab = audioBlock(question);
 
-  const btns = document.createElement("div");
-  btns.className = "team-btns";
-  btns.append(
-    ...state.teamNames.map((name, idx) => {
-      const b = document.createElement("button");
-      b.textContent = name;
-      b.addEventListener("click", () => award(idx));
-      return b;
-    })
-  );
-  const pass = document.createElement("button");
-  pass.className = "btn-pass";
-  pass.textContent = "Pass";
-  pass.addEventListener("click", () => award(-1));
-  btns.append(pass);
+  wrap.append(cat, ...(ab ? [ab] : []), qText);
+  wrap.append(teamButtons(colMarks, (idx) => cycleColMark(idx)));
 
-  wrap.append(cat, ...(ab ? [ab] : []), qText, btns);
+  const controls = document.createElement("div");
+  controls.className = "team-btns";
+  const nx = document.createElement("button");
+  nx.className = "btn-primary";
+  nx.textContent = "Next";
+  nx.addEventListener("click", nextQuestion);
+  controls.append(nx);
+  wrap.append(controls);
   root.replaceChildren(wrap);
 }
 
@@ -160,54 +245,4 @@ function renderTally(roundName) {
   });
   wrap.append(h, rows, back);
   el.replaceChildren(wrap);
-}
-
-function renderPhase() {
-  const { ri, qi } = current;
-  const round = state.bank.rounds[ri];
-  const question = round.questions[qi];
-  const root = document.getElementById("screen-question");
-
-  const wrap = document.createElement("div");
-  wrap.className = "question-wrap";
-  const cat = document.createElement("h2");
-  cat.textContent = round.name;
-  const qText = document.createElement("p");
-  qText.className = "question-text";
-  qText.textContent = question.q.trim(); // block scalars fold to one paragraph
-
-  const btns = document.createElement("div");
-  btns.className = "team-btns";
-  btns.append(
-    ...state.teamNames.map((name, idx) => {
-      const b = document.createElement("button");
-      b.textContent = name;
-      b.disabled = phase !== "claim";
-      if (phase === "reveal" && idx === claimedIdx) b.classList.add("claimed");
-      b.addEventListener("click", () => claim(idx));
-      return b;
-    })
-  );
-  const ab = audioBlock(question);
-  wrap.append(cat, ...(ab ? [ab] : []), qText, btns);
-
-  if (phase === "reveal") {
-    const ans = document.createElement("p");
-    ans.className = "answer-text";
-    ans.textContent = question.a.trim();
-    const controls = document.createElement("div");
-    controls.className = "team-btns";
-    const ok = document.createElement("button");
-    ok.className = "btn-good";
-    ok.textContent = "Correct";
-    ok.addEventListener("click", () => resolve(true));
-    const no = document.createElement("button");
-    no.className = "btn-bad";
-    no.textContent = "Wrong";
-    no.addEventListener("click", () => resolve(false));
-    controls.append(ok, no);
-    wrap.append(ans, controls);
-  }
-
-  root.replaceChildren(wrap);
 }
