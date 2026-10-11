@@ -44,3 +44,12 @@ button:disabled { background: #30363d; color: var(--muted); cursor: not-allowed;
 .board-cell.clickable:hover { background: #1f6feb; }
 .board-cell.used { color: var(--muted); background: transparent; border: 2px dashed #30363d; }
 .board-gap { visibility: hidden; }
+.question-wrap { display: grid; gap: 32px; justify-items: start; }
+.question-wrap h2 { font-size: 40px; color: var(--muted); margin: 0; }
+.question-text { font-size: 48px; margin: 0; white-space: pre-line; }
+.answer-text { font-size: 44px; color: var(--good); margin: 0; }
+.team-btns { display: flex; gap: 24px; flex-wrap: wrap; }
+.team-btns button { font-size: 36px; padding: 20px 40px; }
+.team-btns button.claimed { background: var(--good); }
+.btn-good { background: var(--good); }
+.btn-bad { background: var(--bad); color: #fff; }
