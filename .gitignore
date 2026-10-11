@@ -1,0 +1,8 @@
+node_modules/
+.venv/
+.DS_Store
+
+# Real audio clips stay out of the repo (copyright).
+# Only generated demo clips are tracked.
+audio/*
+!audio/demo/
