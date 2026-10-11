@@ -1,0 +1,21 @@
+name: Deploy to gh-pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      # No build step: the repo root is the static site.
+      # An empty orphan gh-pages branch is pre-seeded so the first deploy has a target.
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          destination_branch: gh-pages
+          force_sync: true
