@@ -291,15 +291,15 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - Consumes: `state`, `Scoring`, `renderBoard`
 - Produces: `startQuestion(roundIdx, qIdx)` (Jeopardy mode)
 
-- [ ] **Step 1: Implement the Jeopardy flow in `js/question.js`**
+- [x] **Step 1: Implement the Jeopardy flow in `js/question.js`**
 
 Phases: `show` (question text; no answer) → `claim` (tap a team button to claim; claim locks the team) → `reveal` (answer shown; Correct / Wrong buttons) → back to board. Team buttons render as `<button>` (not `<input type=button>`) so they pick up the accent button style and disabled dimming. Question text renders as a clean paragraph — block-scalar content (already folded by the YAML parser) shows without indentation or line-break artifacts (Review Focus 2). `Correct`: `scoring.give(claimIdx, +points, round.name)`, mark used. `Wrong`: `scoring.give(claimIdx, -points, round.name)`, mark used. Taps on team buttons after `reveal` are ignored (Review Focus 5).
 
-- [ ] **Step 2: Verify with Playwright**
+- [x] **Step 2: Verify with Playwright**
 
-MCP: setup (teams "A", "B"), Jeopardy mode, Start. Click the 300 cell of Demo → question text visible, no answer. Tap "B" → answer reveals. Click Wrong → scoreboard B = -300, back on board, cell dimmed. Click a fresh 100 cell, tap "A", Correct → A = +100.
+MCP: setup (teams "A", "B"), Jeopardy mode, Start. Click Demo 300 → question visible, no answer; tap "B" → answer reveals, team buttons disabled. Wrong → B = -300, back on board, cell inert. Click Demo 200 (block scalar) → renders as one clean paragraph (Review Focus 2); tap "A" → reveal → Correct → A = +200.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add js/question.js js/app.js
