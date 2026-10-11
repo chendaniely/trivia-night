@@ -73,7 +73,7 @@ Question = { q: string, a: string, audio?: string, points?: number }
 // js/app.js (module-level, consumed by board.js / question.js / folder.js)
 state = { mode: "jeopardy" | "trivia", teamNames: string[], bank: Bank,
           used: Map /* "roundIdx:qIdx" -> true */, scoring: Scoring }
-showScreen(id: "setup" | "board" | "question" | "tally")
+showScreen(id: "setup" | "board" | "question" | "tally" | "error")
 ```
 
 ---
@@ -191,7 +191,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - Consumes: `parseBank` (Task 2)
 - Produces: `state`, `showScreen` (shapes above); setup screen with 4 team inputs, 2 mode radios, Start button
 
-- [ ] **Step 1: Write `index.html` + `styles.css` + `js/app.js` skeleton**
+- [x] **Step 1: Write `index.html` + `styles.css` + `js/app.js` skeleton**
 
 `index.html`: one `<main id="root">` with four screen containers (`#screen-setup`, `#screen-board`, `#screen-question`, `#screen-tally`), loads `js/app.js` as a module. `styles.css`: dark background, light text, large type (min 28 px body), high contrast. `js/app.js`: `state` object, `showScreen(id)` toggles `.hidden`, and on load `fetch("questions.yaml")` → `parseBank` → on failure show an error panel — `line N: message` when `line` is present, else `where: message` — and stop; on success render setup.
 
@@ -226,17 +226,17 @@ rounds:
         a: "A5"
 ```
 
-- [ ] **Step 2: Verify with Playwright**
+- [x] **Step 2: Verify with Playwright**
 
 Start a static server in the background: `python3 -m http.server 8080 --bind 127.0.0.1` (from repo root).
 MCP: `browser_navigate` → `http://127.0.0.1:8080`, then `browser_snapshot`.
 Expected: setup screen visible; Start disabled; type two team names → Start enabled; click Start → board screen visible (empty grid fine — Task 4 fills it).
 
-- [ ] **Step 3: Verify the malformed-YAML path**
+- [x] **Step 3: Verify the malformed-YAML path**
 
 MCP: use `browser_navigate` to a temporary copy is NOT needed — instead temporarily append a bad line to `questions.yaml`, reload via `browser_navigate`, expect the error panel with a line number and no board. Restore the file when done and confirm clean with `git diff --exit-code questions.yaml` before committing — a broken bank must not flow into Tasks 4–7.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add index.html styles.css js/app.js questions.yaml
