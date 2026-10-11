@@ -193,7 +193,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [x] **Step 1: Write `index.html` + `styles.css` + `js/app.js` skeleton**
 
-`index.html`: one `<main id="root">` with four screen containers (`#screen-setup`, `#screen-board`, `#screen-question`, `#screen-tally`), loads `js/app.js` as a module. `styles.css`: dark background, light text, large type (min 28 px body), high contrast. `js/app.js`: `state` object, `showScreen(id)` toggles `.hidden`, and on load `fetch("questions.yaml")` → `parseBank` → on failure show an error panel — `line N: message` when `line` is present, else `where: message` — and stop; on success render setup.
+`index.html`: one `<main id="root">` with four screen containers (`#screen-setup`, `#screen-board`, `#screen-question`, `#screen-tally`) plus `#screen-error` (error panel, part of the showScreen interface), loads `js/app.js` as a module. `styles.css`: dark background, light text, large type (min 28 px body), high contrast. `js/app.js`: `state` object, `showScreen(id)` toggles `.hidden`, and on load `fetch("questions.yaml")` → `parseBank` → on failure show an error panel — `line N: message` when `line` is present, else `where: message` — and stop; on success render setup.
 
 Setup screen: title, 4 team-name inputs (placeholders Team 1–4; first two required, 2–4 accepted), mode radios labeled **Jeopardy** and **Trivia**, Start button (disabled until ≥ 2 names). Start sets `state`, `createScoring`, `showScreen("board")`.
 
@@ -288,7 +288,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [ ] **Step 1: Implement the Jeopardy flow in `js/question.js`**
 
-Phases: `show` (question text; no answer) → `claim` (tap a team button to claim; claim locks the team) → `reveal` (answer shown; Correct / Wrong buttons) → back to board. `Correct`: `scoring.give(claimIdx, +points, round.name)`, mark used. `Wrong`: `scoring.give(claimIdx, -points, round.name)`, mark used. Taps on team buttons after `reveal` are ignored (Review Focus 5).
+Phases: `show` (question text; no answer) → `claim` (tap a team button to claim; claim locks the team) → `reveal` (answer shown; Correct / Wrong buttons) → back to board. Team buttons render as `<button>` (not `<input type=button>`) so they pick up the accent button style and disabled dimming. `Correct`: `scoring.give(claimIdx, +points, round.name)`, mark used. `Wrong`: `scoring.give(claimIdx, -points, round.name)`, mark used. Taps on team buttons after `reveal` are ignored (Review Focus 5).
 
 - [ ] **Step 2: Verify with Playwright**
 
@@ -423,6 +423,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - [ ] **Step 1: Implement `js/folder.js`**
 
 Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio files via `URL.createObjectURL`. Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub), an `audio/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source).
+app.js hooks for this task: `renderError(errors)` (exported — folder loads route to the same error panel) and `setLoader(fn)` (exported — "Try again" reloads the active source, not always the shipped file). `renderSetup`'s input listener is one-time wired at app.js init — do not re-add it per load.
 
 - [ ] **Step 2: Verify with Playwright**
 
