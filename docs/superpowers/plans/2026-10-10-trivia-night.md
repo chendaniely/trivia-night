@@ -313,7 +313,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ### Task 6: Question flow — Trivia mode + column tally
 
 **Files:**
-- Modify: `js/question.js` (column mode), `js/app.js` (tally screen)
+- Modify: `js/question.js` (column mode + tally screen), `js/app.js` (setColumnClick), `js/board.js` (completed-column headers inert), `styles.css`
 
 **Interfaces:**
 - Consumes: `state`, `Scoring`, `renderBoard`
@@ -348,32 +348,32 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - Consumes: `state`
 - Produces: play control on the question screen; `audio/demo/*.wav`
 
-- [ ] **Step 1: Write `tools/make-demo-audio.mjs`**
+- [x] **Step 1: Write `tools/make-demo-audio.mjs`**
 
 Dependency-free Node: writes three 16-bit PCM WAV files (44.1 kHz, ~1.5 s each) into `audio/demo/`: `note-440.wav` (A4), `note-523.wav` (C5), `arpeggio.wav` (440→523→659). Pure math + DataView, no npm packages.
 Recorded deviation: the spec prefers m4a/mp3 for REAL clips (TV-browser support); demo clips are WAV — universally decodable and trivial to generate dependency-free. The app is extension-agnostic (`<audio src>` handles the format); the m4a/mp3 advice stands for clips the host adds.
 
-- [ ] **Step 2: Generate and check the clips**
+- [x] **Step 2: Generate and check the clips**
 
 Run: `node tools/make-demo-audio.mjs` then `ls -la audio/demo/`
 Expected: three files, each a few hundred KB, RIFF header (`xxd -l 4` shows `RIFF`).
 
-- [ ] **Step 3: Wire playback into the question screen**
+- [x] **Step 3: Wire playback into the question screen**
 
-If `q.audio` present: render an `<audio controls preload="auto" src={q.audio}>` (relative path) above the question text. On `error` event (missing file): hide the player, show a "no clip — play it from any device" note, continue the flow (Review Focus 3). `renderPhase` re-runs on claim→reveal, so the audio element must be rendered in EVERY phase branch and the error handler re-attached per render (or the clip vanishes from the reveal screen).
+If `q.audio` present: render an `<audio controls preload="auto" src={q.audio}>` (relative path) above the question text. On `error` event (missing file): hide the player, show a "no clip — play it from any device" note, continue the flow (Review Focus 3). `renderPhase` re-runs on claim→reveal, so the audio element must be rendered in EVERY phase branch and the error handler re-attached per render (or the clip vanishes from the reveal screen). The column flow's `renderColumnPhase` is a SEPARATE renderer — audio must land there too (spec: the question screen is shared by both modes).
 
-- [ ] **Step 4: Add audio questions to the stub bank**
+- [x] **Step 4: Add audio questions to the stub bank**
 
 Add to `questions.yaml` under a new round "Music": one question referencing `audio/demo/arpeggio.wav`, one referencing `audio/demo/missing.wav` (does not exist — exercises the fallback).
 
-- [ ] **Step 5: Verify with Playwright**
+- [x] **Step 5: Verify with Playwright**
 
-MCP: Jeopardy mode, open the arpeggio question → snapshot shows the audio element; click play → `browser_wait_for` 2 s → snapshot: no error note. Open the missing-clip question → snapshot shows the "no clip" note and the claim buttons still work.
+MCP: Jeopardy mode, open the arpeggio question → audio element present; `play()` via evaluate → waits to `currentTime` 1.5 (full clip), no error. Open the missing-clip question → "no clip" note renders, claim buttons work. Trivia mode: Music column header → Q1 shows the player (renderColumnPhase coverage).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
-git add tools/make-demo-audio.mjs audio/demo js/question.js questions.yaml
+git add tools/make-demo-audio.mjs audio/demo js/question.js styles.css questions.yaml
 git commit -m "feat(audio): 🤖 add audio playback with generated demo clips
 
 Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
