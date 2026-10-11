@@ -319,15 +319,15 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - Consumes: `state`, `Scoring`, `renderBoard`
 - Produces: `startColumn(roundIdx)`, tally screen renderer
 
-- [ ] **Step 1: Implement the Trivia flow**
+- [x] **Step 1: Implement the Trivia flow**
 
 Round header click → first question of the column. In Trivia mode cells are NOT individual click targets — board.js attaches no `.clickable`/listener to them; the header is the target. The column flow is a separate path from Jeopardy's `resolve()` (one tap awards, then next question or tally — never back to board mid-column); capture `round.name` before clearing the flow's current question. Per question: team buttons (tap = that team got it, `give(+points)`) plus a **Pass** button (`give` nothing, 0 points). Next → following question; used cells update as the column progresses. After the last question: tally screen — per-team points earned in this column via `scoring.roundTeamTotal(round.name, teamIdx)` for each team — then back to board. Invalid taps after a question is awarded are ignored (Review Focus 5).
 
-- [ ] **Step 2: Verify with Playwright**
+- [x] **Step 2: Verify with Playwright**
 
-MCP: setup (teams "A", "B"), Trivia mode, Start. Click "Demo 2" header (the 5-question stub round) → Q1. Tap "A" (+100) → Q2. Pass (0) → Q3. Tap "B" (+300) → Q4. Tap "B" (+400) → Q5. Tap "A" (+500) → tally screen shows A = 600, B = 700. Back to board → Demo 2 column fully dimmed.
+MCP: setup (teams "A", "B"), Trivia mode, Start. Click "Demo 2" header (the 5-question stub round) → Q1. Tap "A" (+100) → Q2. Pass (0) → Q3. Tap "B" (+300) → Q4. Tap "B" (+400) → Q5. Tap "A" (+500) → tally screen shows A = 600, B = 700. Back to board → Demo 2 column fully dimmed, its header inert (completed columns are not re-clickable).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add js/question.js js/app.js
