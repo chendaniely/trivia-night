@@ -47,8 +47,10 @@ audio/demo/              generated demo clips (Task 7)
 tools/make-demo-audio.mjs  dependency-free Node script that writes the demo WAVs
 test/scoring.test.mjs    node:assert self-checks
 test/validate.test.mjs   node:assert self-checks
-.github/workflows/deploy-pages.yml
+.github/workflows/deploy-gh-pages.yml
 ```
+
+Already in the repo (pre-plan, Tasks 1–9 must not re-create these): `.gitignore` (gitignores `audio/` except `audio/demo/`, node_modules, .venv, .playwright-mcp), `package.json` + lock (playwright devDeps, `"type": "module"`), `opencode.json` (Playwright MCP registration).
 
 **Shared interfaces** (exact; every task uses these names):
 
@@ -115,7 +117,7 @@ Expected: PASS (no output, exit 0)
 
 ```bash
 git add js/scoring.js test/scoring.test.mjs
-git commit -m "feat: 🤖 add scoring engine with per-round tallies
+git commit -m "feat(scoring): 🤖 add scoring engine with per-round tallies
 
 Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ```
@@ -135,6 +137,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - [ ] **Step 1: Vendor js-yaml**
 
 Run: `npm i -D js-yaml` then copy `node_modules/js-yaml/dist/js-yaml.mjs` to `js/yaml.js`, prepending a one-line header: `// Vendored js-yaml — refresh: npm i -D js-yaml && cp node_modules/js-yaml/dist/js-yaml.mjs js/yaml.js`
+Note: js-yaml exports `load` (verified v4 and v5) — there is no `parse` export. `validate.js` imports `{ load }`.
 
 - [ ] **Step 2: Write the failing test**
 
@@ -144,7 +147,10 @@ Run: `npm i -D js-yaml` then copy `node_modules/js-yaml/dist/js-yaml.mjs` to `js
 import { parseBank } from "../js/validate.js";
 // - valid bank (title + 2 rounds, one question using a `>` block scalar) -> ok, bank.rounds[0].questions[0].q is the folded text
 // - question missing `a` -> ok:false, errors[0].where === 'rounds[0].questions[1]', message names the missing field
-// - YAML typo (unclosed quote on line 4) -> ok:false, errors[0].line === 3 (js-yaml marks are 0-based; store line+1)
+// - mid-file YAML error: line 6 is `        a: bad: line` (unquoted value containing a colon)
+//   -> ok:false, errors[0].line === 6 (js-yaml marks are 0-based; store mark.line+1)
+//   NOTE (verified): EOF-truncated errors (e.g. unclosed quote) mark EOF, not the
+//   offending line — keep the fixture mid-file so the reported line is the real one.
 // - `points` must be a positive integer when present
 ```
 
@@ -155,7 +161,7 @@ Expected: FAIL — module not found
 
 - [ ] **Step 4: Implement `js/validate.js`**
 
-`parse` in try/catch: on syntax error return `errors: [{ line: err.mark.line + 1, where: "yaml", message: err.reason }]`. On success, walk the structure; collect every schema error with `where` like `rounds[1].questions[2]`. Return `{ ok: errors.length === 0, ... }`.
+`load` in try/catch: on syntax error return `errors: [{ line: err.mark.line + 1, where: "yaml", message: err.reason }]` (mark is 0-based; for mid-file errors that is the offending line). On success, walk the structure; collect every schema error with `where` like `rounds[1].questions[2]`. Return `{ ok: errors.length === 0, ... }`.
 
 - [ ] **Step 5: Run test to verify it passes**
 
@@ -166,7 +172,7 @@ Expected: PASS
 
 ```bash
 git add js/yaml.js js/validate.js test/validate.test.mjs package.json package-lock.json
-git commit -m "feat: 🤖 add yaml validation with line-numbered errors
+git commit -m "feat(yaml): 🤖 add yaml validation with line-numbered errors
 
 Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ```
@@ -226,13 +232,13 @@ Expected: setup screen visible; Start disabled; type two team names → Start en
 
 - [ ] **Step 3: Verify the malformed-YAML path**
 
-MCP: use `browser_navigate` to a temporary copy is NOT needed — instead temporarily append a bad line to `questions.yaml`, reload via `browser_navigate`, expect the error panel with a line number and no board. Restore the file when done.
+MCP: use `browser_navigate` to a temporary copy is NOT needed — instead temporarily append a bad line to `questions.yaml`, reload via `browser_navigate`, expect the error panel with a line number and no board. Restore the file when done and confirm clean with `git diff --exit-code questions.yaml` before committing — a broken bank must not flow into Tasks 4–7.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add index.html styles.css js/app.js questions.yaml
-git commit -m "feat: 🤖 add app shell and setup screen
+git commit -m "feat(app): 🤖 add app shell and setup screen
 
 Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ```
@@ -251,7 +257,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [ ] **Step 1: Implement `js/board.js`**
 
-Grid: columns = rounds (header = round name; in Trivia mode the header is the click target for the whole column), rows = max question count across rounds (Review Focus 4). Cell text = points (position default 100×n, or `q.points`). Used cells (key `roundIdx:qIdx` in `state.used`) render dimmed with no click. Scoreboard strip: team names + live points. Reset button → `state.scoring.reset()`, clear `state.used`, re-render. Question text must render block-scalar content as clean paragraphs (Review Focus 2). Clicks route through app.js callbacks `onCellClick(roundIdx, qIdx)` / `onColumnClick(roundIdx)`; until Tasks 5–6 land those callbacks are no-ops, so the board is fully navigable-looking but inert.
+Grid: columns = rounds (header = round name; in Trivia mode the header is the click target for the whole column), rows = max question count across rounds (Review Focus 4). Rounds with fewer questions simply have fewer cells — no placeholder cells (spec: the board only shows cells that have content). Cell text = points (position default 100×n, or `q.points`). Used cells (key `roundIdx:qIdx` in `state.used`) render dimmed with no click. Scoreboard strip: team names + live points. Reset button → `state.scoring.reset()`, clear `state.used`, re-render. Question text must render block-scalar content as clean paragraphs (Review Focus 2). Clicks route through app.js callbacks `onCellClick(roundIdx, qIdx)` / `onColumnClick(roundIdx)`; until Tasks 5–6 land those callbacks are no-ops, so the board is fully navigable-looking but inert.
 
 - [ ] **Step 2: Verify with Playwright**
 
@@ -261,7 +267,7 @@ MCP: reload, setup with two teams, Start. `browser_snapshot`: board shows 2 colu
 
 ```bash
 git add js/board.js js/app.js
-git commit -m "feat: 🤖 add board grid, scoreboard, and reset
+git commit -m "feat(board): 🤖 add board grid, scoreboard, and reset
 
 Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ```
@@ -290,7 +296,7 @@ MCP: setup (teams "A", "B"), Jeopardy mode, Start. Click the 300 cell of Demo �
 
 ```bash
 git add js/question.js js/app.js
-git commit -m "feat: 🤖 add jeopardy question flow with claim and reveal
+git commit -m "feat(question): 🤖 add jeopardy question flow with claim and reveal
 
 Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ```
@@ -312,13 +318,13 @@ Round header click → first question of the column. Per question: team buttons 
 
 - [ ] **Step 2: Verify with Playwright**
 
-MCP: setup, Trivia mode, Start. Click "Demo" header → Q1. Tap "A" → Q2. Pass → Q3. Tap "B" → Q4 → Q5 → tally screen shows A = 100, B = 400 (positions 100/200/300/400/500). Back to board → Demo column fully dimmed.
+MCP: setup (teams "A", "B"), Trivia mode, Start. Click "Demo 2" header (the 5-question stub round) → Q1. Tap "A" (+100) → Q2. Pass (0) → Q3. Tap "B" (+300) → Q4. Tap "B" (+400) → Q5. Tap "A" (+500) → tally screen shows A = 600, B = 700. Back to board → Demo 2 column fully dimmed.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add js/question.js js/app.js
-git commit -m "feat: 🤖 add trivia column flow with pass and tally
+git commit -m "feat(trivia): 🤖 add trivia column flow with pass and tally
 
 Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ```
@@ -338,6 +344,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - [ ] **Step 1: Write `tools/make-demo-audio.mjs`**
 
 Dependency-free Node: writes three 16-bit PCM WAV files (44.1 kHz, ~1.5 s each) into `audio/demo/`: `note-440.wav` (A4), `note-523.wav` (C5), `arpeggio.wav` (440→523→659). Pure math + DataView, no npm packages.
+Recorded deviation: the spec prefers m4a/mp3 for REAL clips (TV-browser support); demo clips are WAV — universally decodable and trivial to generate dependency-free. The app is extension-agnostic (`<audio src>` handles the format); the m4a/mp3 advice stands for clips the host adds.
 
 - [ ] **Step 2: Generate and check the clips**
 
@@ -360,7 +367,7 @@ MCP: Jeopardy mode, open the arpeggio question → snapshot shows the audio elem
 
 ```bash
 git add tools/make-demo-audio.mjs audio/demo js/question.js questions.yaml
-git commit -m "feat: 🤖 add audio playback with generated demo clips
+git commit -m "feat(audio): 🤖 add audio playback with generated demo clips
 
 Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ```
@@ -381,19 +388,20 @@ Start the server (`python3 -m http.server 8080 --bind 127.0.0.1` from repo root,
 
 - [ ] **Step 1: Write the bank**
 
-Six rounds, deliberately hard (spec): Movies: Oscar (5), Movies: Cult Classics (5), Movies: Childhoods (5), Music (4 — two reference `audio/demo/` clips), Nerd Culture (5 — e.g. "name the game by its fishing minigame"), Words (5 — e.g. "cartoon character by their nose"). Easy → hard within each round. Long questions use `>` block scalars.
+Six rounds, deliberately hard (spec): Movies: Oscar (5), Movies: Cult Classics (5), Movies: Childhoods (5), Music (4 — placeholder questions, NO `audio:` references: spec ships music as placeholders until real clips are dropped into `audio/`; the generated demo clips stay in `audio/demo/` for folder-mode use), Nerd Culture (5 — e.g. "name the game by its fishing minigame"), Words (5 — e.g. "cartoon character by their nose"). Easy → hard within each round. Long questions use `>` block scalars.
+The stub's `missing.wav` fallback-test question does NOT survive this replace — the shipped bank has no broken references; the missing-clip path stays verified by Task 7's record.
 
 - [ ] **Step 2: Verify**
 
 Run: `node --input-type=module -e "import { readFileSync } from 'node:fs'; import { parseBank } from './js/validate.js'; const r = parseBank(readFileSync('questions.yaml','utf8')); if (!r.ok) { console.error(r.errors); process.exit(1); } console.log(r.bank.rounds.length + ' rounds,', r.bank.rounds.reduce((n, x) => n + x.questions.length, 0) + ' questions');"`
 Expected: `6 rounds, 29 questions`
-MCP: reload, Start → board shows 6 columns.
+MCP: reload (reuse the running 8080 server from the milestone — do not rebind the port), Start → board shows 6 columns.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add questions.yaml
-git commit -m "feat: 🤖 add starter question bank across six categories
+git commit -m "feat(bank): 🤖 add starter question bank across six categories
 
 Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ```
@@ -408,21 +416,25 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 **Interfaces:**
 - Consumes: `parseBank`, `state`
-- Produces: `loadFolder(dirHandleOrFiles) -> Bank` (object URLs for audio), `createNew(name) -> dirHandle`, both with graceful fallbacks
+- Produces: `loadFolder(dirHandleOrFiles) -> parseBank result` (audio as object URLs; a malformed `questions.yaml` in the folder surfaces the same line-numbered error panel), `createNew(parentHandle, name) -> dirHandle`, both with graceful fallbacks
 
 - [ ] **Step 1: Implement `js/folder.js`**
 
-Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio files via `URL.createObjectURL`. Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub), an `audio/` dir, and a README explaining the layout and the `>` block-scalar convention. Unsupported browser → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source).
+Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio files via `URL.createObjectURL`. Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub), an `audio/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source).
 
 - [ ] **Step 2: Verify with Playwright**
 
-Create a temp folder (e.g. `/tmp/tv-test/`) with its own `questions.yaml` (2 rounds) + `audio/x.wav`. MCP: on the setup screen, set files on the `webkitdirectory` input (browser_file_upload with the file list) → snapshot: board renders from the folder's bank, not the shipped one. Also snapshot the fallback message on a path where the FSA API is unavailable (skip if headless exposes it — note which path was exercised).
+Verified environment fact: headless Chromium (this MCP, Chrome 155) does NOT expose FSA — `showDirectoryPicker` is undefined — so the webkitdirectory fallback is the path Playwright exercises; FSA load + create-new are manual (user's machine), noted in handoff.
+1. Create a temp folder (e.g. `/tmp/tv-test/`) with its own `questions.yaml` (2 rounds) + `audio/x.wav`.
+2. MCP: on the setup screen, snapshot → fallback visible (webkitdirectory input shown, no FSA button). `browser_file_upload` the file list to the webkitdirectory input → snapshot: board renders from the folder's bank, not the shipped one.
+3. Second temp folder with a MALFORMED `questions.yaml` → snapshot: line-numbered error panel, no board.
+4. Create-new: code-path review only (FSA-only); the manual test is a handoff item.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add js/folder.js js/app.js
-git commit -m "feat: 🤖 add local folder loading and create-new scaffold
+git commit -m "feat(folder): 🤖 add local folder loading and create-new scaffold
 
 Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 ```
@@ -441,7 +453,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - [x] **Step 1: Write the workflow** (done 2026-10-10; inputs fixed after council review)
 
 On push to `main` + `workflow_dispatch`: `actions/checkout@v4`, then `peaceiris/actions-gh-pages@v3` with `github_token: ${{ secrets.GITHUB_TOKEN }}`, `publish_branch: gh-pages`, `publish_dir: .`. No build step — the repo root is the site.
-Council fix 2026-10-11: the first deploy used `destination_branch`/`force_sync`, which the pinned v3 SHA silently ignores (its inputs are `publish_branch`/`publish_dir`); the branch ended up with only `.nojekyll`. Fixed, redeployed, verified live.
+Council fix 2026-10-11: the first deploy used `destination_branch`/`force_sync`, which the `@v3` tag's resolved SHA silently ignores (its inputs are `publish_branch`/`publish_dir`); the branch ended up with only `.nojekyll`. Fixed, redeployed, verified live.
 
 - [x] **Step 2: Verify the workflow parses**
 
