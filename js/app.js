@@ -75,10 +75,18 @@ function renderSetup() {
   const startBtn = document.getElementById("start-btn");
   startBtn.disabled = teamNames().length < 2;
   startBtn.onclick = () => {
-    state.teamNames = teamNames();
+    const names = teamNames();
+    const sameGame =
+      state.scoring !== null && names.length === state.teamNames.length;
+    state.teamNames = names;
     state.mode = document.querySelector('input[name="mode"]:checked').value;
-    state.used = new Map();
-    state.scoring = createScoring(state.teamNames);
+    if (sameGame) {
+      // Back-to-setup (Task 7.5): rename in place, keep scores + used cells.
+      names.forEach((n, i) => { state.scoring.teams[i].name = n; });
+    } else {
+      state.used = new Map();
+      state.scoring = createScoring(names);
+    }
     showScreen("board");
     renderBoard();
   };

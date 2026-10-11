@@ -1,6 +1,6 @@
-// Board grid + scoreboard + reset. No state of its own: reads app.js state.
-// Clicks route through the callbacks wired by app.js (Tasks 5-6).
-import { state } from "./app.js";
+// Board grid + scoreboard + reset + setup return. No state of its own:
+// reads app.js state. Clicks route through the callbacks wired by app.js.
+import { state, showScreen } from "./app.js";
 
 let onCellClick = () => {};
 let onColumnClick = () => {};
@@ -69,14 +69,23 @@ export function renderBoard() {
     });
   }
 
+  const actions = document.createElement("div");
+  actions.className = "btn-row";
   const resetBtn = document.createElement("button");
   resetBtn.id = "reset-btn";
+  resetBtn.className = "btn-secondary";
   resetBtn.textContent = "Reset scores";
   resetBtn.addEventListener("click", () => {
     scoring.reset();
     used.clear();
     renderBoard();
   });
+  const setupBtn = document.createElement("button");
+  setupBtn.id = "setup-btn";
+  setupBtn.className = "btn-secondary";
+  setupBtn.textContent = "Setup";
+  setupBtn.addEventListener("click", () => showScreen("setup"));
+  actions.append(resetBtn, setupBtn);
 
-  el.replaceChildren(score, grid, resetBtn);
+  el.replaceChildren(score, grid, actions);
 }
