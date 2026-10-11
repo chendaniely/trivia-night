@@ -293,7 +293,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [x] **Step 1: Implement the Jeopardy flow in `js/question.js`**
 
-Phases: `show` (question text; no answer) → `claim` (tap a team button to claim; claim locks the team) → `reveal` (answer shown; Correct / Wrong buttons) → back to board. Team buttons render as `<button>` (not `<input type=button>`) so they pick up the accent button style and disabled dimming. Question text renders as a clean paragraph — block-scalar content (already folded by the YAML parser) shows without indentation or line-break artifacts (Review Focus 2). `Correct`: `scoring.give(claimIdx, +points, round.name)`, mark used. `Wrong`: `scoring.give(claimIdx, -points, round.name)`, mark used. Taps on team buttons after `reveal` are ignored (Review Focus 5).
+Phases: `claim` (question text + tappable team buttons; tapping a team claims and locks it) → `reveal` (answer shown; Correct / Wrong buttons) → back to board. Team buttons render as `<button>` (not `<input type=button>`) so they pick up the accent button style and disabled dimming. Question text renders as a clean paragraph — block-scalar content (already folded by the YAML parser) shows without indentation or line-break artifacts (Review Focus 2). `Correct`: `scoring.give(claimIdx, +points, round.name)`, mark used. `Wrong`: `scoring.give(claimIdx, -points, round.name)`, mark used. Taps on team buttons after `reveal` are ignored (Review Focus 5).
 
 - [x] **Step 2: Verify with Playwright**
 
@@ -321,7 +321,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [ ] **Step 1: Implement the Trivia flow**
 
-Round header click → first question of the column. In Trivia mode cells are NOT individual click targets (header is); wire `setCellClick` to a no-op so they don't stay pointable. Per question: team buttons (tap = that team got it, `give(+points)`) plus a **Pass** button (`give` nothing, 0 points). Next → following question; used cells update as the column progresses. After the last question: tally screen — per-team points earned in this column via `scoring.roundTeamTotal(round.name, teamIdx)` for each team — then back to board. Invalid taps after a question is awarded are ignored (Review Focus 5).
+Round header click → first question of the column. In Trivia mode cells are NOT individual click targets — board.js attaches no `.clickable`/listener to them; the header is the target. The column flow is a separate path from Jeopardy's `resolve()` (one tap awards, then next question or tally — never back to board mid-column); capture `round.name` before clearing the flow's current question. Per question: team buttons (tap = that team got it, `give(+points)`) plus a **Pass** button (`give` nothing, 0 points). Next → following question; used cells update as the column progresses. After the last question: tally screen — per-team points earned in this column via `scoring.roundTeamTotal(round.name, teamIdx)` for each team — then back to board. Invalid taps after a question is awarded are ignored (Review Focus 5).
 
 - [ ] **Step 2: Verify with Playwright**
 
@@ -360,7 +360,7 @@ Expected: three files, each a few hundred KB, RIFF header (`xxd -l 4` shows `RIF
 
 - [ ] **Step 3: Wire playback into the question screen**
 
-If `q.audio` present: render an `<audio controls preload="auto" src={q.audio}>` (relative path) above the question text. On `error` event (missing file): hide the player, show a "no clip — play it from any device" note, continue the flow (Review Focus 3).
+If `q.audio` present: render an `<audio controls preload="auto" src={q.audio}>` (relative path) above the question text. On `error` event (missing file): hide the player, show a "no clip — play it from any device" note, continue the flow (Review Focus 3). `renderPhase` re-runs on claim→reveal, so the audio element must be rendered in EVERY phase branch and the error handler re-attached per render (or the clip vanishes from the reveal screen).
 
 - [ ] **Step 4: Add audio questions to the stub bank**
 
@@ -428,7 +428,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - [ ] **Step 1: Implement `js/folder.js`**
 
 Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio files via `URL.createObjectURL`. Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub), an `audio/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source).
-app.js hooks for this task: `renderError(errors)` (exported — folder loads route to the same error panel) and `setLoader(fn)` (exported — "Try again" reloads the active source, not always the shipped file). `renderSetup`'s input listener is one-time wired at app.js init — do not re-add it per load.
+app.js hooks for this task: `renderError(errors)` (exported — folder loads route to the same error panel) and `setLoader(fn)` (exported — "Try again" reloads the active source, not always the shipped file). `renderSetup`'s input listener is one-time wired at app.js init — do not re-add it per load. `loadBank` calls question.js `resetFlow()` on every successful bank load — folder loads go through the same path; don't bypass it.
 
 - [ ] **Step 2: Verify with Playwright**
 
