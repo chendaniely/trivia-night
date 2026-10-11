@@ -12,8 +12,9 @@ mid-task. Commits + plan checkboxes are the memory of record.
 ## Commit protocol — every step
 
 - Conventional Commits: https://www.conventionalcommits.org/en/v1.0.0/
+  — write type and scope: `type(scope): description`.
 - AI-generated commits start the description with 🤖:
-  `feat: 🤖 add board screen`
+  `feat(board): 🤖 add board screen`
 - Detect the model you are running as from your session context and add a
   Co-Authored-By line. Example for qwen3.8-27b:
   `Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>`
