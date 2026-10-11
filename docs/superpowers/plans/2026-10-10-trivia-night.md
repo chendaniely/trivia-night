@@ -163,7 +163,7 @@ Expected: FAIL — module not found
 
 - [x] **Step 4: Implement `js/validate.js`**
 
-`load` in try/catch: on syntax error return `errors: [{ line: err.mark.line + 1, where: "yaml", message: err.reason }]` (mark is 0-based; for mid-file errors that is the offending line). On success, walk the structure; collect every schema error with `where` like `rounds[1].questions[2]`. Return `{ ok: errors.length === 0, ... }`.
+`load` in try/catch: on syntax error return `errors: [{ line: err.mark.line + 1, where: "yaml", message: err.reason }]` (mark is 0-based; for mid-file errors that is the offending line). On success, walk the structure; collect every schema error with `where` like `rounds[1].questions[2]`. Also reject: empty rounds list, zero-question rounds, duplicate round names (Task 6 tallies key by name). Return `{ ok: errors.length === 0, ... }`.
 
 - [x] **Step 5: Run test to verify it passes**
 
@@ -193,7 +193,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [ ] **Step 1: Write `index.html` + `styles.css` + `js/app.js` skeleton**
 
-`index.html`: one `<main id="root">` with four screen containers (`#screen-setup`, `#screen-board`, `#screen-question`, `#screen-tally`), loads `js/app.js` as a module. `styles.css`: dark background, light text, large type (min 28 px body), high contrast. `js/app.js`: `state` object, `showScreen(id)` toggles `.hidden`, and on load `fetch("questions.yaml")` → `parseBank` → on failure show the errors (line numbers included) and stop; on success render setup.
+`index.html`: one `<main id="root">` with four screen containers (`#screen-setup`, `#screen-board`, `#screen-question`, `#screen-tally`), loads `js/app.js` as a module. `styles.css`: dark background, light text, large type (min 28 px body), high contrast. `js/app.js`: `state` object, `showScreen(id)` toggles `.hidden`, and on load `fetch("questions.yaml")` → `parseBank` → on failure show an error panel — `line N: message` when `line` is present, else `where: message` — and stop; on success render setup.
 
 Setup screen: title, 4 team-name inputs (placeholders Team 1–4; first two required, 2–4 accepted), mode radios labeled **Jeopardy** and **Trivia**, Start button (disabled until ≥ 2 names). Start sets `state`, `createScoring`, `showScreen("board")`.
 
