@@ -9,7 +9,7 @@
 // Audio: questions with q.audio get a player in EVERY renderer (both modes);
 // a missing clip swaps the player for a "no clip" note (Review Focus 3).
 import { state, showScreen } from "./app.js";
-import { renderBoard } from "./board.js";
+import { renderBoard, pointsFor } from "./board.js";
 
 function audioBlock(question) {
   if (!question.audio) return null;
@@ -34,11 +34,6 @@ let marks = new Map(); // teamIdx -> "green" | "red" (jeopardy marks)
 let revealed = false;
 let col = null; // { ri, qi } — active trivia column
 let colMarks = new Map(); // teamIdx -> "green" (trivia marks)
-
-function pointsFor(round, qi) {
-  const q = round.questions[qi];
-  return q.points !== undefined ? q.points : (qi + 1) * 100;
-}
 
 // Team buttons shared by both renderers: colored by mark state, ✓ / ✕ suffix.
 function teamButtons(markMap, onMark) {
@@ -153,11 +148,20 @@ function renderQuestion() {
 
 // --- Trivia column ----------------------------------------------------------
 
+// Mid-game mode switch keeps used cells, so the column flow must skip
+// questions already awarded (council 2026-10-11: no re-awarding).
+function firstUnused(round, ri, from) {
+  for (let qi = from; qi < round.questions.length; qi++) {
+    if (!state.used.has(`${ri}:${qi}`)) return qi;
+  }
+  return -1;
+}
+
 export function startColumn(ri) {
-  // ignore fully-used columns (Review Focus 5: no re-awarding)
   const round = state.bank.rounds[ri];
-  if (round.questions.every((_, qi) => state.used.has(`${ri}:${qi}`))) return;
-  col = { ri, qi: 0 };
+  const qi = firstUnused(round, ri, 0);
+  if (qi === -1) return; // fully-used column (Review Focus 5: no re-awarding)
+  col = { ri, qi };
   colMarks = new Map();
   showScreen("question");
   renderColumn();
@@ -178,8 +182,9 @@ function nextQuestion() {
   for (const idx of colMarks.keys()) state.scoring.give(idx, pts, round.name);
   state.used.set(`${ri}:${qi}`, true);
   colMarks = new Map();
-  if (qi + 1 < round.questions.length) {
-    col = { ri, qi: qi + 1 };
+  const next = firstUnused(round, ri, qi + 1);
+  if (next !== -1) {
+    col = { ri, qi: next };
     renderColumn();
     return;
   }

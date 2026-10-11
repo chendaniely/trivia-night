@@ -8,7 +8,7 @@ let onColumnClick = () => {};
 export function setCellClick(fn) { onCellClick = fn; }
 export function setColumnClick(fn) { onColumnClick = fn; }
 
-function pointsFor(round, qIdx) {
+export function pointsFor(round, qIdx) {
   const q = round.questions[qIdx];
   return q.points !== undefined ? q.points : (qIdx + 1) * 100;
 }
