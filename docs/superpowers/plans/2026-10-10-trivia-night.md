@@ -257,15 +257,15 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - Consumes: `state` (Task 3), `Scoring` (Task 1)
 - Produces: `renderBoard(rootEl: HTMLElement)` — grid + scoreboard + reset; cell click → `onCellClick(roundIdx, qIdx)` callback set by app.js
 
-- [ ] **Step 1: Implement `js/board.js`**
+- [x] **Step 1: Implement `js/board.js`**
 
-Grid: columns = rounds (header = round name; in Trivia mode the header is the click target for the whole column), rows = max question count across rounds (Review Focus 4). Rounds with fewer questions simply have fewer cells — no placeholder cells (spec: the board only shows cells that have content). Cell text = points (position default 100×n, or `q.points`). Used cells (key `roundIdx:qIdx` in `state.used`) render dimmed with no click. Scoreboard strip: team names + live points. Reset button → `state.scoring.reset()`, clear `state.used`, re-render. Question text must render block-scalar content as clean paragraphs (Review Focus 2). Clicks route through app.js callbacks `onCellClick(roundIdx, qIdx)` / `onColumnClick(roundIdx)`; until Tasks 5–6 land those callbacks are no-ops, so the board is fully navigable-looking but inert.
+Grid: columns = rounds (header = round name; in Trivia mode the header is the click target for the whole column), rows = max question count across rounds (Review Focus 4). Rounds with fewer questions simply have fewer cells — no placeholder cells (spec: the board only shows cells that have content). Cell text = points (position default 100×n, or `q.points`). Used cells (key `roundIdx:qIdx` in `state.used`) render dimmed with no click. Scoreboard strip: team names + live points. Reset button → `state.scoring.reset()`, clear `state.used`, re-render. Clicks route through app.js callbacks `onCellClick(roundIdx, qIdx)` / `onColumnClick(roundIdx)`; until Tasks 5–6 land those callbacks are no-ops, so the board is fully navigable-looking but inert.
 
-- [ ] **Step 2: Verify with Playwright**
+- [x] **Step 2: Verify with Playwright**
 
 MCP: reload, setup with two teams, Start. `browser_snapshot`: board shows 2 columns, row counts 5 and 3 (adapted, Review Focus 4), cell values 100–500, scoreboard shows both teams at 0. Click Reset → still 0.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add js/board.js js/app.js
@@ -288,7 +288,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [ ] **Step 1: Implement the Jeopardy flow in `js/question.js`**
 
-Phases: `show` (question text; no answer) → `claim` (tap a team button to claim; claim locks the team) → `reveal` (answer shown; Correct / Wrong buttons) → back to board. Team buttons render as `<button>` (not `<input type=button>`) so they pick up the accent button style and disabled dimming. `Correct`: `scoring.give(claimIdx, +points, round.name)`, mark used. `Wrong`: `scoring.give(claimIdx, -points, round.name)`, mark used. Taps on team buttons after `reveal` are ignored (Review Focus 5).
+Phases: `show` (question text; no answer) → `claim` (tap a team button to claim; claim locks the team) → `reveal` (answer shown; Correct / Wrong buttons) → back to board. Team buttons render as `<button>` (not `<input type=button>`) so they pick up the accent button style and disabled dimming. Question text renders as a clean paragraph — block-scalar content (already folded by the YAML parser) shows without indentation or line-break artifacts (Review Focus 2). `Correct`: `scoring.give(claimIdx, +points, round.name)`, mark used. `Wrong`: `scoring.give(claimIdx, -points, round.name)`, mark used. Taps on team buttons after `reveal` are ignored (Review Focus 5).
 
 - [ ] **Step 2: Verify with Playwright**
 
