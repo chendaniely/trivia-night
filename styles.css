@@ -98,7 +98,9 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
   font-size: 48px; line-height: 1.25; font-weight: 800; color: var(--orange);
   margin: 0; max-width: 1080px; animation: reveal-in 240ms ease;
 }
-.team-btns { display: flex; gap: 24px; flex-wrap: wrap; }
+.team-btns, .controls { display: flex; gap: 24px; flex-wrap: wrap; }
+/* .team-btns holds only the team mark buttons (blue fill); the controls
+   row (Back/Reveal/Done/Next) keeps its own .btn-* classes. */
 .team-btns button { font-size: 34px; padding: 18px 40px; background: var(--blue); color: #fff; border-radius: 14px; }
 .team-btns button.marked-green { background: var(--good); color: #06130a; }
 .team-btns button.marked-red { background: var(--bad); color: #160505; }

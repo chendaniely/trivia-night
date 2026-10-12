@@ -160,7 +160,7 @@ function renderQuestion() {
   wrap.append(teamButtons(marks, (idx) => cycleMark(idx)));
 
   const controls = document.createElement("div");
-  controls.className = "team-btns";
+  controls.className = "controls";
   const bk = document.createElement("button");
   bk.className = "btn-quiet";
   bk.textContent = "Back to board";
@@ -259,7 +259,7 @@ function renderColumn() {
   wrap.append(teamButtons(colMarks, (idx) => cycleColMark(idx)));
 
   const controls = document.createElement("div");
-  controls.className = "team-btns";
+  controls.className = "controls";
   const bk = document.createElement("button");
   bk.className = "btn-quiet";
   bk.textContent = "Back to board";
