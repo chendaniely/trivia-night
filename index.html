@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trivia Night</title>
+  <link rel="preload" href="fonts/atkinson-hyperlegible-next.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="root">
+    <section id="screen-setup" class="screen hidden">
+      <h1>Trivia Night</h1>
+      <p class="subtitle">Name your teams and pick a mode.</p>
+      <div id="team-inputs"></div>
+      <div id="mode-pick" role="radiogroup" aria-label="Game mode">
+        <label><input type="radio" name="mode" value="jeopardy" checked> Jeopardy</label>
+        <label><input type="radio" name="mode" value="trivia"> Trivia</label>
+      </div>
+      <button id="start-btn" disabled>Start</button>
+    </section>
+    <section id="screen-board" class="screen hidden"></section>
+    <section id="screen-question" class="screen hidden"></section>
+    <section id="screen-tally" class="screen hidden"></section>
+    <section id="screen-error" class="screen hidden">
+      <h1>Question file problem</h1>
+      <ul id="error-list"></ul>
+      <button id="retry-btn">Try again</button>
+    </section>
+  </main>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+title: "Trivia Night"
+rounds:
+  - name: "Demo"
+    questions:
+      - q: "Starter question"
+        a: "Answer"
+        images:
+          - "images/demo/orange-solid.png"
+          - "images/demo/missing.png"
+      - q: >
+          A longer question written with a block
+          scalar to check rendering.
+        a: "Answer two"
+      - q: "Third question"
+        a: "Answer three"
+  - name: "Demo 2"
+    questions:
+      - q: "Q1"
+        a: "A1"
+        images:
+          - "images/demo/blue-checker.png"
+      - q: "Q2"
+        a: "A2"
+      - q: "Q3"
+        a: "A3"
+      - q: "Q4"
+        a: "A4"
+      - q: "Q5"
+        a: "A5"
+  - name: "Music"
+    questions:
+      - q: "Listen: which three notes are these, low to high?"
+        a: "A4, C5, E5 (an A-major arpeggio)"
+        audio: "audio/demo/arpeggio.wav"
+      - q: "Which note is this? (440 Hz, the tuning pitch)"
+        a: "A4"
+        audio: "audio/demo/missing.wav"
