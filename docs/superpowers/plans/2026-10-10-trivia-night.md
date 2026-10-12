@@ -697,11 +697,18 @@ is reused across the teams currently in setup.
 - Add: `js/teams.js`, `test/teams.test.mjs`
 - Modify: `js/app.js`
 
-- [ ] **Step 1: teams.js + wire Add + node test.**
-- [ ] **Step 2: Verify (Playwright, text-only)** — Add generates 2-word
-  names; 5 adds → 10 distinct words; editing a name then adding → no
-  clash with the edited words; console clean.
-- [ ] **Step 3: Council + commit.**
+- [x] **Step 1: teams.js + wire Add + node test.** (cafc27d)
+- [x] **Step 2: Verify (Playwright, text-only)** — port 8091: 5 adds →
+  5 two-word names (Vivid Badgers, Plucky Falcons, Golden Tofu, Breezy
+  Beavers, Gilded Sausages) with 14/14 words distinct across typed +
+  generated; typing "Cosmic Pickles" then Add → "Nifty Pigeons"
+  (avoids both typed words, no clash); console only the favicon 404.
+- [x] **Step 3: Council + commit.** Council 2026-10-12: forward — no
+  downstream risk (nothing keyed by name; fallback dupes display-only;
+  test fallback assertion self-referential on the exported lists).
+  Backward — 🟠 typed-clash test assertion was vacuous (full-name
+  string compared to a single word, could never fail) → rewritten as
+  word-to-word set check, re-verified green.
 
 ---
 

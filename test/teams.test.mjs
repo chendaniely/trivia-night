@@ -18,12 +18,15 @@ for (const name of names)
     seen.add(w);
   }
 
-// no clash with words the host typed
-const typed = ["Zesty Rockets"];
+// no clash with words the host typed (compare word to word)
+const typed = ["Zesty Rockets", "The Crew"];
+const typedWords = new Set(
+  typed.flatMap((t) => t.toLowerCase().split(/\s+/))
+);
 for (let i = 0; i < 10; i++) {
   const m = randomTeamName([...typed, ...names]);
   for (const w of m.toLowerCase().split(" "))
-    assert.ok(!typed.some((t) => t.toLowerCase() === w), `clash with typed: ${w}`);
+    assert.ok(!typedWords.has(w), `clash with typed word: ${w}`);
 }
 
 // a name containing a list word blocks that word only
