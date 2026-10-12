@@ -689,9 +689,11 @@ is reused across the teams currently in setup.
   exhausted (15+ teams). Node-tested: word membership, no word reused
   across 20 generations, no clash with existing names, fallback.
 - `js/app.js`: "Add team" passes the generated name into the new row
-  (host can still edit it). The initial 2 rows stay empty. Removed or
-  edited names free their words automatically — generation always checks
-  the live row values, no bookkeeping.
+  (host can still edit it). The initial 2 rows are PRE-FILLED on app
+  start (partner 2026-10-12: minimize start time — host can hit Start
+  immediately; the 2nd name avoids the 1st's words). Removed or edited
+  names free their words automatically — generation always checks the
+  live row values, no bookkeeping.
 
 **Files:**
 - Add: `js/teams.js`, `test/teams.test.mjs`
@@ -709,6 +711,9 @@ is reused across the teams currently in setup.
   Backward — 🟠 typed-clash test assertion was vacuous (full-name
   string compared to a single word, could never fail) → rewritten as
   word-to-word set check, re-verified green.
+- [ ] **Step 4: Pre-fill initial rows on app start** (partner
+  2026-10-12: minimize start time) — renderSetup() with no args
+  generates two non-clashing names.
 
 ---
 
