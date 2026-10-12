@@ -236,7 +236,7 @@ rounds:
 
 Start a static server in the background: `python3 -m http.server 8080 --bind 127.0.0.1` (from repo root).
 MCP: `browser_navigate` → `http://127.0.0.1:8080`, then `browser_snapshot`.
-Expected: setup screen visible; Start disabled; type two team names → Start enabled; click Start → board screen visible (empty grid fine — Task 4 fills it).
+Expected: setup screen visible; Start disabled; type two team names → Start enabled; click Start → board screen visible (empty grid fine — Task 4 fills it). (Superseded on fresh load by Task 7.10 step 4: rows are pre-filled with random names and Start is enabled immediately.)
 
 - [x] **Step 3: Verify the malformed-YAML path**
 
@@ -659,7 +659,9 @@ remove teams at setup.
 - [x] **Step 1: Dynamic team rows** — renderSetup rows + Add/Remove +
   all-named start rule. (add404e)
 - [x] **Step 2: Verify (Playwright, text-only)** — port 8090: fresh load
-  2 rows (Remove×2 disabled, Add on, Start off); names → Start on;
+  2 rows (Remove×2 disabled, Add on, Start off — true at the time, rows
+  were then empty; Task 7.10 step 4 pre-fills names so Start is on);
+  names → Start on;
   Add 3rd empty → Start off, values kept; 3-team game scores 100;
   back-to-setup keeps 3 rows + values; 5-team start → 5 plaques all 0
   (count change = fresh game) + 5 question-screen team buttons; removes
@@ -711,9 +713,14 @@ is reused across the teams currently in setup.
   Backward — 🟠 typed-clash test assertion was vacuous (full-name
   string compared to a single word, could never fail) → rewritten as
   word-to-word set check, re-verified green.
-- [ ] **Step 4: Pre-fill initial rows on app start** (partner
+- [x] **Step 4: Pre-fill initial rows on app start** (partner
   2026-10-12: minimize start time) — renderSetup() with no args
-  generates two non-clashing names.
+  generates two non-clashing names. (f1c3319) Verified port 8092:
+  fresh load "Hazy Bagpipes" + "Misty Goblins" (0 duplicate words,
+  Start enabled immediately); Add → "Feral Walruses" (no clash with
+  the existing 4 words); console only the favicon 404. Council:
+  backward clean; forward — no downstream risk, 2 🟡 annotations on
+  stale "Start disabled" verify records in Tasks 4/7.9 (applied).
 
 ---
 
