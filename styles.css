@@ -1,6 +1,18 @@
+/* Partner's face (2026-10-12): Atkinson Hyperlegible Next — built for
+   maximum legibility, which is the TV requirement. One variable file
+   (latin, wght 200-800); Google Fonts, OFL. Self-hosted: no CDN. */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("fonts/atkinson-hyperlegible-next.woff2") format("woff2");
+}
+
 :root {
   --bg: #0a1620;        /* blue-black, hue of NYC blue */
   --panel: #13242f;
+  --edge: #24405a;      /* 1px panel borders */
   --text: #f5f9fc;
   --muted: #9fb3c8;
   --orange: #f26522;    /* NYC flag orange — primary action, score */
@@ -8,24 +20,29 @@
   --accent: #f26522;
   --good: #3fb950;
   --bad: #f85149;
+  --font: "Atkinson Hyperlegible Next", system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 28px/1.4 system-ui, sans-serif; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 30px/1.45 var(--font); }
 .hidden { display: none !important; }
-h1 { font-size: 56px; margin: 0 0 8px; }
-.subtitle { color: var(--muted); }
+h1 { font-size: 68px; font-weight: 800; line-height: 1.1; margin: 0 0 12px; }
+.subtitle { color: var(--muted); font-size: 30px; }
 .screen { max-width: 1280px; margin: 0 auto; padding: 40px; }
 input[type="text"], input:not([type]) {
-  font-size: 28px; padding: 12px 16px; width: 100%; max-width: 480px;
-  background: var(--panel); color: var(--text); border: 2px solid #2c4a66; border-radius: 8px;
+  font: 30px var(--font); padding: 14px 18px; width: 100%; max-width: 560px;
+  background: var(--panel); color: var(--text); border: 1px solid var(--edge); border-radius: 12px;
 }
-input:focus { outline: 3px solid var(--accent); border-color: transparent; }
-input[type="radio"] { accent-color: var(--orange); width: 28px; height: 28px; }
+input:focus { outline: 3px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+input[type="radio"] { accent-color: var(--orange); width: 30px; height: 30px; }
 button {
-  font-size: 32px; padding: 14px 32px; border: 0; border-radius: 10px;
-  background: var(--orange); color: #0a1620; cursor: pointer; font-weight: 600;
+  font: 600 30px var(--font); padding: 14px 32px; border: 0; border-radius: 12px;
+  background: var(--orange); color: #0a1620; cursor: pointer;
+  transition: transform 140ms ease, filter 140ms ease;
 }
-button:disabled { background: #24405a; color: var(--muted); cursor: not-allowed; }
+button:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+button:active:not(:disabled) { filter: brightness(0.94); transform: translateY(1px); }
+button:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+button:disabled { background: var(--edge); color: var(--muted); cursor: not-allowed; }
 .btn-secondary { background: var(--blue); color: #fff; }
 .btn-row { display: flex; gap: 24px; justify-content: center; margin-top: 24px; }
 #team-inputs { display: grid; gap: 16px; margin: 32px 0; }

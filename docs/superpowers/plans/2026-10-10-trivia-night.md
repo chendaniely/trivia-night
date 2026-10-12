@@ -535,11 +535,13 @@ frontend-design skill; subject = a trivia night on a living-room TV
 refine roles, do not recolor.
 
 **Design:**
-- Type: self-hosted woff2 under `fonts/` (the no-CDN constraint above +
-  flaky home Wi-Fi): **Playfair Display** (display serif — h1 title,
-  category headers, revealed answer; quiz-show vernacular) + **Archivo**
-  (sturdy grotesque — UI, question text, numerals). Latin subset only;
-  `font-display: swap`; Georgia/system-ui fallbacks.
+- Type: the partner's personal face (2026-10-12), self-hosted as woff2
+  under `fonts/` (the no-CDN constraint above + flaky home Wi-Fi):
+  **Atkinson Hyperlegible Next** (Google Fonts — designed for maximum
+  legibility, which IS the TV requirement), the latin variable file
+  (wght 200–800; verified via fontTools `fvar`); `font-display: swap`;
+  system-ui fallback. Weight contrast is the typographic device: 400
+  body, 700 headers, 800 tabular numerals + scores.
 - Base scale 28 → 30px; h1 56 → 72px serif.
 - Board (the hero): 1px `--edge` borders on headers/cells (depth via edges,
   no shadow card kit); cells min-height 88px with 40px/800 tabular
@@ -555,11 +557,12 @@ refine roles, do not recolor.
   slide, button hover lift + press sink; `prefers-reduced-motion` kills it.
 
 **Files:**
-- Add: `fonts/*.woff2` (6 files), `@font-face` blocks in `styles.css`
+- Add: `fonts/atkinson-hyperlegible-next.woff2` (variable font), `@font-face` in `styles.css`
 - Modify: `styles.css`, `js/board.js` (one line: tier classes on cells)
 
-- [ ] **Step 1: Type + tokens** — 6 latin woff2 into `fonts/`, `@font-face`
-  + font stacks + base scale + button/input restyle.
+- [ ] **Step 1: Type + tokens** — Atkinson Hyperlegible Next variable
+  woff2 (latin, wght 200–800) into `fonts/`, `@font-face` + base scale +
+  button/input restyle.
 - [ ] **Step 2: Board + scoreboard** — borders, cell presence, difficulty
   ramp (tier classes in board.js), score plaques.
 - [ ] **Step 3: Setup + question + tally + motion** — title rule, question
