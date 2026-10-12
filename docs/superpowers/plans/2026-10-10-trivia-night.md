@@ -611,12 +611,24 @@ target — the category headers are.
 **Files:**
 - Modify: `js/question.js`, `js/board.js`, `styles.css`
 
-- [ ] **Step 1: Back button** — both flows + `.btn-quiet` style.
-- [ ] **Step 2: Trivia affordance** — dim cells, hint line, dim finished headers.
-- [ ] **Step 3: Verify (Playwright, text-only)** — back from both screens
-  keeps scores + cells intact; trivia board shows hint + dimmed cells;
-  console clean. Save after-shots (do NOT read).
-- [ ] **Step 4: Council + commit.**
+- [x] **Step 1: Back button** — both flows + `.btn-quiet` style. (5a78202)
+- [x] **Step 2: Trivia affordance** — dim cells, hint line, dim finished
+  headers. (38bcbf4)
+- [x] **Step 3: Verify (Playwright, text-only)** — port 8088: Jeopardy
+  back after a green mark → scores 0, 0 used cells, cell still
+  clickable; trivia board → hint text verbatim, cells opacity 0.45 and
+  not clickable, header clickable; column back → 0 consumed; round-over
+  dim → 1/3 headers dim at 0.45, not clickable. Console: only the
+  favicon 404 + intentional missing.png probes. After-shots in
+  `.playwright-mcp/ui-after-backbtn.png`, `ui-after-trivia-hint.png`
+  (NOT read — text-only model).
+- [x] **Step 4: Council + commit.** Council 2026-10-12: backward — clean
+  (record-keeping only). Forward — 🔴 `.team-btns button` (0,1,1)
+  outranked `.btn-quiet` (0,1,0): Back rendered blue; 🟠 same pre-existing
+  root cause (since 7.5) had Done/Next blue, breaking orange = primary.
+  Fixed (controls row → own `.controls` class, layout only), verified on
+  8089: Back panel/muted, Reveal blue, Done orange, mark buttons 34px
+  blue.
 
 ---
 
