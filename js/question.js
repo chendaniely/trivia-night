@@ -124,6 +124,16 @@ function done() {
   showScreen("board");
 }
 
+function back() {
+  if (!current) return; // guard stale taps (Task 7.8)
+  // Accidental-tap escape: discard marks, do NOT consume the cell.
+  current = null;
+  marks = new Map();
+  revealed = false;
+  renderBoard();
+  showScreen("board");
+}
+
 function renderQuestion() {
   const { ri, qi } = current;
   const round = state.bank.rounds[ri];
@@ -151,6 +161,11 @@ function renderQuestion() {
 
   const controls = document.createElement("div");
   controls.className = "team-btns";
+  const bk = document.createElement("button");
+  bk.className = "btn-quiet";
+  bk.textContent = "Back to board";
+  bk.addEventListener("click", back);
+  controls.append(bk);
   if (!revealed) {
     const rv = document.createElement("button");
     rv.className = "btn-secondary";
@@ -215,6 +230,15 @@ function nextQuestion() {
   showScreen("tally");
 }
 
+function backToBoard() {
+  if (!col) return; // guard stale taps (Task 7.8)
+  // Accidental-tap escape: leave the column, no cell consumed.
+  col = null;
+  colMarks = new Map();
+  renderBoard();
+  showScreen("board");
+}
+
 function renderColumn() {
   const { ri, qi } = col;
   const round = state.bank.rounds[ri];
@@ -236,6 +260,11 @@ function renderColumn() {
 
   const controls = document.createElement("div");
   controls.className = "team-btns";
+  const bk = document.createElement("button");
+  bk.className = "btn-quiet";
+  bk.textContent = "Back to board";
+  bk.addEventListener("click", backToBoard);
+  controls.append(bk);
   const nx = document.createElement("button");
   nx.className = "btn-primary";
   nx.textContent = "Next";

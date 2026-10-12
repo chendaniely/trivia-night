@@ -44,6 +44,8 @@ button:active:not(:disabled) { filter: brightness(0.94); transform: translateY(1
 button:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
 button:disabled { background: var(--edge); color: var(--muted); cursor: not-allowed; }
 .btn-secondary { background: var(--blue); color: #fff; }
+.btn-quiet { background: var(--panel); color: var(--muted); border: 1px solid var(--edge); }
+.btn-quiet:hover:not(:disabled) { color: var(--text); border-color: var(--muted); filter: none; }
 .btn-row { display: flex; gap: 24px; justify-content: center; margin-top: 24px; }
 #team-inputs { display: grid; gap: 16px; margin: 40px 0; justify-items: center; }
 #mode-pick { display: flex; gap: 48px; margin: 32px 0; font-size: 32px; justify-content: center; }
