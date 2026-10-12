@@ -45,8 +45,15 @@ button:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
 button:disabled { background: var(--edge); color: var(--muted); cursor: not-allowed; }
 .btn-secondary { background: var(--blue); color: #fff; }
 .btn-row { display: flex; gap: 24px; justify-content: center; margin-top: 24px; }
-#team-inputs { display: grid; gap: 16px; margin: 32px 0; }
-#mode-pick { display: flex; gap: 48px; margin: 24px 0; font-size: 32px; }
+#team-inputs { display: grid; gap: 16px; margin: 40px 0; justify-items: center; }
+#mode-pick { display: flex; gap: 48px; margin: 32px 0; font-size: 32px; justify-content: center; }
+#screen-setup h1 { text-align: center; }
+#screen-setup h1::after {
+  content: ""; display: block; width: 120px; height: 6px; margin: 16px auto 0;
+  background: var(--orange); border-radius: 3px;
+}
+#screen-setup .subtitle { text-align: center; }
+#screen-setup #start-btn { display: block; margin: 0 auto; }
 #error-list { font-size: 28px; color: var(--bad); padding-left: 24px; }
 .scoreboard { display: flex; gap: 28px; justify-content: center; margin-bottom: 28px; }
 .score-team {
@@ -78,14 +85,17 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .board-cell.clickable:hover { background: var(--orange); border-color: var(--orange); color: #0a1620; }
 .board-cell.used { color: var(--muted); background: transparent; border: 2px dashed var(--edge); }
 .board-gap { visibility: hidden; }
-.question-wrap { display: grid; gap: 32px; justify-items: start; }
-.question-wrap h2 { font-size: 40px; color: var(--muted); margin: 0; }
-.question-text { font-size: 48px; margin: 0; white-space: pre-line; }
-.answer-text { font-size: 44px; color: var(--orange); margin: 0; }
+.question-wrap { display: grid; gap: 30px; justify-items: start; }
+.question-wrap h2 { font-size: 32px; font-weight: 700; color: var(--muted); margin: 0; }
+.question-text { font-size: 52px; line-height: 1.3; margin: 0; white-space: pre-line; max-width: 1080px; }
+.answer-text {
+  font-size: 48px; line-height: 1.25; font-weight: 800; color: var(--orange);
+  margin: 0; max-width: 1080px; animation: reveal-in 240ms ease;
+}
 .team-btns { display: flex; gap: 24px; flex-wrap: wrap; }
-.team-btns button { font-size: 36px; padding: 20px 40px; background: var(--blue); color: #fff; }
-.team-btns button.marked-green { background: var(--good); }
-.team-btns button.marked-red { background: var(--bad); }
+.team-btns button { font-size: 34px; padding: 18px 40px; background: var(--blue); color: #fff; border-radius: 14px; }
+.team-btns button.marked-green { background: var(--good); color: #06130a; }
+.team-btns button.marked-red { background: var(--bad); color: #160505; }
 .btn-primary { background: var(--orange); color: #0a1620; }
 .audio-block { display: grid; gap: 8px; }
 .audio-block audio { width: 480px; height: 48px; }
@@ -93,7 +103,19 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .images-block { display: flex; gap: 16px; flex-wrap: wrap; }
 .images-block img {
   max-width: 640px; max-height: 480px; width: auto; height: auto;
-  object-fit: contain; border-radius: 10px; background: var(--panel);
+  object-fit: contain; border-radius: 12px; border: 1px solid var(--edge); background: var(--panel);
 }
 .no-image { color: var(--muted); font-style: italic; margin: 0; font-size: 28px; }
-.tally-row { background: var(--panel); padding: 16px 32px; border-radius: 10px; font-size: 36px; }
+.tally-row {
+  display: flex; align-items: baseline; gap: 16px;
+  background: var(--panel); border: 1px solid var(--edge);
+  padding: 18px 36px; border-radius: 14px; font-size: 32px;
+}
+
+/* Motion: responds to action, <=240ms; off under prefers-reduced-motion. */
+@keyframes screen-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes reveal-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.screen:not(.hidden) { animation: screen-in 200ms ease; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
