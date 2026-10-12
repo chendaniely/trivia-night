@@ -48,6 +48,10 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .btn-quiet:hover:not(:disabled) { color: var(--text); border-color: var(--muted); filter: none; }
 .btn-row { display: flex; gap: 24px; justify-content: center; margin-top: 24px; }
 #team-inputs { display: grid; gap: 16px; margin: 40px 0; justify-items: center; }
+.team-row { display: flex; gap: 14px; align-items: center; }
+.team-row input { width: 480px; max-width: 480px; }
+.team-remove { font-size: 26px; padding: 10px 24px; }
+#add-team-btn { margin-top: 6px; }
 #mode-pick { display: flex; gap: 48px; margin: 32px 0; font-size: 32px; justify-content: center; }
 #screen-setup h1 { text-align: center; }
 #screen-setup h1::after {
@@ -57,7 +61,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 #screen-setup .subtitle { text-align: center; }
 #screen-setup #start-btn { display: block; margin: 0 auto; }
 #error-list { font-size: 28px; color: var(--bad); padding-left: 24px; }
-.scoreboard { display: flex; gap: 28px; justify-content: center; margin-bottom: 28px; }
+.scoreboard { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; margin-bottom: 28px; }
 .score-team {
   display: flex; align-items: baseline; gap: 14px;
   background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;

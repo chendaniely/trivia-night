@@ -52,34 +52,56 @@ async function loadBank() {
   // (used-cell keys and round logs refer to the old bank).
   state.scoring = null;
   state.used = new Map();
+  state.teamNames = []; // no stale names for the next setup (council 7.9, Task 9)
   resetFlow(); // no stale question state across bank loads (Task 9 folder mode)
   renderSetup();
   showScreen("setup");
 }
 
-function teamNames() {
-  return [1, 2, 3, 4]
-    .map((i) => document.getElementById(`team-${i}`))
-    .filter(Boolean)
-    .map((el) => el.value.trim())
-    .filter(Boolean);
+// Dynamic team rows (Task 7.9): min 2, no cap; row count IS the team count.
+function setupInputs() {
+  return [...document.querySelectorAll("#team-inputs input")];
 }
 
-function renderSetup() {
+function allNamed() {
+  return setupInputs().every((el) => el.value.trim() !== "");
+}
+
+function renderSetup(draftNames = ["", ""]) {
   const wrap = document.getElementById("team-inputs");
+  const addBtn = document.createElement("button");
+  addBtn.id = "add-team-btn";
+  addBtn.className = "btn-quiet";
+  addBtn.textContent = "Add team";
+  addBtn.addEventListener("click", () =>
+    renderSetup(setupInputs().map((el) => el.value).concat(""))
+  );
   wrap.replaceChildren(
-    ...[1, 2, 3, 4].map((i) => {
+    ...draftNames.map((val, i) => {
+      const row = document.createElement("div");
+      row.className = "team-row";
       const input = document.createElement("input");
-      input.id = `team-${i}`;
-      input.placeholder = `Team ${i}`;
+      input.id = `team-${i + 1}`;
+      input.placeholder = `Team ${i + 1}`;
       input.setAttribute("autocomplete", "off");
-      return input;
-    })
+      input.value = val;
+      const rm = document.createElement("button");
+      rm.className = "btn-quiet team-remove";
+      rm.textContent = "Remove";
+      rm.disabled = draftNames.length <= 2; // 2 teams is the playable minimum
+      rm.addEventListener("click", () => {
+        const vals = setupInputs().map((el) => el.value);
+        renderSetup(vals.filter((_, j) => j !== i));
+      });
+      row.append(input, rm);
+      return row;
+    }),
+    addBtn
   );
   const startBtn = document.getElementById("start-btn");
-  startBtn.disabled = teamNames().length < 2;
+  startBtn.disabled = !allNamed();
   startBtn.onclick = () => {
-    const names = teamNames();
+    const names = setupInputs().map((el) => el.value.trim());
     const sameGame =
       state.scoring !== null && names.length === state.teamNames.length;
     state.teamNames = names;
@@ -100,7 +122,7 @@ function renderSetup() {
 document
   .getElementById("team-inputs")
   .addEventListener("input", () => {
-    document.getElementById("start-btn").disabled = teamNames().length < 2;
+    document.getElementById("start-btn").disabled = !allNamed();
   });
 
 setCellClick((ri, qi) => {

@@ -632,6 +632,49 @@ target — the category headers are.
 
 ---
 
+### Task 7.9: Dynamic team count (add/remove, min 2, no cap)
+
+Partner request (2026-10-12): team count must not be fixed at 4 — add and
+remove teams at setup.
+
+**Design:**
+- Setup renders team ROWS (input + Remove button), min 2, NO cap —
+  partner also wants the option of more than 4 (2026-10-12); team
+  buttons and scoreboard plaques wrap (flex-wrap). Fresh load starts at
+  2 rows; back-to-setup keeps the current game's rows (values persist in
+  the DOM — the Setup button only shows the screen). "Add team" appends
+  a row; Remove disabled at 2 rows; Add always enabled.
+- Start requires every row to have a name (Start disabled otherwise) —
+  replaces the old "empty box = no team" filtering; the row count IS the
+  team count.
+- Same-game rule unchanged: same count = rename in place (scores + used
+  cells kept); different count = fresh game.
+- No change to scoring/board/question renderers: they already build from
+  `scoring.teams`.
+
+**Files:**
+- Modify: `js/app.js`, `styles.css` (index.html needs no change — inputs
+  are already JS-rendered into `#team-inputs`)
+
+- [x] **Step 1: Dynamic team rows** — renderSetup rows + Add/Remove +
+  all-named start rule. (add404e)
+- [x] **Step 2: Verify (Playwright, text-only)** — port 8090: fresh load
+  2 rows (Remove×2 disabled, Add on, Start off); names → Start on;
+  Add 3rd empty → Start off, values kept; 3-team game scores 100;
+  back-to-setup keeps 3 rows + values; 5-team start → 5 plaques all 0
+  (count change = fresh game) + 5 question-screen team buttons; removes
+  step 5→4→3→2 one row per click, Remove disabled at 2; console only
+  the favicon 404 + intentional missing.png probes. After-shot in
+  `.playwright-mcp/ui-after-5teams.png` (NOT read — text-only model).
+- [x] **Step 3: Council + commit.** Council 2026-10-12: backward — clean
+  (plan heading "2–4" corrected to no-cap). Forward — 🟠 loadBank did not
+  reset state.teamNames (stale names for Task 9) → one-line fix applied;
+  🟡 draft-carry across bank loads deferred (Task 9 owns that UX); 🟡
+  5+ rows scroll at 720p accepted (setup is a pre-game screen, TVs are
+  1080p).
+
+---
+
 ### Task 8: Full starter question bank
 
 **Files:**
