@@ -21,6 +21,7 @@
 - YAML questions must support block scalars (`>`, `|`).
 - UI: dark, high-contrast, legible from ~10 ft on a TV.
 - AGENTS.md protocol: commit after every task (Conventional Commits, 🤖 prefix, Co-Authored-By line), backward + forward council review after every task, Playwright verification for every UI task.
+- Text-only working model (qwen3.8 27b; partner note 2026-10-12): UI verification = a11y snapshot + `getComputedStyle`/`document.fonts` assertions + console check. Screenshots may be saved but NOT read — all visual screenshot review is deferred to the final Claude Code pass (section at end of file).
 
 ## Review Focus
 
@@ -525,6 +526,54 @@ already work; add images:
 
 ---
 
+### Task 7.7: UI polish pass (visual only — UX locked)
+
+Partner request (2026-10-11): the UX does what they want; now make it
+prettier. Interaction and flow unchanged — visuals only. Designed with the
+frontend-design skill; subject = a trivia night on a living-room TV
+(game-show set, not a SaaS app). Palette partner-pinned (NYC orange/blue) —
+refine roles, do not recolor.
+
+**Design:**
+- Type: self-hosted woff2 under `fonts/` (the no-CDN constraint above +
+  flaky home Wi-Fi): **Playfair Display** (display serif — h1 title,
+  category headers, revealed answer; quiz-show vernacular) + **Archivo**
+  (sturdy grotesque — UI, question text, numerals). Latin subset only;
+  `font-display: swap`; Georgia/system-ui fallbacks.
+- Base scale 28 → 30px; h1 56 → 72px serif.
+- Board (the hero): 1px `--edge` borders on headers/cells (depth via edges,
+  no shadow card kit); cells min-height 88px with 40px/800 tabular
+  numerals; category headers serif 32px; a subtle 5-step background ramp
+  easy → hard (tier classes on cells) that encodes difficulty; hover =
+  orange fill.
+- Scoreboard: plaque style — name 28px, points 40px/800 orange
+  tabular-nums, 1px border, radius 14.
+- Question screen: h2 eyebrow serif 32px muted; question 52px; answer
+  48px serif orange, slide-in reveal; setup title gets a short orange
+  rule; team buttons keep the ✓/✕ suffix, dark text on green/red fills.
+- Motion (responds to action, ≤240ms): screen fade/slide-in, answer reveal
+  slide, button hover lift + press sink; `prefers-reduced-motion` kills it.
+
+**Files:**
+- Add: `fonts/*.woff2` (6 files), `@font-face` blocks in `styles.css`
+- Modify: `styles.css`, `js/board.js` (one line: tier classes on cells)
+
+- [ ] **Step 1: Type + tokens** — 6 latin woff2 into `fonts/`, `@font-face`
+  + font stacks + base scale + button/input restyle.
+- [ ] **Step 2: Board + scoreboard** — borders, cell presence, difficulty
+  ramp (tier classes in board.js), score plaques.
+- [ ] **Step 3: Setup + question + tally + motion** — title rule, question
+  scale, reveal + screen-in animations, press states, reduced-motion.
+- [ ] **Step 4: Verify (Playwright, TEXT-ONLY)** — fresh port;
+  `document.fonts.check` for both families; `getComputedStyle` spot checks
+  (families, sizes, colors) on board + question screens; a11y snapshots
+  structurally sound; console clean. Save (do NOT read) after-screenshots
+  for the Claude pass.
+- [ ] **Step 5: Council + commit** — backward + forward pass (text-based:
+  subagents read code/diffs, not screenshots), apply findings, check boxes.
+
+---
+
 ### Task 8: Full starter question bank
 
 **Files:**
@@ -621,3 +670,25 @@ Expected: `200`. (Site root 404s until Task 3 adds `index.html` — expected.)
 - [ ] **Step: Handoff for the user (not agent work)**
 
 Remote already configured. Pushing `main` triggers the deploy. Set the repo's Pages source to the `gh-pages` branch (Settings → Pages → Branch: gh-pages). Site: `https://chendaniely.github.io/trivia-night/`. Until Task 3 lands, the site root has no `index.html`.
+
+---
+
+## Deferred to the final Claude Code pass (partner note 2026-10-12)
+
+The working model (qwen3.8 27b) is TEXT-ONLY: it cannot read images.
+Everything below needs image input and is deliberately left to a
+multimodal model. The partner will run a Claude Code pass at the end to
+tie up loose ends — this is the list:
+
+1. **UI pass visual review (Task 7.7):** take fresh 1280×720 screenshots
+   of all five screens (setup, board, question with a revealed answer,
+   trivia column, tally) against the no-store server and judge: board
+   legibility at TV distance, serif rendering, orange/blue role
+   discipline (orange = primary action + scores only), motion feel
+   (reveal + screen fade). Before-shots from 2026-10-11 are in
+   `.playwright-mcp/ui-before-*.png` (gitignored, untracked).
+2. **Demo media eyeball:** the two self-generated PNGs in `images/demo/`
+   and the demo WAVs in `audio/demo/` were verified by bytes/dimensions,
+   never looked at.
+3. **Font fallback on a real TV:** confirm the self-hosted woff2 render
+   (not the swap fallback) on the actual TV browser at the event.
