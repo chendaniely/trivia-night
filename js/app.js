@@ -68,7 +68,12 @@ function allNamed() {
   return setupInputs().every((el) => el.value.trim() !== "");
 }
 
-function renderSetup(draftNames = ["", ""]) {
+function renderSetup(draftNames) {
+  if (draftNames === undefined) {
+    // App start (Task 7.10 step 4): pre-fill so the host can Start fast.
+    const first = randomTeamName([]);
+    draftNames = [first, randomTeamName([first])];
+  }
   const wrap = document.getElementById("team-inputs");
   const addBtn = document.createElement("button");
   addBtn.id = "add-team-btn";
