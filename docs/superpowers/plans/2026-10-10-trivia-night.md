@@ -632,6 +632,40 @@ target — the category headers are.
 
 ---
 
+### Task 7.9: Dynamic team count (add/remove, 2–4)
+
+Partner request (2026-10-12): team count must not be fixed at 4 — add and
+remove teams at setup.
+
+**Design:**
+- Setup renders team ROWS (input + Remove button), min 2, NO cap —
+  partner also wants the option of more than 4 (2026-10-12); team
+  buttons and scoreboard plaques wrap (flex-wrap). Fresh load starts at
+  2 rows; back-to-setup keeps the current game's rows (values persist in
+  the DOM — the Setup button only shows the screen). "Add team" appends
+  a row; Remove disabled at 2 rows; Add always enabled.
+- Start requires every row to have a name (Start disabled otherwise) —
+  replaces the old "empty box = no team" filtering; the row count IS the
+  team count.
+- Same-game rule unchanged: same count = rename in place (scores + used
+  cells kept); different count = fresh game.
+- No change to scoring/board/question renderers: they already build from
+  `scoring.teams`.
+
+**Files:**
+- Modify: `js/app.js`, `styles.css` (index.html needs no change — inputs
+  are already JS-rendered into `#team-inputs`)
+
+- [ ] **Step 1: Dynamic team rows** — renderSetup rows + Add/Remove +
+  all-named start rule.
+- [ ] **Step 2: Verify (Playwright, text-only)** — 2→3→5 flows, min
+  enforcement (Remove disabled at 2 rows), Start disabled on an empty
+  row, back-to-setup keeps rows + values, count change = fresh game;
+  console clean.
+- [ ] **Step 3: Council + commit.**
+
+---
+
 ### Task 8: Full starter question bank
 
 **Files:**
