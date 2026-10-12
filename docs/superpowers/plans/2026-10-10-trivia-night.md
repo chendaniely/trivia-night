@@ -632,7 +632,7 @@ target — the category headers are.
 
 ---
 
-### Task 7.9: Dynamic team count (add/remove, 2–4)
+### Task 7.9: Dynamic team count (add/remove, min 2, no cap)
 
 Partner request (2026-10-12): team count must not be fixed at 4 — add and
 remove teams at setup.
@@ -656,13 +656,22 @@ remove teams at setup.
 - Modify: `js/app.js`, `styles.css` (index.html needs no change — inputs
   are already JS-rendered into `#team-inputs`)
 
-- [ ] **Step 1: Dynamic team rows** — renderSetup rows + Add/Remove +
-  all-named start rule.
-- [ ] **Step 2: Verify (Playwright, text-only)** — 2→3→5 flows, min
-  enforcement (Remove disabled at 2 rows), Start disabled on an empty
-  row, back-to-setup keeps rows + values, count change = fresh game;
-  console clean.
-- [ ] **Step 3: Council + commit.**
+- [x] **Step 1: Dynamic team rows** — renderSetup rows + Add/Remove +
+  all-named start rule. (add404e)
+- [x] **Step 2: Verify (Playwright, text-only)** — port 8090: fresh load
+  2 rows (Remove×2 disabled, Add on, Start off); names → Start on;
+  Add 3rd empty → Start off, values kept; 3-team game scores 100;
+  back-to-setup keeps 3 rows + values; 5-team start → 5 plaques all 0
+  (count change = fresh game) + 5 question-screen team buttons; removes
+  step 5→4→3→2 one row per click, Remove disabled at 2; console only
+  the favicon 404 + intentional missing.png probes. After-shot in
+  `.playwright-mcp/ui-after-5teams.png` (NOT read — text-only model).
+- [x] **Step 3: Council + commit.** Council 2026-10-12: backward — clean
+  (plan heading "2–4" corrected to no-cap). Forward — 🟠 loadBank did not
+  reset state.teamNames (stale names for Task 9) → one-line fix applied;
+  🟡 draft-carry across bank loads deferred (Task 9 owns that UX); 🟡
+  5+ rows scroll at 720p accepted (setup is a pre-game screen, TVs are
+  1080p).
 
 ---
 

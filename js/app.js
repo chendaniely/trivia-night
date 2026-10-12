@@ -52,6 +52,7 @@ async function loadBank() {
   // (used-cell keys and round logs refer to the old bank).
   state.scoring = null;
   state.used = new Map();
+  state.teamNames = []; // no stale names for the next setup (council 7.9, Task 9)
   resetFlow(); // no stale question state across bank loads (Task 9 folder mode)
   renderSetup();
   showScreen("setup");
