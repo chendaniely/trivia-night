@@ -542,16 +542,16 @@ refine roles, do not recolor.
   (wght 200–800; verified via fontTools `fvar`); `font-display: swap`;
   system-ui fallback. Weight contrast is the typographic device: 400
   body, 700 headers, 800 tabular numerals + scores.
-- Base scale 28 → 30px; h1 56 → 72px serif.
+- Base scale 28 → 30px; h1 56 → 72px/800.
 - Board (the hero): 1px `--edge` borders on headers/cells (depth via edges,
   no shadow card kit); cells min-height 88px with 40px/800 tabular
-  numerals; category headers serif 32px; a subtle 5-step background ramp
+  numerals; category headers 32px/700; a subtle 5-step background ramp
   easy → hard (tier classes on cells) that encodes difficulty; hover =
   orange fill.
 - Scoreboard: plaque style — name 28px, points 40px/800 orange
   tabular-nums, 1px border, radius 14.
-- Question screen: h2 eyebrow serif 32px muted; question 52px; answer
-  48px serif orange, slide-in reveal; setup title gets a short orange
+- Question screen: h2 eyebrow 32px/700 muted; question 52px/400; answer
+  48px/800 orange, slide-in reveal; setup title gets a short orange
   rule; team buttons keep the ✓/✕ suffix, dark text on green/red fills.
 - Motion (responds to action, ≤240ms): screen fade/slide-in, answer reveal
   slide, button hover lift + press sink; `prefers-reduced-motion` kills it.
@@ -560,20 +560,33 @@ refine roles, do not recolor.
 - Add: `fonts/atkinson-hyperlegible-next.woff2` (variable font), `@font-face` in `styles.css`
 - Modify: `styles.css`, `js/board.js` (one line: tier classes on cells)
 
-- [ ] **Step 1: Type + tokens** — Atkinson Hyperlegible Next variable
+- [x] **Step 1: Type + tokens** — Atkinson Hyperlegible Next variable
   woff2 (latin, wght 200–800) into `fonts/`, `@font-face` + base scale +
-  button/input restyle.
-- [ ] **Step 2: Board + scoreboard** — borders, cell presence, difficulty
-  ramp (tier classes in board.js), score plaques.
-- [ ] **Step 3: Setup + question + tally + motion** — title rule, question
+  button/input restyle. (1630f28)
+- [x] **Step 2: Board + scoreboard** — borders, cell presence, difficulty
+  ramp (tier classes in board.js), score plaques. (51c468a)
+- [x] **Step 3: Setup + question + tally + motion** — title rule, question
   scale, reveal + screen-in animations, press states, reduced-motion.
-- [ ] **Step 4: Verify (Playwright, TEXT-ONLY)** — fresh port;
-  `document.fonts.check` for both families; `getComputedStyle` spot checks
-  (families, sizes, colors) on board + question screens; a11y snapshots
-  structurally sound; console clean. Save (do NOT read) after-screenshots
-  for the Claude pass.
-- [ ] **Step 5: Council + commit** — backward + forward pass (text-based:
+  (fb7d3c4)
+- [x] **Step 4: Verify (Playwright, TEXT-ONLY)** — port 8086;
+  `document.fonts.status` loaded + `fonts.check` true at wght 400 AND 800
+  (variable axis resolves); computed checks: body 30px Atkinson, h1
+  72px/800, cell 40px/800 min-height 88px border 1px #24405a, tier ramp
+  #111f2a→#1f3b4e, header 32px/700, points 40px/800 #f26522, question
+  52px/400, answer 48px/800 + `reveal-in 0.24s`, marked-green #3fb950,
+  trivia img 640px loaded, tally row 14px/1px. Console: only the
+  expected favicon 404 + the 3 intentional missing.png probe 404s.
+  After-screenshots saved to `.playwright-mcp/ui-after-*.png` (NOT read —
+  text-only model).
+- [x] **Step 5: Council + commit** — backward + forward pass (text-based:
   subagents read code/diffs, not screenshots), apply findings, check boxes.
+  Council 2026-10-12: backward — code h1 was 68px vs plan 72px (code
+  aligned); stale "serif" wording fixed. Forward — `font-display: swap`
+  flagged as a metrics-reflow risk (TV + public deploy); KEPT swap (text
+  visible immediately beats a one-time reflow; `block` risks up to 3s of
+  blank TV on flaky Wi-Fi), mitigated with `<link rel="preload"
+  as="font">` in index.html. Real-TV reflow re-checked in the Claude
+  pass (deferred section).
 
 ---
 
@@ -686,7 +699,7 @@ tie up loose ends — this is the list:
 1. **UI pass visual review (Task 7.7):** take fresh 1280×720 screenshots
    of all five screens (setup, board, question with a revealed answer,
    trivia column, tally) against the no-store server and judge: board
-   legibility at TV distance, serif rendering, orange/blue role
+   legibility at TV distance, font rendering, orange/blue role
    discipline (orange = primary action + scores only), motion feel
    (reveal + screen fade). Before-shots from 2026-10-11 are in
    `.playwright-mcp/ui-before-*.png` (gitignored, untracked).
