@@ -7,3 +7,7 @@ node_modules/
 # Only generated demo clips are tracked.
 audio/*
 !audio/demo/
+
+# Working question drafts stay local (real content, not demo material).
+question-drafts/*
+!question-drafts/.gitkeep
