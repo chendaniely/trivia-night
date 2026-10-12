@@ -34,6 +34,7 @@ export function renderBoard() {
 
   const grid = document.createElement("div");
   grid.className = "board-grid";
+  if (mode === "trivia") grid.classList.add("trivia"); // dim inert cells (Task 7.8)
   grid.style.gridTemplateColumns = `repeat(${bank.rounds.length}, 1fr)`;
 
   bank.rounds.forEach((round, ri) => {
@@ -44,6 +45,8 @@ export function renderBoard() {
     if (mode === "trivia" && hasUnused) {
       h.classList.add("clickable");
       h.addEventListener("click", () => onColumnClick(ri));
+    } else if (mode === "trivia") {
+      h.classList.add("dim"); // round finished: header is inert (Task 7.8)
     }
     grid.append(h);
   });
@@ -88,5 +91,11 @@ export function renderBoard() {
   setupBtn.addEventListener("click", () => showScreen("setup"));
   actions.append(resetBtn, setupBtn);
 
-  el.replaceChildren(score, grid, actions);
+  let hint = null;
+  if (mode === "trivia") {
+    hint = document.createElement("p");
+    hint.className = "board-hint";
+    hint.textContent = "Trivia: click a category name to start that round — the amounts are not clickable.";
+  }
+  el.replaceChildren(score, ...(hint ? [hint] : []), grid, actions);
 }
