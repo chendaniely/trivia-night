@@ -590,6 +590,36 @@ refine roles, do not recolor.
 
 ---
 
+### Task 7.8: Back button + trivia click affordance
+
+Partner request (2026-10-12): (a) every question screen needs a Back button
+— an accidental cell tap must be recoverable without losing state; (b) in
+trivia mode it must be obvious that the dollar amounts are NOT the click
+target — the category headers are.
+
+**Design:**
+- Back to board: quiet-style button (`.btn-quiet`: panel bg, 1px edge
+  border, muted text) FIRST in the controls row of BOTH question screens.
+  Jeopardy: discards marks, does NOT consume the cell, scores unchanged,
+  back to board. Trivia: leaves the column, no cell consumed; the host can
+  re-enter from the header. Same stale-tap guards as `done()`/`nextQuestion()`.
+- Trivia affordance: trivia-mode cells render at opacity 0.45 (visually
+  inert); centered hint line under the scoreboard — "Trivia: click a
+  category name to start that round — the amounts are not clickable."; a
+  fully-used column's header dims too (round-over feedback).
+
+**Files:**
+- Modify: `js/question.js`, `js/board.js`, `styles.css`
+
+- [ ] **Step 1: Back button** — both flows + `.btn-quiet` style.
+- [ ] **Step 2: Trivia affordance** — dim cells, hint line, dim finished headers.
+- [ ] **Step 3: Verify (Playwright, text-only)** — back from both screens
+  keeps scores + cells intact; trivia board shows hint + dimmed cells;
+  console clean. Save after-shots (do NOT read).
+- [ ] **Step 4: Council + commit.**
+
+---
+
 ### Task 8: Full starter question bank
 
 **Files:**
