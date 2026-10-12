@@ -48,23 +48,35 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 #team-inputs { display: grid; gap: 16px; margin: 32px 0; }
 #mode-pick { display: flex; gap: 48px; margin: 24px 0; font-size: 32px; }
 #error-list { font-size: 28px; color: var(--bad); padding-left: 24px; }
-.scoreboard { display: flex; gap: 40px; justify-content: center; font-size: 32px; margin-bottom: 24px; }
-.score-team { background: var(--panel); padding: 12px 28px; border-radius: 10px; }
-.score-points { font-weight: 700; color: var(--orange); }
-.board-grid { display: grid; gap: 10px; }
+.scoreboard { display: flex; gap: 28px; justify-content: center; margin-bottom: 28px; }
+.score-team {
+  display: flex; align-items: baseline; gap: 14px;
+  background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
+  padding: 12px 28px; font-size: 28px;
+}
+.score-points { font-weight: 800; font-size: 40px; color: var(--orange); font-variant-numeric: tabular-nums; }
+.board-grid { display: grid; gap: 12px; }
 .board-header {
-  font-size: 30px; font-weight: 700; text-align: center;
-  padding: 14px 8px; background: var(--panel); border-radius: 10px;
+  font-size: 32px; font-weight: 700; line-height: 1.2; text-align: center;
+  padding: 18px 12px; background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
   overflow-wrap: break-word; min-width: 0;
 }
-.board-header.clickable:hover { background: var(--blue); }
+.board-header.clickable:hover { background: var(--blue); border-color: var(--blue); }
+/* Row position IS difficulty: subtle 5-step ramp easy (top) to hard (bottom). */
+.board-cell.tier-0 { background: #111f2a; }
+.board-cell.tier-1 { background: #13242f; }
+.board-cell.tier-2 { background: #162a38; }
+.board-cell.tier-3 { background: #1a3242; }
+.board-cell.tier-4 { background: #1f3b4e; }
 .board-cell {
-  font-size: 36px; font-weight: 700; text-align: center;
-  padding: 26px 8px; background: var(--panel); border-radius: 10px;
+  font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums;
+  display: grid; place-items: center; text-align: center;
+  min-height: 88px; padding: 10px 8px;
+  background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
 }
 .clickable { cursor: pointer; }
-.board-cell.clickable:hover { background: var(--orange); color: #0a1620; }
-.board-cell.used { color: var(--muted); background: transparent; border: 2px dashed #2c4a66; }
+.board-cell.clickable:hover { background: var(--orange); border-color: var(--orange); color: #0a1620; }
+.board-cell.used { color: var(--muted); background: transparent; border: 2px dashed var(--edge); }
 .board-gap { visibility: hidden; }
 .question-wrap { display: grid; gap: 32px; justify-items: start; }
 .question-wrap h2 { font-size: 40px; color: var(--muted); margin: 0; }

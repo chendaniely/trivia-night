@@ -52,6 +52,7 @@ export function renderBoard() {
     bank.rounds.forEach((round, ri) => {
       const cell = document.createElement("div");
       cell.className = "board-cell";
+      cell.classList.add("tier-" + Math.min(qi, 4)); // difficulty ramp (Task 7.7)
       if (qi >= round.questions.length) {
         cell.classList.add("board-gap"); // no placeholder content (spec)
         grid.append(cell);
