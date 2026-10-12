@@ -675,6 +675,43 @@ remove teams at setup.
 
 ---
 
+### Task 7.10: Random team names on Add (adj + noun, no word reuse)
+
+Partner request (2026-10-12): "Add team" auto-fills the new row with a
+fun two-word name (adjective + noun) from a built-in dictionary; no word
+is reused across the teams currently in setup.
+
+**Design:**
+- Pure `js/teams.js`: `TEAM_ADJ` + `TEAM_NOUN` (~30 each, short
+  TV-legible words) + `randomTeamName(existingNames)` — picks an unused
+  adjective + unused noun (case-insensitive word match against every
+  current name, typed or generated); falls back to "Team N" if a list is
+  exhausted (15+ teams). Node-tested: word membership, no word reused
+  across 20 generations, no clash with existing names, fallback.
+- `js/app.js`: "Add team" passes the generated name into the new row
+  (host can still edit it). The initial 2 rows stay empty. Removed or
+  edited names free their words automatically — generation always checks
+  the live row values, no bookkeeping.
+
+**Files:**
+- Add: `js/teams.js`, `test/teams.test.mjs`
+- Modify: `js/app.js`
+
+- [x] **Step 1: teams.js + wire Add + node test.** (cafc27d)
+- [x] **Step 2: Verify (Playwright, text-only)** — port 8091: 5 adds →
+  5 two-word names (Vivid Badgers, Plucky Falcons, Golden Tofu, Breezy
+  Beavers, Gilded Sausages) with 14/14 words distinct across typed +
+  generated; typing "Cosmic Pickles" then Add → "Nifty Pigeons"
+  (avoids both typed words, no clash); console only the favicon 404.
+- [x] **Step 3: Council + commit.** Council 2026-10-12: forward — no
+  downstream risk (nothing keyed by name; fallback dupes display-only;
+  test fallback assertion self-referential on the exported lists).
+  Backward — 🟠 typed-clash test assertion was vacuous (full-name
+  string compared to a single word, could never fail) → rewritten as
+  word-to-word set check, re-verified green.
+
+---
+
 ### Task 8: Full starter question bank
 
 **Files:**

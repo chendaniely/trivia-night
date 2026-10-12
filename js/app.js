@@ -3,6 +3,7 @@ import { parseBank } from "./validate.js";
 import { createScoring } from "./scoring.js";
 import { renderBoard, setCellClick, setColumnClick } from "./board.js";
 import { startQuestion, startColumn, resetFlow } from "./question.js";
+import { randomTeamName } from "./teams.js";
 
 export const state = {
   mode: "jeopardy", // "jeopardy" | "trivia"
@@ -73,9 +74,11 @@ function renderSetup(draftNames = ["", ""]) {
   addBtn.id = "add-team-btn";
   addBtn.className = "btn-quiet";
   addBtn.textContent = "Add team";
-  addBtn.addEventListener("click", () =>
-    renderSetup(setupInputs().map((el) => el.value).concat(""))
-  );
+  addBtn.addEventListener("click", () => {
+    const vals = setupInputs().map((el) => el.value);
+    // fun auto-name (Task 7.10); the host can still edit it
+    renderSetup(vals.concat(randomTeamName(vals)));
+  });
   wrap.replaceChildren(
     ...draftNames.map((val, i) => {
       const row = document.createElement("div");
