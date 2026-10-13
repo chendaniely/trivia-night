@@ -60,6 +60,16 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 }
 #screen-setup .subtitle { text-align: center; }
 #screen-setup #start-btn { display: block; margin: 0 auto; }
+#screen-setup #about-btn { display: block; margin: 20px auto 0; font-size: 24px; padding: 10px 28px; }
+/* About page (Task 11): static text, narrower than the board. */
+#screen-about { max-width: 900px; }
+#screen-about h1 { text-align: center; }
+#screen-about p, #screen-about li { line-height: 1.55; }
+#screen-about ul { padding-left: 24px; }
+#screen-about a { color: var(--orange); }
+#screen-about a:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+#screen-about code { font-size: 0.85em; background: var(--panel); border: 1px solid var(--edge); border-radius: 6px; padding: 2px 8px; }
+#about-back-btn { display: block; margin: 32px auto 0; }
 #error-list { font-size: 28px; color: var(--bad); padding-left: 24px; }
 .scoreboard { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; margin-bottom: 28px; }
 .score-team {

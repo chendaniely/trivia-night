@@ -774,7 +774,11 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [ ] **Step 1: Implement `js/folder.js`**
 
-Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio and image files via `URL.createObjectURL` (FSA: walk the directory handle per referenced path; webkitdirectory fallback: match on `webkitRelativePath`). Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub; the optional `audio:` and `images:` keys appear as COMMENTED example lines — an empty `images:` or `images: []` fails validation, so the template must parse on first load), an `audio/` dir, an `images/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source). Audio and image files from the folder become object URLs — `URL.revokeObjectURL` all of them on every load/reset (no leaks across sources). A folder bank referencing audio or an image that is NOT in the folder keeps the path as-is: 404 → the existing "no clip"/"no image" note (graceful, no crash).
+Setup screen gains two buttons: **Load folder** and **Create new** —
+PLACED in `#screen-setup` OUTSIDE `#team-inputs` (council Task 11,
+2026-10-12: `renderSetup` replaceChildren-wipes `#team-inputs` on every
+add/remove/folder load, so the buttons would vanish mid-use; e.g.
+beside/below `#about-btn`). Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio and image files via `URL.createObjectURL` (FSA: walk the directory handle per referenced path; webkitdirectory fallback: match on `webkitRelativePath`). Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub; the optional `audio:` and `images:` keys appear as COMMENTED example lines — an empty `images:` or `images: []` fails validation, so the template must parse on first load), an `audio/` dir, an `images/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source). Audio and image files from the folder become object URLs — `URL.revokeObjectURL` all of them on every load/reset (no leaks across sources). A folder bank referencing audio or an image that is NOT in the folder keeps the path as-is: 404 → the existing "no clip"/"no image" note (graceful, no crash).
 app.js hooks for this task: `renderError(errors)` (exported — folder loads route to the same error panel) and `setLoader(fn)` (exported — "Try again" reloads the active source, not always the shipped file). `renderSetup`'s input listener is one-time wired at app.js init — do not re-add it per load. `loadBank` calls question.js `resetFlow()` on every successful bank load AND resets `state.scoring`/`state.used` to a fresh game (council fix 2026-10-11 — a mid-game source swap must not carry old-bank scores or old-index used cells into the new bank) — folder loads go through the same path; don't bypass it.
 
 - [ ] **Step 2: Verify with Playwright**
@@ -828,6 +832,75 @@ Expected: `200`. (Site root 404s until Task 3 adds `index.html` — expected.)
 - [ ] **Step: Handoff for the user (not agent work)**
 
 Remote already configured. Pushing `main` triggers the deploy. Set the repo's Pages source to the `gh-pages` branch (Settings → Pages → Branch: gh-pages). Site: `https://chendaniely.github.io/trivia-night/`. Until Task 3 lands, the site root has no `index.html`.
+
+---
+
+### Task 11: About page (in-app) — partner request 2026-10-12
+
+**Design:**
+- New `#screen-about` section in index.html — STATIC content, no JS
+  rendering: what the app is (single-device host app — the TV shows the
+  board, the host runs everything from one screen), how to use it
+  (setup: teams + mode; Jeopardy: cell → mark teams green/red →
+  Reveal/Done; Trivia: the category header is the click target,
+  green/deselect; "Back to board" is the mis-tap escape; Setup
+  mid-game: same count = resume, different count = fresh game), one
+  line that the board is `questions.yaml`, and a link to
+  https://github.com/chendaniely/trivia-night.
+- "About" = `.btn-quiet` button under Start on the setup screen;
+  "Back to setup" on the about screen. "about" joins the SCREENS array.
+  No state change — showScreen only.
+
+**Files:**
+- Modify: `index.html`, `js/app.js`, `styles.css`
+
+- [x] **Step 1: About screen + wiring + minimal CSS.**
+- [x] **Step 2: Verify (Playwright, text-only)** — port 8094: About
+  visible with all five how-to items (Setup, Jeopardy, Trivia,
+  Mistapped?, Mid-game); link href
+  https://github.com/chendaniely/trivia-night; questions.yaml line
+  present; Back to setup returns with typed team value intact;
+  console only the favicon 404.
+- [x] **Step 3: Council + commit.** Council 2026-10-12: backward —
+  clean (how-to text re-verified against question.js/board.js/app.js
+  behavior). Forward — 🟠 GitHub link was same-tab (a TV-remote tap
+  would navigate away and wipe the in-memory game) → target="_blank"
+  rel="noopener"; 🟡 link had no focus-visible rule → added; 🟠 Task 9
+  Load-folder/Create-new buttons must live outside #team-inputs
+  (placement pinned in Task 9 step text).
+
+---
+
+### Task 12: README (human-facing) + AGENTS sync rule — partner request 2026-10-12
+
+**Design:**
+- New `README.md` — simple, for HUMAN use: what it is (one paragraph),
+  using it at the event (a few lines + pointer to the in-app About
+  page), running it locally (`make`, `make serve [PORT]`, `make test`,
+  the validation one-liner), customizing (`questions.yaml` schema in a
+  handful of lines), where it lives (live URL, auto-deployed on push).
+  NO agent-process information — that stays in AGENTS.md.
+- `AGENTS.md`: add the sync rule — whenever app behavior changes (new
+  screen, command, file, or flow), update README.md in the same change;
+  README stays simple and human-facing; agent context lives in
+  AGENTS.md only.
+
+**Files:**
+- Create: `README.md`
+- Modify: `AGENTS.md`
+
+- [x] **Step 1: README + AGENTS rule.**
+- [x] **Step 2: Verify** — `make test` 3/3 pass; the README one-liner
+  → `6 rounds, 29 questions`; `make serve PORT=8095` → 200; live URL
+  already verified serving on the last deploy. README checked for
+  agent-jargon: none (no commit/council/plan language).
+- [x] **Step 3: Council + commit.** Council 2026-10-12: backward —
+  clean (every command + behavioral claim re-verified against the
+  repo; schema example parses). Forward — 🟠 "The whole board lives in
+  one file" would go false after Task 9 → "The shipped board…"; 🟠 the
+  sync rule covered only README.md while the About screen carries the
+  same falsifiable line → rule now names both targets and pins "same
+  commit (at latest, the task's final commit)".
 
 ---
 
