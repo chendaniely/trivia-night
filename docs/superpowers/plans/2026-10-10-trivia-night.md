@@ -774,7 +774,11 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [ ] **Step 1: Implement `js/folder.js`**
 
-Setup screen gains two buttons: **Load folder** and **Create new**. Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio and image files via `URL.createObjectURL` (FSA: walk the directory handle per referenced path; webkitdirectory fallback: match on `webkitRelativePath`). Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub; the optional `audio:` and `images:` keys appear as COMMENTED example lines — an empty `images:` or `images: []` fails validation, so the template must parse on first load), an `audio/` dir, an `images/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source). Audio and image files from the folder become object URLs — `URL.revokeObjectURL` all of them on every load/reset (no leaks across sources). A folder bank referencing audio or an image that is NOT in the folder keeps the path as-is: 404 → the existing "no clip"/"no image" note (graceful, no crash).
+Setup screen gains two buttons: **Load folder** and **Create new** —
+PLACED in `#screen-setup` OUTSIDE `#team-inputs` (council Task 11,
+2026-10-12: `renderSetup` replaceChildren-wipes `#team-inputs` on every
+add/remove/folder load, so the buttons would vanish mid-use; e.g.
+beside/below `#about-btn`). Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio and image files via `URL.createObjectURL` (FSA: walk the directory handle per referenced path; webkitdirectory fallback: match on `webkitRelativePath`). Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub; the optional `audio:` and `images:` keys appear as COMMENTED example lines — an empty `images:` or `images: []` fails validation, so the template must parse on first load), an `audio/` dir, an `images/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source). Audio and image files from the folder become object URLs — `URL.revokeObjectURL` all of them on every load/reset (no leaks across sources). A folder bank referencing audio or an image that is NOT in the folder keeps the path as-is: 404 → the existing "no clip"/"no image" note (graceful, no crash).
 app.js hooks for this task: `renderError(errors)` (exported — folder loads route to the same error panel) and `setLoader(fn)` (exported — "Try again" reloads the active source, not always the shipped file). `renderSetup`'s input listener is one-time wired at app.js init — do not re-add it per load. `loadBank` calls question.js `resetFlow()` on every successful bank load AND resets `state.scoring`/`state.used` to a fresh game (council fix 2026-10-11 — a mid-game source swap must not carry old-bank scores or old-index used cells into the new bank) — folder loads go through the same path; don't bypass it.
 
 - [ ] **Step 2: Verify with Playwright**
@@ -850,11 +854,20 @@ Remote already configured. Pushing `main` triggers the deploy. Set the repo's Pa
 **Files:**
 - Modify: `index.html`, `js/app.js`, `styles.css`
 
-- [ ] **Step 1: About screen + wiring + minimal CSS.**
-- [ ] **Step 2: Verify (Playwright, text-only)** — fresh port: About
-  from setup; content has the how-to list + the GitHub link; back
-  returns to setup with rows/values/mode intact; console clean.
-- [ ] **Step 3: Council + commit.**
+- [x] **Step 1: About screen + wiring + minimal CSS.**
+- [x] **Step 2: Verify (Playwright, text-only)** — port 8094: About
+  visible with all five how-to items (Setup, Jeopardy, Trivia,
+  Mistapped?, Mid-game); link href
+  https://github.com/chendaniely/trivia-night; questions.yaml line
+  present; Back to setup returns with typed team value intact;
+  console only the favicon 404.
+- [x] **Step 3: Council + commit.** Council 2026-10-12: backward —
+  clean (how-to text re-verified against question.js/board.js/app.js
+  behavior). Forward — 🟠 GitHub link was same-tab (a TV-remote tap
+  would navigate away and wipe the in-memory game) → target="_blank"
+  rel="noopener"; 🟡 link had no focus-visible rule → added; 🟠 Task 9
+  Load-folder/Create-new buttons must live outside #team-inputs
+  (placement pinned in Task 9 step text).
 
 ---
 
