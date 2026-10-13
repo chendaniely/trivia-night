@@ -889,11 +889,18 @@ Remote already configured. Pushing `main` triggers the deploy. Set the repo's Pa
 - Create: `README.md`
 - Modify: `AGENTS.md`
 
-- [ ] **Step 1: README + AGENTS rule.**
-- [ ] **Step 2: Verify** — every command in the README actually runs
-  (make, make serve, make test, the one-liner); the live URL is right;
-  no agent-only jargon leaked in.
-- [ ] **Step 3: Council + commit.**
+- [x] **Step 1: README + AGENTS rule.**
+- [x] **Step 2: Verify** — `make test` 3/3 pass; the README one-liner
+  → `6 rounds, 29 questions`; `make serve PORT=8095` → 200; live URL
+  already verified serving on the last deploy. README checked for
+  agent-jargon: none (no commit/council/plan language).
+- [x] **Step 3: Council + commit.** Council 2026-10-12: backward —
+  clean (every command + behavioral claim re-verified against the
+  repo; schema example parses). Forward — 🟠 "The whole board lives in
+  one file" would go false after Task 9 → "The shipped board…"; 🟠 the
+  sync rule covered only README.md while the About screen carries the
+  same falsifiable line → rule now names both targets and pins "same
+  commit (at latest, the task's final commit)".
 
 ---
 

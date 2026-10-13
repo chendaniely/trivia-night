@@ -36,3 +36,13 @@ step counts as done:
 
 - CLI: https://playwright.dev/docs/getting-started-cli
 - MCP: https://playwright.dev/docs/getting-started-mcp
+
+## README sync
+
+- `README.md` is for HUMAN readers: keep it simple — what it is, how to
+  run it, how to customize it. No agent-process information (commit
+  protocol, council, plans, protocols) — that lives here in AGENTS.md.
+- Whenever a change alters what a human can do with the app or how it is
+  run (new screen, command, file, or flow), update `README.md` and the
+  in-app About screen in the same commit (at latest, the task's final
+  commit). Stale human-facing docs are an unfinished step.
