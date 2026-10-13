@@ -4,8 +4,9 @@
 // -> red = -pts -> clear) + "Reveal answer" (manual: host doesn't know all
 // answers; marks may be set before or after) + "Done" (applies all marks,
 // consumes the cell, back to board; zero marks = nobody got it).
-// Trivia column: team toggles (green = +pts, click again clears) + "Next"
-// (applies greens, advances; no taps = pass); last question -> tally.
+// Trivia column: team toggles (green = +pts, click again clears) +
+// "Reveal answer" (manual, per-question — Task 13) + "Next" (applies
+// greens, advances; no taps = pass); last question -> tally.
 // Audio: questions with q.audio get a player in EVERY renderer (both modes);
 // a missing clip swaps the player for a "no clip" note (Review Focus 3).
 import { state, showScreen } from "./app.js";
@@ -54,6 +55,7 @@ let marks = new Map(); // teamIdx -> "green" | "red" (jeopardy marks)
 let revealed = false;
 let col = null; // { ri, qi } — active trivia column
 let colMarks = new Map(); // teamIdx -> "green" (trivia marks)
+let colRevealed = false; // per-question (Task 13: host may need the answer)
 
 // Team buttons shared by both renderers: colored by mark state, ✓ / ✕ suffix.
 function teamButtons(markMap, onMark) {
@@ -81,6 +83,7 @@ export function resetFlow() {
   revealed = false;
   col = null;
   colMarks = new Map();
+  colRevealed = false;
 }
 
 // --- Jeopardy -------------------------------------------------------------
@@ -199,7 +202,14 @@ export function startColumn(ri) {
   if (qi === -1) return; // fully-used column (Review Focus 5: no re-awarding)
   col = { ri, qi };
   colMarks = new Map();
+  colRevealed = false;
   showScreen("question");
+  renderColumn();
+}
+
+function revealCol() {
+  if (!col || colRevealed) return;
+  colRevealed = true;
   renderColumn();
 }
 
@@ -218,6 +228,7 @@ function nextQuestion() {
   for (const idx of colMarks.keys()) state.scoring.give(idx, pts, round.name);
   state.used.set(`${ri}:${qi}`, true);
   colMarks = new Map();
+  colRevealed = false; // fresh question: answer hidden again
   const next = firstUnused(round, ri, qi + 1);
   if (next !== -1) {
     col = { ri, qi: next };
@@ -235,6 +246,7 @@ function backToBoard() {
   // Accidental-tap escape: leave the column, no cell consumed.
   col = null;
   colMarks = new Map();
+  colRevealed = false;
   renderBoard();
   showScreen("board");
 }
@@ -256,6 +268,12 @@ function renderColumn() {
   const ib = imageBlock(question.images);
 
   wrap.append(cat, ...(ab ? [ab] : []), ...(ib ? [ib] : []), qText);
+  if (colRevealed) {
+    const ans = document.createElement("p");
+    ans.className = "answer-text";
+    ans.textContent = question.a.trim();
+    wrap.append(ans);
+  }
   wrap.append(teamButtons(colMarks, (idx) => cycleColMark(idx)));
 
   const controls = document.createElement("div");
@@ -265,6 +283,13 @@ function renderColumn() {
   bk.textContent = "Back to board";
   bk.addEventListener("click", backToBoard);
   controls.append(bk);
+  if (!colRevealed) {
+    const rv = document.createElement("button");
+    rv.className = "btn-secondary";
+    rv.textContent = "Reveal answer";
+    rv.addEventListener("click", revealCol);
+    controls.append(rv);
+  }
   const nx = document.createElement("button");
   nx.className = "btn-primary";
   nx.textContent = "Next";
