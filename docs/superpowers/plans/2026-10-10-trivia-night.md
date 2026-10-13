@@ -772,7 +772,9 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 - Consumes: `parseBank`, `state`
 - Produces: `loadFolder(dirHandleOrFiles) -> parseBank result` (audio AND images as object URLs — council 2026-10-11: folder-bank `images:` paths must resolve against the folder, not the site URL, or every folder image 404s into the "no image" note; a malformed `questions.yaml` in the folder surfaces the same line-numbered error panel), `createNew(parentHandle, name) -> dirHandle`, both with graceful fallbacks
 
-- [ ] **Step 1: Implement `js/folder.js`**
+- [x] **Step 1: Implement `js/folder.js`** (done 2026-10-13, commit
+  `35e2b32` — amended from `900becc` to add the 🤖 prefix per AGENTS.md
+  + council fixes)
 
 Setup screen gains two buttons: **Load folder** and **Create new** —
 PLACED in `#screen-setup` OUTSIDE `#team-inputs` (council Task 11,
@@ -781,22 +783,47 @@ add/remove/folder load, so the buttons would vanish mid-use; e.g.
 beside/below `#about-btn`). Primary: File System Access API (`window.showDirectoryPicker`); read `questions.yaml` via `File.text()`, audio and image files via `URL.createObjectURL` (FSA: walk the directory handle per referenced path; webkitdirectory fallback: match on `webkitRelativePath`). Fallback when the API is absent: hidden `<input type="file" webkitdirectory>` covering the same load path. **Create new**: `showDirectoryPicker()` first (user picks the parent, e.g. Documents), then `parent.getDirectoryHandle(name, { create: true })` writes a template `questions.yaml` (schema from Task 3 stub; the optional `audio:` and `images:` keys appear as COMMENTED example lines — an empty `images:` or `images: []` fails validation, so the template must parse on first load), an `audio/` dir, an `images/` dir, and a README explaining the layout and the `>` block-scalar convention. FSA absent → inline message with instructions, no crash. Loading any source resets `state` to a fresh board (one board per data source). Audio and image files from the folder become object URLs — `URL.revokeObjectURL` all of them on every load/reset (no leaks across sources). A folder bank referencing audio or an image that is NOT in the folder keeps the path as-is: 404 → the existing "no clip"/"no image" note (graceful, no crash).
 app.js hooks for this task: `renderError(errors)` (exported — folder loads route to the same error panel) and `setLoader(fn)` (exported — "Try again" reloads the active source, not always the shipped file). `renderSetup`'s input listener is one-time wired at app.js init — do not re-add it per load. `loadBank` calls question.js `resetFlow()` on every successful bank load AND resets `state.scoring`/`state.used` to a fresh game (council fix 2026-10-11 — a mid-game source swap must not carry old-bank scores or old-index used cells into the new bank) — folder loads go through the same path; don't bypass it.
 
-- [ ] **Step 2: Verify with Playwright**
+- [x] **Step 2: Verify with Playwright** (done 2026-10-13, ports 8096/8097)
 
-Verified environment fact: headless Chromium (this MCP, Chrome 155) does NOT expose FSA — `showDirectoryPicker` is undefined — so the webkitdirectory fallback is the path Playwright exercises; FSA load + create-new are manual (user's machine), noted in handoff.
-1. Create a temp folder (e.g. `/tmp/tv-test/`) with its own `questions.yaml` (2 rounds) + `audio/x.wav`.
-2. MCP: on the setup screen, snapshot → fallback visible (webkitdirectory input shown, no FSA button). `browser_file_upload` the file list to the webkitdirectory input → snapshot: board renders from the folder's bank, not the shipped one.
-3. Second temp folder with a MALFORMED `questions.yaml` → snapshot: line-numbered error panel, no board.
-4. Create-new: code-path review only (FSA-only); the manual test is a handoff item.
+Environment fact, CORRECTED 2026-10-13: this headless Chromium DOES
+expose FSA (`showDirectoryPicker` is a function) — the original note was
+wrong. But the directory picker is not scriptable via this MCP
+(`browser_file_upload` never sees its modal state; the picker's promise
+aborts), so the webkitdirectory fallback is still the browser-verified
+path; FSA load + create-new writes stay a manual handoff (user's real
+Chrome/Edge). Also learned: a `display:none` file input never opens the
+chooser on a programmatic `.click()` — `#folder-input` is
+visually-hidden (1px, opacity 0) + `tabindex="-1"` instead.
+1. Fixtures under `.playwright-mcp/tv-test/` (gitignored; MCP file
+   access is restricted to the workspace): `good/` (questions.yaml +
+   `audio/clip.wav` + `images/here.png`, referencing a missing
+   `images/missing.png` too) and `bad/` (malformed yaml, no `a:`).
+2. `browser_file_upload` with the DIRECTORY path (required for
+   webkitdirectory inputs; Playwright walks it and sets proper
+   `webkitRelativePath`s) → board renders from the folder's bank
+   ("Folder Round", 2 cells), setup pre-filled with fresh auto-names,
+   Start immediately enabled.
+3. Media: audio `src` = `blob:…` (works), found image = `blob:…`,
+   missing image = "no image" note; malformed folder → line-numbered
+   error panel ("question.a must be a non-empty string"); console clean
+   (favicon + the intentional missing.png 404s only).
+4. Create-new: prompt() fires + is handleable via MCP; the directory
+   picker + `createWritable` writes are not scriptable → manual handoff.
+   Template parseability + webkit path matching covered by
+   `test/folder.test.mjs` (node 4/4).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit + council** (commit `35e2b32`, pushed)
 
-```bash
-git add js/folder.js js/app.js
-git commit -m "feat(folder): 🤖 add local folder loading and create-new scaffold
-
-Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
-```
+Council 2026-10-13: backward — clean (every spec bullet re-verified;
+single reset funnel `startNewBank` confirmed for shipped + both folder
+paths). Forward — 🟠 setup screen measured 871px tall at 1280x720 with
+Load folder/Create new ~15px visible and About fully off-screen →
+compacted (secondary buttons on one row, tighter rhythm): setup 680px,
+about 692px, both fit one TV screen; 🟡 `#folder-input` was an
+invisible tab stop → `tabindex="-1"`; 🟡 unguarded FSA media reads
+(denied permission = silent stall) → `fileUrl()` helper, NotFoundError
+vs other errors distinguished in the panel; 🟠 original commit lacked
+the 🤖 prefix → amended + force-with-lease.
 
 ---
 
