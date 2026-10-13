@@ -34,6 +34,16 @@ async function resolveFsa(handle, relPath) {
   }
 }
 
+// Object URL from a file handle; null when the read fails (permission etc) —
+// the path is then kept and surfaces as the usual note, never a stall.
+async function fileUrl(fh) {
+  try {
+    return URL.createObjectURL(await fh.getFile());
+  } catch {
+    return null;
+  }
+}
+
 // Swap found media for object URLs in place; return the URL list so the
 // caller can revoke it on the next load.
 async function swapMediaFromDirHandle(dir, bank, urls) {
@@ -41,19 +51,18 @@ async function swapMediaFromDirHandle(dir, bank, urls) {
     for (const q of round.questions) {
       if (q.audio) {
         const fh = await resolveFsa(dir, q.audio);
-        if (fh) {
-          const f = await fh.getFile();
-          q.audio = URL.createObjectURL(f);
-          urls.push(q.audio);
+        const u = fh ? await fileUrl(fh) : null;
+        if (u) {
+          q.audio = u;
+          urls.push(u);
         }
       }
       if (q.images) {
         const out = [];
         for (const p of q.images) {
           const fh = await resolveFsa(dir, p);
-          if (fh) {
-            const f = await fh.getFile();
-            const u = URL.createObjectURL(f);
+          const u = fh ? await fileUrl(fh) : null;
+          if (u) {
             out.push(u);
             urls.push(u);
           } else {
@@ -70,8 +79,14 @@ export async function loadFromDirHandle(handle) {
   try {
     const fh = await handle.getFileHandle("questions.yaml");
     text = await (await fh.getFile()).text();
-  } catch {
-    return { ok: false, errors: [{ where: "folder", message: "no questions.yaml in the folder root" }] };
+  } catch (err) {
+    // NotFoundError = no yaml in the root; anything else (e.g. a denied
+    // permission mid-read) is reported, not silently swallowed.
+    const message =
+      err && err.name === "NotFoundError"
+        ? "no questions.yaml in the folder root"
+        : `could not read questions.yaml (${err.message})`;
+    return { ok: false, errors: [{ where: "folder", message }] };
   }
   const result = parseBank(text);
   if (!result.ok) return result;
