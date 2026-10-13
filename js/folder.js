@@ -1,0 +1,170 @@
+// Local folder mode (Task 9): one folder = one board. Load the folder's
+// questions.yaml plus its media as object URLs; scaffold a new game
+// folder. FSA (showDirectoryPicker) primary, webkitdirectory fallback.
+// Pure logic — the DOM lives in app.js.
+import { parseBank } from "./validate.js";
+
+// Normalize a bank-relative media path ("audio/x.wav") for matching.
+function norm(p) {
+  return p.replace(/^\.\//, "").replace(/\\/g, "/");
+}
+
+export function revokeAll(urls) {
+  for (const u of urls) URL.revokeObjectURL(u);
+}
+
+// FSA: walk the directory handle by path parts; null when any part is
+// missing (the path stays as-is -> 404 -> the existing "no clip"/
+// "no image" note).
+async function resolveFsa(handle, relPath) {
+  const parts = norm(relPath).split("/").filter(Boolean);
+  if (!parts.length) return null;
+  let h = handle;
+  for (let i = 0; i < parts.length - 1; i++) {
+    try {
+      h = await h.getDirectoryHandle(parts[i]);
+    } catch {
+      return null;
+    }
+  }
+  try {
+    return await h.getFileHandle(parts[parts.length - 1]);
+  } catch {
+    return null;
+  }
+}
+
+// Swap found media for object URLs in place; return the URL list so the
+// caller can revoke it on the next load.
+async function swapMediaFromDirHandle(dir, bank, urls) {
+  for (const round of bank.rounds)
+    for (const q of round.questions) {
+      if (q.audio) {
+        const fh = await resolveFsa(dir, q.audio);
+        if (fh) {
+          const f = await fh.getFile();
+          q.audio = URL.createObjectURL(f);
+          urls.push(q.audio);
+        }
+      }
+      if (q.images) {
+        const out = [];
+        for (const p of q.images) {
+          const fh = await resolveFsa(dir, p);
+          if (fh) {
+            const f = await fh.getFile();
+            const u = URL.createObjectURL(f);
+            out.push(u);
+            urls.push(u);
+          } else {
+            out.push(p); // not in folder: keep the path -> note, no crash
+          }
+        }
+        q.images = out;
+      }
+    }
+}
+
+export async function loadFromDirHandle(handle) {
+  let text;
+  try {
+    const fh = await handle.getFileHandle("questions.yaml");
+    text = await (await fh.getFile()).text();
+  } catch {
+    return { ok: false, errors: [{ where: "folder", message: "no questions.yaml in the folder root" }] };
+  }
+  const result = parseBank(text);
+  if (!result.ok) return result;
+  const urls = [];
+  await swapMediaFromDirHandle(handle, result.bank, urls);
+  return { ok: true, bank: result.bank, urls };
+}
+
+// webkitdirectory fallback: match media on webkitRelativePath. The
+// folder root is the first path segment of the picked questions.yaml.
+export async function loadFromFileList(files) {
+  const arr = [...files];
+  const yaml = arr.find((f) => {
+    const parts = (f.webkitRelativePath || "").split("/");
+    return parts.length === 2 && parts[1] === "questions.yaml";
+  });
+  if (!yaml) {
+    return { ok: false, errors: [{ where: "folder", message: "no questions.yaml in the folder root" }] };
+  }
+  const result = parseBank(await yaml.text());
+  if (!result.ok) return result;
+  const root = yaml.webkitRelativePath.split("/")[0];
+  const urls = [];
+  const find = (rel) =>
+    arr.find((f) => f.webkitRelativePath === `${root}/${norm(rel)}`);
+  for (const round of result.bank.rounds)
+    for (const q of round.questions) {
+      if (q.audio) {
+        const f = find(q.audio);
+        if (f) {
+          q.audio = URL.createObjectURL(f);
+          urls.push(q.audio);
+        }
+      }
+      if (q.images) {
+        q.images = q.images.map((p) => {
+          const f = find(p);
+          if (f) {
+            const u = URL.createObjectURL(f);
+            urls.push(u);
+            return u;
+          }
+          return p; // not in folder: keep the path -> note, no crash
+        });
+      }
+    }
+  return { ok: true, bank: result.bank, urls };
+}
+
+// Create-new scaffold (FSA only): template keys that are optional
+// (audio:/images:) appear as COMMENTED example lines, so the file
+// parses on first load.
+export const NEW_TEMPLATE = `title: "My Trivia Night"
+rounds:
+  - name: "Round One"
+    questions:
+      - q: "First question — the easy one (top row is easy, bottom is hard)."
+        a: "First answer"
+      - q: >
+          A longer question, written with a block scalar.
+        a: "Second answer"
+      # Optional per question (uncomment and fill in):
+      #   points: 300
+      #   audio: "audio/clip.wav"
+      #   images:
+      #     - "images/photo.png"
+`;
+
+export const NEW_FOLDER_README = `# Trivia Night folder
+
+One folder = one board. Load this folder in the app with "Load folder".
+
+- questions.yaml — the board (title, rounds, questions; top row of a
+  round is easy, bottom row is hard)
+- audio/ — clips referenced with audio: (e.g. "audio/clip.wav")
+- images/ — photos referenced with images: (e.g. "images/photo.png")
+
+Long questions: use a block scalar (>), like the second question.
+Missing files never break the game — they show a "no clip"/"no image"
+note instead.
+`;
+
+export async function createNew(parentHandle, name) {
+  const dir = await parentHandle.getDirectoryHandle(name, { create: true });
+  const write = async (fileName, text) => {
+    const fh = await dir.getFileHandle(fileName, { create: true });
+    const w = await fh.createWritable();
+    await w.write(text);
+    await w.close();
+  };
+  await write("questions.yaml", NEW_TEMPLATE);
+  await write("README.md", NEW_FOLDER_README);
+  await dir.getDirectoryHandle("audio", { create: true });
+  await dir.getDirectoryHandle("images", { create: true });
+  return dir;
+}

@@ -4,6 +4,12 @@ import { createScoring } from "./scoring.js";
 import { renderBoard, setCellClick, setColumnClick } from "./board.js";
 import { startQuestion, startColumn, resetFlow } from "./question.js";
 import { randomTeamName } from "./teams.js";
+import {
+  loadFromDirHandle,
+  loadFromFileList,
+  createNew,
+  revokeAll,
+} from "./folder.js";
 
 export const state = {
   mode: "jeopardy", // "jeopardy" | "trivia"
@@ -48,7 +54,15 @@ async function loadBank() {
     renderError(result.errors);
     return;
   }
-  state.bank = result.bank;
+  startNewBank(result.bank, []);
+}
+
+// One board per data source (Task 9): any bank load starts a fresh game.
+let mediaUrls = []; // object URLs from the active folder bank
+function startNewBank(bank, urls) {
+  revokeAll(mediaUrls); // no blob leaks across sources
+  mediaUrls = urls;
+  state.bank = bank;
   // Bank swap (retry / folder mode): previous game state no longer applies
   // (used-cell keys and round logs refer to the old bank).
   state.scoring = null;
@@ -150,5 +164,79 @@ document.getElementById("about-back-btn").addEventListener("click", () => showSc
 let currentLoader = loadBank;
 export function setLoader(fn) { currentLoader = fn; }
 document.getElementById("retry-btn").addEventListener("click", () => currentLoader());
+
+// Local folder mode (Task 9): Load folder (FSA primary, webkitdirectory
+// fallback) + Create new (FSA only). Buttons live OUTSIDE #team-inputs
+// (council Task 11: renderSetup's replaceChildren would wipe them).
+const folderInput = document.getElementById("folder-input");
+const folderMsg = document.getElementById("folder-msg");
+const setFolderMsg = (text) => {
+  folderMsg.textContent = text;
+  folderMsg.classList.toggle("hidden", !text);
+};
+
+async function pickFolder() {
+  let handle;
+  try {
+    handle = await window.showDirectoryPicker();
+  } catch (err) {
+    if (err && err.name === "AbortError") return; // host cancelled
+    setFolderMsg("Could not open the folder: " + err.message);
+    return;
+  }
+  const result = await loadFromDirHandle(handle);
+  if (!result.ok) {
+    renderError(result.errors);
+    return;
+  }
+  startNewBank(result.bank, result.urls);
+  setFolderMsg("");
+}
+
+document.getElementById("load-folder-btn").addEventListener("click", () => {
+  if (window.showDirectoryPicker) {
+    setLoader(pickFolder); // "Try again" re-picks the folder
+    pickFolder();
+  } else {
+    setLoader(() => folderInput.click());
+    folderInput.click();
+  }
+});
+folderInput.addEventListener("change", async () => {
+  if (!folderInput.files.length) return;
+  const result = await loadFromFileList(folderInput.files);
+  folderInput.value = ""; // allow re-picking the same folder
+  if (!result.ok) {
+    renderError(result.errors);
+    return;
+  }
+  startNewBank(result.bank, result.urls);
+  setFolderMsg("");
+});
+
+document.getElementById("create-new-btn").addEventListener("click", async () => {
+  if (!window.showDirectoryPicker) {
+    setFolderMsg(
+      "Create new needs Chrome or Edge (File System Access API) — open the app there on your computer."
+    );
+    return;
+  }
+  const name = prompt("New game folder name", "my-trivia-night");
+  if (!name) return;
+  let parent;
+  try {
+    parent = await window.showDirectoryPicker();
+  } catch (err) {
+    if (err && err.name === "AbortError") return;
+    setFolderMsg("Could not pick the parent folder: " + err.message);
+    return;
+  }
+  try {
+    await createNew(parent, name);
+    setFolderMsg(`Created ${name}/ with a starter questions.yaml — load it with Load folder.`);
+  } catch (err) {
+    setFolderMsg("Could not create the folder: " + err.message);
+  }
+});
 
 loadBank();

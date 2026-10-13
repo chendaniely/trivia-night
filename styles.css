@@ -60,6 +60,12 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 }
 #screen-setup .subtitle { text-align: center; }
 #screen-setup #start-btn { display: block; margin: 0 auto; }
+/* Visually hidden but present (a display:none file input never opens the
+   chooser on a programmatic click). */
+#folder-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+#screen-setup .folder-btns { display: flex; gap: 16px; justify-content: center; margin-top: 20px; }
+#screen-setup .folder-btns button { font-size: 24px; padding: 10px 24px; }
+#folder-msg { color: var(--muted); font-size: 24px; text-align: center; margin: 16px 0 0; }
 #screen-setup #about-btn { display: block; margin: 20px auto 0; font-size: 24px; padding: 10px 28px; }
 /* About page (Task 11): static text, narrower than the board. */
 #screen-about { max-width: 900px; }
