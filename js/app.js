@@ -13,7 +13,7 @@ export const state = {
   scoring: null,
 };
 
-const SCREENS = ["setup", "board", "question", "tally", "error"];
+const SCREENS = ["setup", "board", "question", "tally", "error", "about"];
 
 export function showScreen(id) {
   for (const s of SCREENS) {
@@ -141,6 +141,10 @@ setColumnClick((ri) => {
   if (state.mode !== "trivia") return;
   startColumn(ri);
 });
+
+// About page (Task 11): static screen, no state — showScreen only.
+document.getElementById("about-btn").addEventListener("click", () => showScreen("about"));
+document.getElementById("about-back-btn").addEventListener("click", () => showScreen("setup"));
 
 // Task 9 folder mode swaps this via setLoader so "Try again" reloads the active source.
 let currentLoader = loadBank;
