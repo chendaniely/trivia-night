@@ -1,37 +1,100 @@
 title: "Trivia Night"
 rounds:
-  - name: "Demo"
+  - name: "Movies: Oscar"
     questions:
-      - q: "Starter question"
-        a: "Answer"
-        images:
-          - "images/demo/orange-solid.png"
-          - "images/demo/missing.png"
+      - q: "Which 2012 film won Best Picture at the Oscars, beating 'Lincoln' and 'Django Unchained'?"
+        a: "Argo"
+      - q: "Which actress holds the record for the most Best Actress wins, with four?"
+        a: "Katharine Hepburn"
       - q: >
-          A longer question written with a block
-          scalar to check rendering.
-        a: "Answer two"
-      - q: "Third question"
-        a: "Answer three"
-  - name: "Demo 2"
+          'It Happened One Night' remains the only film ever to win the
+          "Big Five" awards — Picture, Director, Actor, Actress and
+          Screenplay — in a single year. Who directed it?
+        a: "Frank Capra"
+      - q: >
+          Truffaut's 'Day for Night' (1973) — the only Oscar the
+          director ever won — took home which award?
+        a: "Best Foreign Language Film"
+      - q: >
+          The Best Picture winner from the first Academy Awards
+          (1927–28) is the only silent film ever to win the award.
+          Which film is it?
+        a: "Wings"
+
+  - name: "Movies: Cult Classics"
     questions:
-      - q: "Q1"
-        a: "A1"
-        images:
-          - "images/demo/blue-checker.png"
-      - q: "Q2"
-        a: "A2"
-      - q: "Q3"
-        a: "A3"
-      - q: "Q4"
-        a: "A4"
-      - q: "Q5"
-        a: "A5"
+      - q: "In 'The Room' (2003), what is the name of Tommy's ever-present butler?"
+        a: "Lenny"
+      - q: >
+          In 'A Clockwork Orange' (1971), Alex DeLarge is obsessed with
+          violence and the music of which composer?
+        a: "Beethoven"
+      - q: "In 'Eraserhead' (1977), the industrial opening scene shows machines spitting out what?"
+        a: "Balls (spheres)"
+      - q: "Who directed 'Don't Look Now' (1973), famous for its red raincoat scene?"
+        a: "Nicolas Roeg"
+      - q: >
+          In 'The Wicker Man' (1973), the islanders of Summerisle
+          practice what kind of tradition?
+        a: "Ancient pagan (Druidic) ritual"
+
+  - name: "Movies: Childhoods"
+    questions:
+      - q: "Which Toy Story character shouts 'To infinity and beyond!'?"
+        a: "Buzz Lightyear"
+      - q: "In 'The Lion King', what is the name of Simba's warthog friend?"
+        a: "Pumbaa"
+      - q: "In 'Home Alone' (1990), what is the name of Kevin's neighbor kid who shows up with a bike?"
+        a: "Richie"
+      - q: "In 'The Sandlot' (1992), what do the kids call the scary dog in the house they dare not cross?"
+        a: "The Beast"
+      - q: >
+          In 'My Neighbor Totoro' (1988), the little black creatures
+          that clean Satsuki and Mei's house are called what?
+        a: "Soot sprites (susuwatari)"
+
+  # Music: placeholder text questions. Replace with listening questions
+  # once real clips are dropped into audio/ (demo clips stay in
+  # audio/demo/ for folder-mode use).
   - name: "Music"
     questions:
-      - q: "Listen: which three notes are these, low to high?"
-        a: "A4, C5, E5 (an A-major arpeggio)"
-        audio: "audio/demo/arpeggio.wav"
-      - q: "Which note is this? (440 Hz, the tuning pitch)"
-        a: "A4"
-        audio: "audio/demo/missing.wav"
+      - q: "Which artist released the album 'Purple Rain' in 1984?"
+        a: "Prince"
+      - q: "Which magazine's critics poll has repeatedly ranked the Beatles' 'Sgt. Pepper' the greatest album of all time?"
+        a: "Rolling Stone"
+      - q: >
+          Which 1979 Pink Floyd concept album tells the story of a rock
+          star building a wall between himself and the world?
+        a: "The Wall"
+      - q: >
+          Which 1982 Michael Jackson album remains the best-selling
+          studio album of all time?
+        a: "Thriller"
+
+  - name: "Nerd Culture"
+    questions:
+      - q: "In 'The Legend of Zelda', what is the name of Link's horse?"
+        a: "Epona"
+      - q: "In 'Ocarina of Time', what is the name of the fairy who follows (and annoys) Link?"
+        a: "Navi"
+      - q: "In 'Minecraft', which mob drops the string you need to craft a fishing rod?"
+        a: "Spiders (witches drop it too)"
+      - q: >
+          In 'Doctor Who', who is the Doctor's very first companion, and
+          what is their relationship to the Doctor?
+        a: "Susan Foreman — his granddaughter"
+      - q: "In 'The Elder Scrolls V: Skyrim', the Thalmor are members of which race?"
+        a: "The Dark Elves (Dunmer)"
+
+  - name: "Words"
+    questions:
+      - q: "Which cartoon character grows a nose when they tell a lie?"
+        a: "Pinocchio"
+      - q: "What is a group of crows called?"
+        a: "A murder"
+      - q: "How many US state names contain the letter X?"
+        a: "Two — Texas and New Mexico"
+      - q: "Which US state name is also a verb, meaning to turn your back and storm off?"
+        a: "Rhode Island"
+      - q: "Which word famously contains all five vowels in alphabetical order?"
+        a: "Abstemious"
