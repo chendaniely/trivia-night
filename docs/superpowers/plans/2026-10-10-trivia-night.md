@@ -732,7 +732,7 @@ is reused across the teams currently in setup.
 **Interfaces:**
 - Consumes: `parseBank` rules (Task 2)
 
-- [ ] **Step 1: Write the bank**
+- [x] **Step 1: Write the bank**
 
 Six rounds, deliberately hard (spec): Movies: Oscar (5), Movies: Cult Classics (5), Movies: Childhoods (5), Music (4 — placeholder questions, NO `audio:` references: spec ships music as placeholders until real clips are dropped into `audio/`; the generated demo clips stay in `audio/demo/` for folder-mode use), Nerd Culture (5 — e.g. "name the game by its fishing minigame"), Words (5 — e.g. "cartoon character by their nose"). Easy → hard within each round. Long questions use `>` block scalars.
 The stub's `missing.wav` fallback-test question does NOT survive this replace — the shipped bank has no broken references; the missing-clip path stays verified by Task 7's record. Same for Task 7.6: the shipped bank carries no `audio:`/`images:` refs at all (host content, copyright); the media renderers stay verified by the stub/demo record.
@@ -741,9 +741,17 @@ The stub's `missing.wav` fallback-test question does NOT survive this replace �
 
 Run: `node --input-type=module -e "import { readFileSync } from 'node:fs'; import { parseBank } from './js/validate.js'; const r = parseBank(readFileSync('questions.yaml','utf8')); if (!r.ok) { console.error(r.errors); process.exit(1); } console.log(r.bank.rounds.length + ' rounds,', r.bank.rounds.reduce((n, x) => n + x.questions.length, 0) + ' questions');"`
 Expected: `6 rounds, 29 questions`
-MCP: reload against the running no-store server (`tools/local-server.py`, port 8080), Start → board shows 6 columns. If the browser profile already loaded files that changed since its last visit, verify on a fresh port (see Task 7.5 execution note).
+MCP: reload against the running no-store server (`tools/local-server.py`, port 8080), Start → board shows 6 columns. If the browser profile already loaded files that changed since its last visit, verify on a fresh port (see Task 7.5 execution note). (Port 8093: one-liner → `6 rounds, 29 questions`; zero audio/images refs; Start with pre-filled names → board shows all 6 round headers, 30 cells = 29 questions + 1 Music gap; opened a cell → real question text rendered; console only favicon 404s.)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit.** Council 2026-10-12 (backward vs spec: clean after
+  fix; forward fact-check caught 5): Hepburn's record is FOUR wins (not
+  three); Truffaut never won Best Director — replaced with his only
+  Oscar, Day for Night (Best Foreign Language Film); Old Town Road's
+  #1-weeks record churns — replaced with stable Thriller fact; "to
+  main" is not a verb — replaced with the real state-verb (Rhode
+  Island); Wings is not a lost film — rephrased as "only silent film
+  to win Best Picture"; Minecraft string comes from spiders/witches,
+  not creepers.
 
 ```bash
 git add questions.yaml
