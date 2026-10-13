@@ -18,7 +18,13 @@
         <label><input type="radio" name="mode" value="trivia"> Trivia</label>
       </div>
       <button id="start-btn" disabled>Start</button>
-      <button id="about-btn" class="btn-quiet">About</button>
+      <div class="folder-btns">
+        <button id="load-folder-btn" class="btn-quiet">Load folder</button>
+        <button id="create-new-btn" class="btn-quiet">Create new</button>
+        <button id="about-btn" class="btn-quiet">About</button>
+      </div>
+      <input type="file" id="folder-input" webkitdirectory tabindex="-1">
+      <p id="folder-msg" class="hidden"></p>
     </section>
     <section id="screen-about" class="screen hidden">
       <h1>About Trivia Night</h1>
@@ -51,11 +57,14 @@
           count resumes the game (rename in place); a different count starts
           a fresh one.
         </li>
+        <li>
+          <strong>Your own games:</strong> the shipped board is one text
+          file — <code>questions.yaml</code>. Or use Load folder to play a
+          board from your own folder (<code>questions.yaml</code> +
+          <code>audio/</code> + <code>images/</code>); Create new scaffolds
+          one (Chrome or Edge).
+        </li>
       </ul>
-      <p>
-        The board is one text file — <code>questions.yaml</code> — so you can
-        write your own game.
-      </p>
       <p>
         <a href="https://github.com/chendaniely/trivia-night" target="_blank" rel="noopener">
           Source &amp; docs: github.com/chendaniely/trivia-night

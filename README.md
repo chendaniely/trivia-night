@@ -60,6 +60,11 @@ rounds:
   node --input-type=module -e "import { readFileSync } from 'node:fs'; import { parseBank } from './js/validate.js'; const r = parseBank(readFileSync('questions.yaml','utf8')); if (!r.ok) { console.error(r.errors); process.exit(1); } console.log(r.bank.rounds.length + ' rounds,', r.bank.rounds.reduce((n, x) => n + x.questions.length, 0) + ' questions');"
   ```
 
+Prefer to keep questions, clips, and photos together? Use **Load
+folder** in the app — a folder with `questions.yaml`, `audio/`, and
+`images/` becomes its own board — and **Create new** scaffolds one for
+you (Chrome or Edge only).
+
 ## Layout
 
 - `index.html`, `styles.css`, `js/` — the app (vanilla, no build step)
