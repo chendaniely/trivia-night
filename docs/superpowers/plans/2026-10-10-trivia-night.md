@@ -931,6 +931,27 @@ Remote already configured. Pushing `main` triggers the deploy. Set the repo's Pa
 
 ---
 
+### Task 13: Reveal answer in trivia mode — partner request 2026-10-13
+
+**Design:** Port the existing Jeopardy reveal pattern into the column
+flow: `colRevealed` flag (reset per question — startColumn, next
+advance, back-to-board, resetFlow), "Reveal answer" `.btn-secondary`
+between Back and Next, `.answer-text` paragraph appended when revealed,
+button hidden once revealed (one-way, same as Jeopardy). No scoring
+change — Reveal only shows the answer on screen. Sync rule: README
+trivia bullet + About "Trivia:" item mention Reveal.
+
+**Files:**
+- Modify: `js/question.js`, `README.md`, `index.html` (About item)
+
+- [ ] **Step 1: Implement + docs.**
+- [ ] **Step 2: Verify (Playwright, text-only)** — trivia mode: Reveal
+  button present, answer appears on click, button gone after; Next
+  resets reveal for the next question; marks still apply; console clean.
+- [ ] **Step 3: Council + commit.**
+
+---
+
 ## Deferred to the final Claude Code pass (partner note 2026-10-12)
 
 The working model (qwen3.8 27b) is TEXT-ONLY: it cannot read images.
