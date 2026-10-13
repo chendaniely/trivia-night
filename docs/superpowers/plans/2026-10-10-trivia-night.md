@@ -831,6 +831,59 @@ Remote already configured. Pushing `main` triggers the deploy. Set the repo's Pa
 
 ---
 
+### Task 11: About page (in-app) — partner request 2026-10-12
+
+**Design:**
+- New `#screen-about` section in index.html — STATIC content, no JS
+  rendering: what the app is (single-device host app — the TV shows the
+  board, the host runs everything from one screen), how to use it
+  (setup: teams + mode; Jeopardy: cell → mark teams green/red →
+  Reveal/Done; Trivia: the category header is the click target,
+  green/deselect; "Back to board" is the mis-tap escape; Setup
+  mid-game: same count = resume, different count = fresh game), one
+  line that the board is `questions.yaml`, and a link to
+  https://github.com/chendaniely/trivia-night.
+- "About" = `.btn-quiet` button under Start on the setup screen;
+  "Back to setup" on the about screen. "about" joins the SCREENS array.
+  No state change — showScreen only.
+
+**Files:**
+- Modify: `index.html`, `js/app.js`, `styles.css`
+
+- [ ] **Step 1: About screen + wiring + minimal CSS.**
+- [ ] **Step 2: Verify (Playwright, text-only)** — fresh port: About
+  from setup; content has the how-to list + the GitHub link; back
+  returns to setup with rows/values/mode intact; console clean.
+- [ ] **Step 3: Council + commit.**
+
+---
+
+### Task 12: README (human-facing) + AGENTS sync rule — partner request 2026-10-12
+
+**Design:**
+- New `README.md` — simple, for HUMAN use: what it is (one paragraph),
+  using it at the event (a few lines + pointer to the in-app About
+  page), running it locally (`make`, `make serve [PORT]`, `make test`,
+  the validation one-liner), customizing (`questions.yaml` schema in a
+  handful of lines), where it lives (live URL, auto-deployed on push).
+  NO agent-process information — that stays in AGENTS.md.
+- `AGENTS.md`: add the sync rule — whenever app behavior changes (new
+  screen, command, file, or flow), update README.md in the same change;
+  README stays simple and human-facing; agent context lives in
+  AGENTS.md only.
+
+**Files:**
+- Create: `README.md`
+- Modify: `AGENTS.md`
+
+- [ ] **Step 1: README + AGENTS rule.**
+- [ ] **Step 2: Verify** — every command in the README actually runs
+  (make, make serve, make test, the one-liner); the live URL is right;
+  no agent-only jargon leaked in.
+- [ ] **Step 3: Council + commit.**
+
+---
+
 ## Deferred to the final Claude Code pass (partner note 2026-10-12)
 
 The working model (qwen3.8 27b) is TEXT-ONLY: it cannot read images.
