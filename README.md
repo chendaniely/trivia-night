@@ -33,13 +33,16 @@ make test         # unit tests
    browser's Back button does the same).
 4. **Setup** mid-game: rename teams or switch modes and **Start** carries
    on with the same game; adding or removing a team starts a fresh game
-   (it asks first). **Reset game** under the board clears all scores and
-   played cells — it asks first too.
+   (it asks first). Changed your mind? **Back to board** on the setup
+   screen returns to the game untouched. **Reset game** under the board
+   clears all scores and played cells — it asks first too.
 5. **Refreshed by accident?** The game saves in the browser as you play.
-   Reload the page and press **Resume game** on the setup screen to get
-   the scores and played cells back. Only the latest game is kept, and
-   only for the same question file (editing `questions.yaml` means a
-   fresh game).
+   Reload the page and press **Resume game** on the setup screen. For a
+   folder board, use **Load folder** and pick the same folder again;
+   Resume appears once that board is loaded (the setup screen reminds
+   you which board has the saved game). Each board keeps its own saved
+   game (the 10 most recent boards); editing a board's `questions.yaml`
+   makes it a new board, so its old game can't be resumed.
 
 The in-app **About** button (under Start) has the same rundown on the TV.
 
@@ -75,9 +78,9 @@ Prefer to keep questions, clips, and photos together? Use **Load
 folder** in the app — a folder with `questions.yaml`, `audio/`, and
 `images/` becomes its own board — and **Create new** scaffolds one for
 you (Chrome or Edge only). Loading another board mid-game asks first;
-it keeps the team names you typed (scores start fresh), and if a folder
-has a problem the error screen lists it — **Back to setup** returns to
-your game untouched.
+it keeps the team names you typed (unless that board has a saved game —
+then Resume is offered), and if a folder has a problem the error screen
+lists it — **Back to setup** returns to your game untouched.
 
 ## Layout
 

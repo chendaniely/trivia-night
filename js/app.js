@@ -15,8 +15,11 @@ import {
   makeSave,
   hasProgress,
   saveSummary,
+  otherBoardHint,
   writeSave,
   resumableSave,
+  latestOtherSave,
+  canSave,
 } from "./persist.js";
 
 export const state = {
@@ -64,10 +67,11 @@ document.addEventListener(
 );
 
 // --- Saved game (Task 18) ---------------------------------------------------
-// One slot in localStorage, written after Start, Done, every trivia Next,
-// Reset game and Resume. Loading a bank never writes: another board's save
-// survives until a new game is Started. Storage that is missing or throws
-// (private mode, blocked site data) just means no save — play goes on.
+// One localStorage slot per board (persist.js), written after Start, Done,
+// every trivia Next, Reset game and Resume. Loading a bank never writes,
+// and a game on one board never touches another board's slot. Storage
+// that is missing or throws (private mode, blocked site data, full) just
+// means no save — play goes on, and setup says so.
 function storage() {
   try {
     return window.localStorage; // the getter itself throws when blocked
@@ -76,16 +80,23 @@ function storage() {
   }
 }
 
+let resumable = null; // this board's saved game, offered on setup
+let otherSave = null; // newest saved game with progress, on ANOTHER board
+let saveOff = false; // the last save (or the probe) failed
+let shippedKey = null; // bankKey of the shipped questions.yaml
+
 export function saveGame() {
   if (state.scoring === null) return;
-  writeSave(storage(), makeSave(state));
+  const ok = writeSave(storage(), makeSave(state));
+  if (ok === saveOff) {
+    saveOff = !ok;
+    renderSaveNote();
+  }
 }
 
 function gameInProgress() {
   return state.scoring !== null && hasProgress(makeSave(state));
 }
-
-let resumable = null; // saved game offered on setup for the loaded bank
 
 const ERROR_CAP = 12; // keeps Try again / Back to setup on screen on a TV
 
@@ -122,7 +133,8 @@ async function loadBank() {
     renderError(result.errors);
     return;
   }
-  startNewBank(result.bank, [], bankKeyOf(text));
+  shippedKey = bankKeyOf(text);
+  startNewBank(result.bank, [], shippedKey);
 }
 
 // One board per data source (Task 9): any bank load starts a fresh game —
@@ -138,7 +150,10 @@ function startNewBank(bank, urls, bankKey) {
   // The setup heading and tab title follow the bank (Task 17).
   document.querySelector("#screen-setup h1").textContent = bank.title;
   document.title = bank.title;
-  resumable = resumableSave(storage(), bankKey);
+  const store = storage();
+  resumable = resumableSave(store, bankKey);
+  otherSave = resumable ? null : latestOtherSave(store, bankKey);
+  saveOff = !canSave(store);
   const names = prefillNames();
   // Bank swap (retry / folder mode): previous game state no longer applies
   // (used-cell keys and round logs refer to the old bank).
@@ -227,6 +242,9 @@ function renderSetup(rows) {
     addBtn
   );
   renderResumeOffer();
+  renderSaveNote();
+  // Mid-game, setup can always be left without changing anything.
+  document.getElementById("setup-back-btn").classList.toggle("hidden", state.scoring === null);
   document.getElementById("start-btn").disabled = !allNamed();
 }
 
@@ -238,18 +256,42 @@ function renderResumeOffer() {
   document.getElementById("start-btn").classList.toggle("btn-secondary", resumable !== null);
 }
 
+// One setup line about saving: saving is off, or the newest saved game is
+// on another board (after a reload the shipped board comes up — the
+// night's folder board has to be loaded again to offer Resume).
+function renderSaveNote() {
+  const text = saveOff
+    ? "Saving is off in this browser — a refresh will lose the game."
+    : otherSave
+    ? otherBoardHint(otherSave, new Date(), otherSave.bankKey === shippedKey)
+    : "";
+  const note = document.getElementById("save-note");
+  note.textContent = text;
+  note.classList.toggle("hidden", !text);
+}
+
+// Setup -> the running game as it is: rows and mode snap back to the game
+// (unsaved setup edits dropped) and a stale Load-folder OK is forgotten.
+// Start/Resume (enterGame), setup's Back to board and browser Back on
+// setup all end here.
+function showRunningGame() {
+  loadConsented = false;
+  setFolderMsg("");
+  renderSetup(state.teamNames.map((name, i) => ({ name, team: i })));
+  setMode(state.mode);
+  renderBoard();
+  showScreen("board");
+}
+
 // Start and Resume both land here: the setup rows now ARE the running
 // game's teams (identity for the next Start), the game is saved, and Back
 // is guarded.
 function enterGame() {
   resumable = null;
-  loadConsented = false;
-  setFolderMsg("");
-  renderSetup(state.teamNames.map((name, i) => ({ name, team: i })));
+  otherSave = null;
   saveGame();
   armBackGuard();
-  renderBoard();
-  showScreen("board");
+  showRunningGame();
 }
 
 // One-time wiring (renderSetup runs again on folder loads — Task 9).
@@ -291,6 +333,12 @@ document.getElementById("start-btn").addEventListener("click", () => {
 document.getElementById("resume-btn").addEventListener("click", () => {
   if (!resumable) return;
   state.scoring = restoreScoring(resumable.scoring);
+  // Names typed over the pre-filled rows win when they line up with the
+  // saved teams (rename in place); otherwise the saved names.
+  const typed = setupRows().map((r) => r.name.trim());
+  if (typed.length === state.scoring.teams.length && typed.every((n) => n !== "")) {
+    typed.forEach((n, i) => { state.scoring.teams[i].name = n; });
+  }
   state.teamNames = state.scoring.teams.map((t) => t.name);
   state.mode = resumable.mode;
   state.used = new Map(resumable.used.map((k) => [k, true]));
@@ -298,11 +346,15 @@ document.getElementById("resume-btn").addEventListener("click", () => {
   enterGame();
 });
 
+document.getElementById("setup-back-btn").addEventListener("click", () => {
+  if (state.scoring !== null) showRunningGame();
+});
+
 // Leave guards (Task 18). Reload / close mid-game asks first (the saved
 // game covers it anyway). Back — browser button, trackpad swipe, TV remote
 // — never leaves a running game: one history entry is pushed on Start /
 // Resume and pushed again on every Back, which then acts like the screen's
-// own back button (question or tally -> board; elsewhere, stay put).
+// own back button (question, tally or setup -> board; elsewhere, stay put).
 window.addEventListener("beforeunload", (e) => {
   if (!gameInProgress()) return;
   e.preventDefault();
@@ -330,6 +382,8 @@ window.addEventListener("popstate", () => {
   } else if (on === "tally") {
     renderBoard();
     showScreen("board");
+  } else if (on === "setup") {
+    showRunningGame();
   }
 });
 
@@ -386,13 +440,16 @@ async function pickFolder() {
 // replaced only when a new game is Started.
 let loadConsented = false; // OK'd, but the click went stale (see below)
 document.getElementById("load-folder-btn").addEventListener("click", () => {
+  // The OK is good for this one click only: once the picker opens, a
+  // cancelled or failed load means the next Load folder asks again.
+  const consented = loadConsented;
+  loadConsented = false;
   if (
-    !loadConsented &&
+    !consented &&
     gameInProgress() &&
     !confirm("Load a different board? This ends the game in progress.")
   )
     return;
-  loadConsented = false;
   // The picker needs the click's activation, which lapses ~5 s after the
   // click: a slow read of the confirm would leave the picker refusing to
   // open (silently, for the fallback input). Ask for one more click.
@@ -401,6 +458,7 @@ document.getElementById("load-folder-btn").addEventListener("click", () => {
     setFolderMsg("Click Load folder again to pick the folder.");
     return;
   }
+  setFolderMsg("");
   if (window.showDirectoryPicker) {
     setLoader(pickFolder); // "Try again" re-picks the folder
     pickFolder();

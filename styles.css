@@ -62,11 +62,12 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
   background: var(--orange); border-radius: 3px;
 }
 #screen-setup .subtitle { text-align: center; margin: 4px 0 0; }
-#screen-setup #start-btn { display: block; margin: 0 auto; }
+#screen-setup .start-row { display: flex; gap: 20px; justify-content: center; }
 /* Saved-game offer (Task 18): summary + Resume on one line at the top of
    setup, so it is on screen whatever the team count. */
 #resume-offer { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; justify-content: center; margin: 16px 0 0; }
 #resume-summary { margin: 0; font-size: 28px; }
+#save-note { margin: 12px auto 0; max-width: 1100px; font-size: 26px; text-align: center; }
 /* Visually hidden but present (a display:none file input never opens the
    chooser on a programmatic click). tabindex=-1: no invisible tab stop. */
 #folder-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
@@ -75,7 +76,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 #folder-msg { color: var(--muted); font-size: 24px; text-align: center; margin: 16px 0 0; }
 /* About page (Task 11): static text, must fit one TV screen (council Task 9):
    24px text, two-column list. */
-#screen-about { max-width: 1100px; padding: 24px 40px; font-size: 22px; }
+#screen-about { max-width: 1200px; padding: 24px 40px; font-size: 22px; }
 #screen-about h1 { text-align: center; font-size: 52px; }
 #screen-about p { margin: 12px 0; line-height: 1.35; }
 #screen-about li { line-height: 1.35; margin: 0 0 10px; break-inside: avoid; }

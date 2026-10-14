@@ -17,12 +17,16 @@
         <p id="resume-summary"></p>
         <button id="resume-btn">Resume game</button>
       </div>
+      <p id="save-note" class="hidden"></p>
       <div id="team-inputs"></div>
       <div id="mode-pick" role="radiogroup" aria-label="Game mode">
         <label><input type="radio" name="mode" value="jeopardy" checked> Jeopardy</label>
         <label><input type="radio" name="mode" value="trivia"> Trivia</label>
       </div>
-      <button id="start-btn" disabled>Start</button>
+      <div class="start-row">
+        <button id="setup-back-btn" class="btn-quiet hidden">Back to board</button>
+        <button id="start-btn" disabled>Start</button>
+      </div>
       <div class="folder-btns">
         <button id="load-folder-btn" class="btn-quiet">Load folder</button>
         <button id="create-new-btn" class="btn-quiet">Create new</button>
@@ -54,22 +58,23 @@
           on.
         </li>
         <li>
-          <strong>Oops?</strong> "Back to board" (or the browser's Back)
-          keeps everything, and the game saves as you play: after a reload,
-          press Resume game.
+          <strong>Oops?</strong> "Back to board" (or browser Back) drops that
+          question's marks and keeps the cell and scores. The game saves as
+          you play: after a reload, press Resume game (folder board: Load
+          folder first).
         </li>
         <li>
           <strong>Mid-game:</strong> on Setup, renames and mode switches
           keep the game; adding or removing a team starts fresh. That and
-          Reset game ask first.
+          Reset game ask first; Back to board drops Setup edits.
         </li>
         <li>
           <strong>Your own games:</strong> the shipped board is one text
           file — <code>questions.yaml</code>. Load folder plays your own
           folder (<code>questions.yaml</code> + <code>audio/</code> +
           <code>images/</code>) and asks first mid-game; Create new
-          scaffolds one (Chrome or Edge). Team names carry over, and if a
-          folder has a problem, "Back to setup" keeps your game.
+          scaffolds one (Chrome or Edge). Team names carry over; if a folder
+          has a problem, "Back to setup" keeps your game.
         </li>
       </ul>
       <p>

@@ -3,10 +3,20 @@
 // (or null). Every storage access is wrapped: private mode / blocked site
 // data must never break play.
 //
-// Save shape: { v: 1, bankKey, mode, scoring: Scoring.snapshot(),
-//               used: ["roundIdx:qIdx", ...], savedAt }
-// One slot: starting a new game (any board) replaces the saved one.
-export const SAVE_KEY = "trivia-night:game";
+// One slot per board (fix round 1): key "trivia-night:game:<bankKey>", so
+// a game on one board never overwrites another board's save. The 10 most
+// recently saved slots are kept (pruned on write). The old single key
+// "trivia-night:game" is ignored.
+//
+// Save shape: { v: 1, bankKey, title, mode, scoring: Scoring.snapshot(),
+//               used: ["roundIdx:qIdx", ...], savedAt (ISO time) }
+export const SAVE_PREFIX = "trivia-night:game:";
+export const MAX_SLOTS = 10;
+const PROBE_KEY = "trivia-night:probe";
+
+export function slotKey(bankKey) {
+  return SAVE_PREFIX + bankKey;
+}
 
 // Identity of a question bank: FNV-1a 32-bit (hex) over the UTF-8 bytes of
 // the raw questions.yaml text. A changed file = a different board, so a
@@ -20,15 +30,16 @@ export function bankKeyOf(text) {
   return (h >>> 0).toString(16).padStart(8, "0");
 }
 
-// game: { bankKey, mode, scoring, used: Map } (the app's state)
-export function makeSave(game) {
+// game: { bankKey, bank, mode, scoring, used: Map } (the app's state)
+export function makeSave(game, now = new Date()) {
   return {
     v: 1,
     bankKey: game.bankKey,
+    title: game.bank.title,
     mode: game.mode,
     scoring: game.scoring.snapshot(),
     used: [...game.used.keys()],
-    savedAt: new Date().toISOString(),
+    savedAt: now.toISOString(),
   };
 }
 
@@ -44,7 +55,9 @@ export function parseSave(json) {
   }
   if (!s || typeof s !== "object" || s.v !== 1) return null;
   if (typeof s.bankKey !== "string") return null;
+  if (s.title !== undefined && typeof s.title !== "string") return null;
   if (s.mode !== "jeopardy" && s.mode !== "trivia") return null;
+  if (typeof s.savedAt !== "string" || !Number.isFinite(Date.parse(s.savedAt))) return null;
   const teams = s.scoring && s.scoring.teams;
   const log = s.scoring && s.scoring.log;
   if (!Array.isArray(teams) || teams.length < 2) return null;
@@ -62,29 +75,103 @@ export function hasProgress(save) {
   return save.used.length > 0 || save.scoring.teams.some((t) => t.points !== 0);
 }
 
-export function saveSummary(save) {
-  return "Saved game: " + save.scoring.teams.map((t) => `${t.name} ${t.points}`).join(" · ");
+// "just now" / "12 min ago" / "3 h ago" / "2 days ago"
+export function ageText(savedAt, now = new Date()) {
+  const min = Math.floor((now.getTime() - Date.parse(savedAt)) / 60000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min} min ago`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} h ago`;
+  const d = Math.floor(h / 24);
+  return d === 1 ? "1 day ago" : `${d} days ago`;
 }
 
-export function writeSave(storage, save) {
+function teamsLine(save) {
+  return save.scoring.teams.map((t) => `${t.name} ${t.points}`).join(" · ");
+}
+
+export function saveSummary(save, now = new Date()) {
+  return `Saved game: ${teamsLine(save)} · saved ${ageText(save.savedAt, now)}`;
+}
+
+// Setup hint when the newest saved game belongs to another board. The
+// shipped board comes back with a reload; a folder board with Load folder.
+export function otherBoardHint(save, now = new Date(), shipped = false) {
+  const board = save.title === undefined ? "another board" : `"${save.title}"`;
+  const how = shipped ? "reload the page to resume it." : "Load folder and pick that folder to resume it.";
+  return `Saved game on ${board} (${teamsLine(save)}, saved ${ageText(save.savedAt, now)}) — ${how}`;
+}
+
+// All valid saved games, newest first ([] when storage is unusable).
+export function listSaves(storage) {
   try {
-    storage.setItem(SAVE_KEY, JSON.stringify(save));
-    return true;
+    const out = [];
+    for (let i = 0; i < storage.length; i++) {
+      const k = storage.key(i);
+      if (k === null || !k.startsWith(SAVE_PREFIX)) continue;
+      const s = parseSave(storage.getItem(k));
+      if (s && slotKey(s.bankKey) === k) out.push(s);
+    }
+    return out.sort((a, b) => Date.parse(b.savedAt) - Date.parse(a.savedAt));
   } catch {
-    return false;
+    return [];
   }
 }
 
-export function readSave(storage) {
+// Keep the MAX_SLOTS newest slots; drop older and unreadable ones.
+function pruneSaves(storage) {
+  const keys = [];
+  for (let i = 0; i < storage.length; i++) {
+    const k = storage.key(i);
+    if (k !== null && k.startsWith(SAVE_PREFIX)) keys.push(k);
+  }
+  const keep = new Set(listSaves(storage).slice(0, MAX_SLOTS).map((s) => slotKey(s.bankKey)));
+  for (const k of keys) if (!keep.has(k)) storage.removeItem(k);
+}
+
+// true when the save landed (a failed prune afterwards doesn't undo that)
+export function writeSave(storage, save) {
   try {
-    return parseSave(storage.getItem(SAVE_KEY));
+    storage.setItem(slotKey(save.bankKey), JSON.stringify(save));
+  } catch {
+    return false;
+  }
+  try {
+    pruneSaves(storage);
+  } catch {
+    // a slot too many is harmless
+  }
+  return true;
+}
+
+export function readSave(storage, bankKey) {
+  try {
+    return parseSave(storage.getItem(slotKey(bankKey)));
   } catch {
     return null;
   }
 }
 
-// The saved game worth offering for this bank: same bankKey AND progress.
+// The saved game worth offering for this bank: its slot, with progress.
 export function resumableSave(storage, bankKey) {
-  const s = readSave(storage);
-  return s && s.bankKey === bankKey && hasProgress(s) ? s : null;
+  const s = readSave(storage, bankKey);
+  return s && hasProgress(s) ? s : null;
+}
+
+// The newest saved game with progress, when it belongs to another board
+// (e.g. a folder board after a reload brought up the shipped one).
+export function latestOtherSave(storage, bankKey) {
+  const s = listSaves(storage).find(hasProgress);
+  return s && s.bankKey !== bankKey ? s : null;
+}
+
+// Can this browser save at all? (a probe write, removed straight away)
+export function canSave(storage) {
+  try {
+    storage.setItem(PROBE_KEY, "1");
+    storage.removeItem(PROBE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
 }
