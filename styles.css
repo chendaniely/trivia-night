@@ -66,7 +66,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
    4 team rows plus the Resume offer, Back to board or a two-line save
    note — fits one screen from 960x540 to 1920x1080 and keeps the old px
    sizes at 1080p. Secondary buttons share one row (council Task 9). */
-#screen-setup { padding: calc(24 * var(--u)) calc(40 * var(--u)); }
+#screen-setup { max-width: calc(1920 * var(--u)); padding: calc(24 * var(--u)) calc(40 * var(--u)); }
 #screen-setup h1 { text-align: center; font-size: calc(72 * var(--u)); margin-bottom: calc(12 * var(--u)); }
 #screen-setup h1::after {
   content: ""; display: block; width: calc(120 * var(--u)); height: calc(6 * var(--u));
@@ -130,12 +130,9 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
   padding: calc(24 * var(--u)) calc(32 * var(--u));
 }
 .scoreboard { display: flex; flex-wrap: wrap; gap: calc(14 * var(--u)) calc(28 * var(--u)); justify-content: center; margin-bottom: calc(20 * var(--u)); }
-.score-team {
-  display: flex; align-items: baseline; gap: 14px;
-  background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
-  padding: 12px 28px; font-size: 28px;
-}
 .scoreboard .score-team {
+  display: flex; align-items: baseline;
+  background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
   gap: calc(14 * var(--u)); line-height: 1.15;
   padding: calc(10 * var(--u)) calc(28 * var(--u)); font-size: max(20px, calc(30 * var(--u)));
 }
@@ -158,12 +155,11 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 }
 /* Clickable headers and cells are <button>s (Task 21): the global button
    chrome (hover lift, brightness) is switched off so the old look stands,
-   and keyboard focus gets the hover fill plus the shared 3px ring. */
+   and keyboard focus gets the hover fill plus the shared button ring. */
 .board-header.clickable, .board-cell.clickable { width: 100%; transition: none; }
 .board-header.clickable:hover, .board-header.clickable:active,
 .board-cell.clickable:hover, .board-cell.clickable:active { filter: none; transform: none; }
 .board-header.clickable:hover, .board-header.clickable:focus-visible { background: var(--blue); border-color: var(--blue); }
-.board-header.clickable:focus-visible, .board-cell.clickable:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
 /* Row position IS difficulty: subtle 5-step ramp easy (top) to hard (bottom). */
 .board-cell.tier-0 { background: #111f2a; }
 .board-cell.tier-1 { background: #13242f; }
@@ -213,10 +209,6 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .audio-block audio { width: calc(480 * var(--u)); height: max(32px, calc(48 * var(--u))); }
 .no-clip { color: var(--muted); font-style: italic; margin: 0; font-size: max(18px, calc(28 * var(--u))); }
 .images-block { display: flex; gap: 16px; flex-wrap: wrap; }
-.images-block img {
-  max-width: 640px; max-height: 480px; width: auto; height: auto;
-  object-fit: contain; border-radius: 12px; border: 1px solid var(--edge); background: var(--panel);
-}
 .no-image { color: var(--muted); font-style: italic; margin: 0; font-size: max(18px, calc(28 * var(--u))); }
 /* Image questions (Task 20): question + answer on the left (45%), the
    image box on the right (55%) filling the height left by the category,
@@ -265,7 +257,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 /* A frame would show the letterbox, so the picture goes unframed here. */
 .has-images .images-block img {
   flex: 1 1 0; min-width: 0; width: 100%; height: 100%; max-width: none; max-height: none;
-  object-position: right top; border: 0; border-radius: 0; background: none;
+  object-fit: contain; object-position: right top; border: 0; border-radius: 0; background: none;
 }
 .tally-row {
   display: flex; align-items: baseline; gap: 16px;
@@ -283,4 +275,6 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 #screen-board:not(.hidden), #screen-question:not(.hidden) { animation-name: fade-in; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  /* The boot note's animation is a delay-reveal, not motion: keep it. */
+  #boot { animation: boot-in 0s 2.5s forwards !important; }
 }
