@@ -19,7 +19,11 @@ make test         # unit tests
 ```
 
 (Requires [uv](https://docs.astral.sh/uv/) and node. That's all.) The
-server prints the one address to open.
+server prints the one address to open. Only the app's own files are
+served: `question-drafts/` and the repo's other files never are. On
+`make serve-lan`, anyone on the same Wi-Fi can still open the app and
+read `questions.yaml`, so use it on a network you trust (or mirror the
+Mac instead).
 
 ## Putting it on the TV
 
