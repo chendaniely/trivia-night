@@ -14,10 +14,47 @@ Open the live link, or run it locally:
 ```sh
 make              # serves on http://127.0.0.1:8080
 make serve PORT=8090   # any other port
+make serve-lan    # reachable from the TV's own browser (see below)
 make test         # unit tests
 ```
 
-(Requires python3 and node. That's all.)
+(Requires [uv](https://docs.astral.sh/uv/) and node. That's all.) The
+server prints the one address to open.
+
+## Putting it on the TV
+
+Pick one:
+
+1. **Mirror the Mac to the TV** (recommended). Everything works,
+   including Load folder and your real clips and photos.
+2. **The TV's own browser on the live link.** Only the shipped board is
+   there; your real clips and photos aren't in the repo.
+3. **The TV's own browser on the Mac, over Wi-Fi.** Run `make serve-lan`
+   and open the address it prints on the TV. macOS may ask to allow
+   incoming connections. Load folder on the TV reads the TV's files, not
+   the Mac's.
+
+Always open the same address: a saved game belongs to the address it was
+played on (`localhost`, `127.0.0.1`, the LAN address, and another port
+are all different).
+
+**Test on the actual TV before the night:**
+
+- Open the live URL.
+- Check the font looks like the Mac's (Atkinson Hyperlegible, not a
+  fallback).
+- Press **Reset game** and confirm the browser's OK/Cancel dialog appears
+  and OK works. Some TV browsers suppress dialogs; if so, mirror the Mac
+  instead.
+- Audio: `.m4a`/`.mp3` play best on TV browsers; `.wav` works.
+
+The app needs a reasonably recent browser (about Chrome 86 / Safari 14).
+On an older one you'll see a "Loading…" note that never goes away: mirror
+the Mac instead.
+
+This repo is public, so keep the real night's questions in a local
+folder (Load folder) or in `question-drafts/`, not in the shipped
+`questions.yaml`.
 
 ## Using it at the event
 
@@ -69,7 +106,7 @@ Unknown keys are reported (typo guard): a misspelled `image:` or `Audio:` is fla
 
 - One round per column; top row is easy, bottom row is hard.
 - Optional per question: `points:` (positive integer), `audio:` (a
-  `.wav`/`.mp3` path), `images:` (list of paths). Missing files show a
+  `.m4a`/`.mp3`/`.wav` path), `images:` (list of paths). Missing files show a
   note, not an error.
 - Check your file before the event:
 

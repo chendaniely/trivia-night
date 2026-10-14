@@ -9,6 +9,7 @@
 </head>
 <body>
   <main id="root">
+    <p id="boot">Loading… If this message stays, this browser is too old for the app — mirror the Mac's screen instead.</p>
     <input type="file" id="folder-input" webkitdirectory tabindex="-1">
     <section id="screen-setup" class="screen hidden">
       <h1>Trivia Night</h1>
@@ -58,6 +59,13 @@
           on.
         </li>
         <li>
+          <strong>On the TV:</strong> easiest is to mirror the Mac's screen
+          (everything works, including Load folder and your real clips). The
+          TV's own browser can open the live link (shipped board only) — test
+          it before the night. A saved game belongs to the address it was
+          played on, so always open the same one.
+        </li>
+        <li>
           <strong>No mouse?</strong> A TV remote's D-pad (or Tab / Shift-Tab)
           moves between cells, categories and buttons; OK (Enter / Space)
           presses.
@@ -101,6 +109,15 @@
       <ul id="error-list"></ul>
     </section>
   </main>
+  <script>
+    // Older TV browsers (before Chrome 86 / Safari 14) lack replaceChildren.
+    if (!Element.prototype.replaceChildren) {
+      Element.prototype.replaceChildren = function () {
+        this.textContent = "";
+        this.append.apply(this, arguments);
+      };
+    }
+  </script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

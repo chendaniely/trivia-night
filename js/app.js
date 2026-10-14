@@ -34,6 +34,7 @@ export const state = {
 const SCREENS = ["setup", "board", "question", "tally", "error", "about"];
 
 export function showScreen(id) {
+  document.getElementById("boot")?.classList.add("hidden");
   for (const s of SCREENS) {
     document.getElementById(`screen-${s}`).classList.toggle("hidden", s !== id);
   }
