@@ -1395,27 +1395,29 @@ player renders light (white pill) on the dark theme.
 **Files:**
 - Modify: `js/question.js`, `styles.css`
 
-- [ ] **Step 1: Build media once per question** — the audio block and
+- [x] **Step 1: Build media once per question** — the audio block and
   the image block are created once when a question opens (both
   renderers) and the SAME nodes are re-appended on every re-render of
   that question (marks, Reveal); a new question (cell, next column
   question) builds fresh nodes. Missing-clip / missing-image notes keep
   working.
-- [ ] **Step 2: Stop audio on leave** — pause any playing question
+- [x] **Step 2: Stop audio on leave** — pause any playing question
   audio on Done, Back to board (both modes), Next (advance and last →
   tally), and `resetFlow()`.
-- [ ] **Step 3: Dark native controls** — `:root { color-scheme: dark; }`
+- [x] **Step 3: Dark native controls** — `:root { color-scheme: dark; }`
   (audio controls, radios, scrollbars follow the theme). Check the
   radios and inputs still look right in a screenshot.
-- [ ] **Step 4: Verify (Playwright, Chrome, fresh port, read your
+- [x] **Step 4: Verify (Playwright, Chrome, fresh port, read your
   screenshots)** — folder bank via the OPFS picker stub (reference:
   `<scratchpad>/audio-rerender.mjs`, which reproduced the bug): play the
   clip, mark a team, Reveal → the same element is still playing and
   `currentTime` advanced; Done → audio paused; trivia column Next →
   previous clip paused. Screenshot shows a dark audio control.
-- [ ] **Step 5: Commit** — `fix(question): 🤖 …`.
+- [x] **Step 5: Commit** — `fix(question): 🤖 …`.
 
 ---
+
+> Council 2026-10-14 (Task 19): backward — spec compliant incl. carried rulings (pause inside every leave path incl. browser Back; resetFlow drops the media cache; mediaSrc kept), approved; controller checked the screenshot (dark audio control, still playing after mark + Reveal). Forward — clear; Task 20 must keep pulling the cached nodes from mediaFor(); Task 21 focus restore must be synchronous after the re-render. Commit 986abf9.
 
 ### Task 20: Layout fit — the board fits the screens it will run on
 
