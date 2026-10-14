@@ -1,0 +1,54 @@
+# Observations (neutral, evidence-linked)
+
+Each item states what the history shows. No judgment about whether it was good or bad. Numbers come from `stats.md`; quoted text from the plan/commits. "Plan line" = text in `docs/superpowers/plans/2026-10-10-trivia-night.md` at the named commit.
+
+## Process discipline (protocol followed)
+
+1. **Trailer/emoji/scope compliance was complete after the rule existed.** All 85 Qwen commits carry `Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>`; all reachable ones carry 🤖; every one from `3e86ac9` on has `type(scope)`. The five early scope-less commits (`1099feb`, `d8b5fba`, `2032e93`, `5083287`, `7677f84`) predate the partner's 10-11 01:03 prompt and `d4f35d0` (01:55). The only commit ever missing 🤖 (`900becc`) was amended into `35e2b32` the next morning with the council fixes (plan Task 9 step 3: "original commit lacked the 🤖 prefix -> amended + force-with-lease").
+2. **One pattern repeats for every partner request:** `docs(plan): add task N` -> `feat` -> optional `fix` -> `docs(plan): check off task N + council record`. Examples: 7.8 (`a60b03a` 12:49 -> `5a78202` 13:01 -> `38bcbf4` 13:03 -> `76a4c75` 13:32 -> `65dac47` 13:33); 7.9 (`61c4a5e` -> `add404e` -> `15630bd`); 13 (`0bc6f71` -> `aa5f30d` -> `6387eba` -> `0ed7223`).
+3. **Plan bookkeeping is a large share of commits.** 43 of 103 non-bot commits are `docs(plan)` (36 of Qwen's 85 = 42%): 19 check-off/close, 10 add-task, 7 council/correction records. Qwen's added lines: docs +1517 vs src +1507 (`stats.md` section 1). The plan grew 460 -> 988 lines (Qwen) -> 1632 (head).
+4. **Commit bodies were written to the "resumption" standard.** 64 of 85 Qwen commits have a body; the 21 without are 19 `docs(plan)` check-offs and 2 `chore`. Feature-commit bodies state what was verified in Playwright (e.g. `870b49a`, `c0aa8b8`, `890eca0`, `127ee57`, `d8eb078`); 21 bodies mention "council". 8 compactions occurred in the build session (`../opencode/sessions.md`: 10-11 01:45, 05:16, 11:24, 14:01, 23:53 manual, 10-12 12:52, 15:56, 10-13 00:14); no commit body mentions compaction or lost context (grep over all bodies).
+5. **Burst vs. gap pattern.** Task 1-7 (7 tasks, 26 commits) took 163 min on 10-11 03:00-05:43; the next substantive work started 5 h later after the partner's feedback. Longest gaps: 11.5 h (10-12 01:19 -> 12:49), 11.1 h (amend artefact), 7.6 h twice overnight 10-13/14. See `timeline.md`.
+
+## Verification was text-only and one-sided
+
+6. **Browser evidence is accessibility-tree text.** `.playwright-mcp/` holds 391 `page-*.yml` snapshots (median 617 bytes, max 2,322; example `page-2026-10-13T23-29-59-616Z.yml` lists board cells as `generic [cursor=pointer]: "100"`), 32 console logs, and 14 saved PNGs (`ui-before-*` saved 10-11 20:22-20:26; `ui-after-*` 10-12 00:37-16:32) that the plan says were "NOT read - text-only model". Layout/colour claims in plan records are `getComputedStyle` numbers (e.g. Task 7.7 step 4: "cell 40px/800 min-height 88px border 1px #24405a").
+7. **Every verification ran on a fresh port.** Console logs show ports 8080-8100 plus 8123/8124. Cause recorded in the Task 7.5 execution note (stale JS served from a persistent Chrome profile; "a port the browser already loaded can keep serving old bytes"); resulting artifact `tools/local-server.py` (no-store, `9abe0e8`).
+8. **Image-input failures consumed part of 10-11 evening.** Partner prompts (per `../opencode/prompts.md`): 10-11 20:32 "is this because the qwen 3.8 27b model does not take image input?", 20:47 "leave a note for another model to pick up", 21:04 "postpone it to the very end", 23:57 "this image issue where i keep getting this error ... is something your council review should've picked up". The repo records the result as the text-only constraint (`606dce8`) and the Deferred section (3 items).
+9. **Unit tests cover only pure modules.** Test files: 4 at `f603230` (70 assert calls, `node --test` 4/4 pass), 5 at head (213 assert calls, 5/5 pass). No test touches `app.js`, `board.js` or `question.js`; of the 15 `fix` commits, 4 touch a test file (`a91b6e7`, `66604e1`, `21aba93`, `739d029`, all Claude pass) and 11 do not; none of Qwen's 6 `fix` commits touched a test (`stats.md` section 4/5). Claude pass added tests with every pure-layer change (`persist.test.mjs` +231 lines).
+10. **Several verified/clean council records were later contradicted** (13 rows in `qwen-council.md` 3b): FSA availability, Create-new ordering (`prompt()` before picker while plan said picker first), audio surviving re-renders, Done/Next colour since 7.5, header word-break, layout measurements, validation of misspelled keys.
+11. **The question bank was council-checked and still contained 7 wrong answers + 6 shaky ones** (`qwen-council.md` 3a). Two of the wrong answers were created by Qwen's own Task 8 council "fixes" (plan Task 14 header). A review by the Claude pass found 0 wrong in a second fact-check (Task 14 council note).
+12. **Browser navigated to Google twice.** `console-2026-10-12T22-13-44-747Z.log` and `...22-13-46-917Z.log` (= 10-12 15:13 PDT) show Chrome loading `google.com/sorry` (HTTP 429) for searches `q=mess` and `q=facebook`. Purpose not recorded in commits or plan.
+
+## Where the partner corrected or redirected
+
+13. **MVP demo rewrote the core loop.** Partner feedback (recorded `60021ff`, `af71d0a`) replaced the single-claim flow, built as Tasks 5/6 (`890eca0` 04:25, `127ee57` 04:50), with multi-win toggles in Task 7.5 (`05fcb4d` 12:06). Tasks 5 and 6 are marked "Superseded by Task 7.5 (2026-10-11)" but remain checked.
+14. **A request was dropped and repeated.** Reveal answer in trivia mode: asked 10-11 20:30, built only after the partner re-asked 10-13 14:31 (`0bc6f71`/`aa5f30d` at 14:33/14:35). Raw prompts in `../opencode/prompts.md`; the plan dates only the second.
+15. **Unrecorded request.** The question-drafts folder (`c1b3331`) is in the same 10-12 12:44 partner message as the Back-button request but has no plan task and no "partner request" label.
+16. **Partner nudges visible in prompts:** 10-11 10:12 "there's nothing running on http://127.0.0.1:8080"; 11:24 "what's wrong with my tool you seem to have stopped/stuck" (compaction at 123,537 prompt tokens fired at 11:24); 14:01 "plan a compaction and try again"; 10-13 16:21 "seems like there was a playwright error, can you try again"; 10-14 00:37 "try again is there anything left?". Quotes from the other agent's `prompts.md`.
+17. **Qwen declined or skipped two items explicitly:** Task 7.5 council skipped an early-exit "Board" button on the trivia column ("not requested - ... revisit if it bothers at the event"), which Task 7.8 later added as Back at the partner's request; Task 7.7 kept `font-display: swap` against the forward pass.
+
+## Self-correction by the same model
+
+18. Qwen's own council caught: bank reload leaks old scores (`a82ee3e`), double-awarding after mode switch (`dddda9c`), Back button/Done/Next colour specificity bug (`76a4c75`), stale `teamNames` (`15630bd`), vacuous test (`72645c6`), 871px setup screen (`35e2b32`), 790px question screen (`6387eba`). It also corrected its own "headless Chromium lacks FSA" note (`2aa76e2`) 2 days after writing it (`946de07`).
+19. Several council fixes landed inside `docs(plan)` commits rather than separate code commits: `15630bd` (js/app.js), `72b7cba` and `cba8805` (index.html, styles.css), `72645c6` (test).
+20. Task 9 (folder mode) is the only task whose commit was rewritten; it was also executed last among the original 10 tasks, after Tasks 7.5-7.10, 8, 11 and 12 were inserted (`timeline.md` "Amended"; `requests.md` B).
+
+## Spec and docs drift
+
+21. The spec was edited twice (`60021ff`, `d7964f1`, both 10-11) and never again by Qwen. At `f603230` it still says "2-4 names accepted" / "4 teams max" though Task 7.9 (10-12) made the count unbounded; plan Global Constraints still say "Teams: 2-4". Task 23 (open at head) lists the reconciliation.
+22. README/About sync rule (`1c279ad`) was followed in later Qwen commits (`35e2b32` and `aa5f30d` bodies each say "Sync rule: README ... in the same commit"). The Claude pass touched README in `a91b6e7`, `b87e688`, `cf26ed4`, `739d029`; Task 23 (open) still lists stale human-facing text.
+
+## The Claude Code pass
+
+23. **Shape of the pass:** one planning commit (`b15c778`, +632 plan lines, Tasks 14-23 written in advance, Task 14 contains the full replacement `questions.yaml`), then 17 commits in 71 minutes (08:44-09:55), implemented by three different models per the trailers: Haiku 5.5 (2 commits, both bank edits), Sonnet 5.5 (6, all `fix`), Opus 5.5 (10: plan check-offs, plan creation, and the two Task 18 feature commits plus follow-up). Briefs and reviews are under `.superpowers/sdd/2026-10-10-trivia-night/` (`task-14-brief.md` ... `review-*.diff`).
+24. **Council loop reused:** each Claude task ends with a `docs(plan): check off task N + council record` commit by Opus (6 of them), with a backward ("spec compliant, approved") and forward ("Important/CRITICAL") entry; Task 18's forward review found a CRITICAL (a folder-board night lost its save on refresh), fixed in `739d029`.
+25. **Scale of what the pass found** (plan Tasks 14-23 intros): 7 wrong + 6 shaky bank answers; 2 Create-new bugs; no persistence; unguarded Reset; layout overflow at 1280x720 (board page ~946 px tall); audio stopping on re-render; D-pad unusable (cells are `<div>`s); `images/*` not gitignored; server bound to 127.0.0.1; deprecated action majors. Tasks 14-19 are committed; 20-23 are open at `81887b4`.
+26. **Volume:** Claude pass +2,015 / -287 lines (src +773/-157, tests +483/-42, docs +710/-50, bank +49/-38) vs Qwen +3,673 / -494 over about 81 calendar hours. `js/app.js` went from 242 to 516 lines; `js/persist.js` (177) and `test/persist.test.mjs` (231) are new.
+27. **Opencode run facts (other agent's file, unverified by me):** build session spans 93.4 h wall, 60 partner messages, 605 assistant steps, 855 tool calls, 617,828 output tokens, median 19.3 tok/s; 43 council child sessions. Its time labels say US Eastern; I believe they are -0700 (see `requests.md` D).
+
+## Possible loose ends for the author to check
+
+- Whether `Co-Authored-By` model naming matches what each model actually was (Haiku/Sonnet/Opus names come from trailers; the session's attribution reminder says Sonnet 5.5, so the trailers are the only record of the other models).
+- 14 bot deploy commits exist on gh-pages (first deploy `23538b0` shipped only `.nojekyll`, per plan Task 10 council fix); nothing on `claude/council-fixes` is deployed (plan Task 22: "Do NOT push; the deploy is exercised when the partner merges").
+- Working tree has uncommitted edits to `js/question.js` and `styles.css` (Task 20 in progress by the concurrent agent); stats here are for committed `81887b4`.

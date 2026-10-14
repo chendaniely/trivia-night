@@ -14,24 +14,120 @@ Open the live link, or run it locally:
 ```sh
 make              # serves on http://127.0.0.1:8080
 make serve PORT=8090   # any other port
+make serve-lan    # reachable from the TV's own browser (see below)
 make test         # unit tests
+make smoke        # end-to-end check in Chrome (needs `make serve` running in another terminal)
 ```
 
-(Requires python3 and node. That's all.)
+Run these from the repo folder. You need [uv](https://docs.astral.sh/uv/)
+(`brew install uv`) and [node](https://nodejs.org/) (`brew install node`);
+that's all. The server prints the one address to open. Only the app's own files are
+served: `question-drafts/` and the repo's other files never are. On
+`make serve-lan`, anyone on the same Wi-Fi can still open the app and
+read `questions.yaml`, so use it on a network you trust (or mirror the
+Mac instead). It serves the shipped board only: a Load folder board lives
+on the device that loaded it.
+
+## Putting it on the TV
+
+Pick one:
+
+1. **Mirror the Mac to the TV** (recommended). Everything works,
+   including Load folder and your real clips and photos.
+2. **The TV's own browser on the live link.** Only the shipped board is
+   there; your real clips and photos aren't in the repo.
+3. **The TV's own browser on the Mac, over Wi-Fi.** Run `make serve-lan`
+   and open the address it prints on the TV. macOS may ask to allow
+   incoming connections. Load folder on the TV reads the TV's files, not
+   the Mac's.
+
+Always open the same address: a saved game belongs to the address it was
+played on (`localhost`, `127.0.0.1`, the LAN address, and another port
+are all different).
+
+**Test on the actual TV before the night:**
+
+- Open the live URL.
+- Check the font looks like the Mac's (Atkinson Hyperlegible, not a
+  fallback).
+- Press **Reset game** and confirm the browser's OK/Cancel dialog appears
+  and OK works. Some TV browsers suppress dialogs; if so, mirror the Mac
+  instead.
+- Audio: `.m4a`/`.mp3` play best on TV browsers; `.wav` works.
+
+The app needs a reasonably recent browser (about Chrome 86 / Safari 14).
+On an older one you'll see a "Loading…" note that never goes away: mirror
+the Mac instead.
+
+This repo is public, so never put the real night's questions in the
+shipped `questions.yaml`. Keep them in a local folder and use **Load
+folder**. `question-drafts/` is git-ignored scratch space and is never
+served: to play a draft, copy it into a folder as `questions.yaml` (with
+`audio/` and `images/` beside it) and Load folder that.
+
+## Before the night
+
+A week before, on the Mac and TV you'll actually use:
+
+- `make test`, and run the check one-liner under "Writing your own
+  questions" (it checks only the shipped `questions.yaml`; a folder
+  board is checked by loading it, and the error screen lists problems).
+- Play one full practice game on the same address and browser as the
+  night (saved games belong to the address). **Reset game** clears it.
+- On the TV: do the "Test on the actual TV" list above, and try a clip.
+- Do the Create new, then Load folder check in Chrome (below).
+- Run `make serve` once on the event Mac (the first `uv run` may fetch a
+  Python).
+
+## On the night, if...
+
+- **The page refreshed, or the remote's Back left the app:** reopen the
+  same address and press **Resume game** (not Start: Start asks to
+  discard the saved game). For a folder board, Load folder the same
+  folder first, then Resume. You land on the board with scores and played
+  cells; a question that was open isn't marked played.
+- **The TV shows a blank page or a "Loading..." that stays:** refresh
+  once, then mirror the Mac instead.
+- **A clip won't play or says "no clip":** check the filename matches
+  exactly (the real name, not URL-encoded) and use `.m4a`/`.mp3`. Or
+  play it from the Mac and just **Reveal**.
+- **A picture is missing:** the question still works; describe it or
+  show it from a phone.
+- **Wrong team marked:** before **Done**, click the team again to change
+  or clear it (or **Back to board** drops the marks). After Done the
+  points are banked and the cell is closed; there is no undo, so adjust
+  by announcing it.
+- **Some private windows can't save:** setup says "Saving is off". Use a
+  normal window.
 
 ## Using it at the event
 
 1. Name your teams — fun names are suggested automatically, so you can
    just hit **Start** or edit, add, or remove teams (2 or more).
 2. Pick a mode:
-   - **Jeopardy** — click a dollar cell, mark teams green (correct) or
+   - **Jeopardy** — click a point cell, mark teams green (correct) or
      red (wrong), **Reveal** the answer, **Done** to bank points.
-   - **Trivia** — click a category name to start the round (the dollar
+   - **Trivia** — click a category name to start the round (the point
      cells aren't clickable), mark a team green when they answer,
      **Reveal** to show the answer, **Next** to move on.
-3. **Back to board** is on every question screen if you mistap.
-4. **Setup** mid-game: the same number of teams resumes the game
-   (rename in place); a different number starts fresh.
+   No mouse needed: a TV remote's D-pad (or Tab / Shift-Tab) moves
+   between cells, categories and buttons, and OK (Enter / Space) presses
+   them.
+3. **Back to board** is on every question screen if you mistap (the
+   browser's Back button does the same). It drops that question's marks
+   and keeps the cell and everyone's scores.
+4. **Setup** mid-game: rename teams or switch modes and **Start** carries
+   on with the same game; adding or removing a team starts a fresh game
+   (it asks first). Changed your mind? **Back to board** on the setup
+   screen returns to the game untouched. **Reset game** under the board
+   clears all scores and played cells — it asks first too.
+5. **Refreshed by accident?** The game saves in the browser as you play.
+   Reload the page and press **Resume game** on the setup screen. For a
+   folder board, use **Load folder** and pick the same folder again;
+   Resume appears once that board is loaded (the setup screen reminds
+   you which board has the saved game). Each board keeps its own saved
+   game (the 10 most recent boards); editing a board's `questions.yaml`
+   makes it a new board, so its old game can't be resumed.
 
 The in-app **About** button (under Start) has the same rundown on the TV.
 
@@ -51,9 +147,16 @@ rounds:
         a: "The answer"
 ```
 
+Unknown keys are reported (typo guard): a misspelled `image:` or `Audio:`
+is flagged with a "did you mean" hint instead of being silently ignored.
+Problems are located the way you'd look for them, e.g. `round 2 "Movies",
+question 3`; YAML syntax errors give a line number.
+
 - One round per column; top row is easy, bottom row is hard.
+- Write media paths as real filenames, not URL-encoded:
+  `audio/My Song.m4a`, not `audio/My%20Song.m4a`.
 - Optional per question: `points:` (positive integer), `audio:` (a
-  `.wav`/`.mp3` path), `images:` (list of paths). Missing files show a
+  `.m4a`/`.mp3`/`.wav` path), `images:` (list of paths). Missing files show a
   note, not an error.
 - Check your file before the event:
 
@@ -62,14 +165,29 @@ rounds:
   ```
 
 Prefer to keep questions, clips, and photos together? Use **Load
-folder** in the app — a folder with `questions.yaml`, `audio/`, and
-`images/` becomes its own board — and **Create new** scaffolds one for
-you (Chrome or Edge only).
+folder** in the app (works best in Chrome or Edge; other browsers use a
+simpler folder picker): a folder with `questions.yaml`, `audio/`, and
+`images/` becomes its own board.
+
+**Create new** scaffolds one for you (Chrome or Edge only):
+
+1. Pick (or make) a parent folder inside Documents. Chrome refuses
+   Documents, Desktop, Downloads and your home folder themselves.
+2. Chrome asks to allow editing: allow it.
+3. Type a name for the new game folder. It never overwrites an existing
+   one.
+4. Then use **Load folder** on it.
+
+Loading another board mid-game asks first; it keeps the team names you
+typed (unless that board has a saved game, then Resume is offered), and
+if a folder has a problem the error screen lists it. **Back to setup**
+returns to your game untouched.
 
 ## Layout
 
 - `index.html`, `styles.css`, `js/` — the app (vanilla, no build step)
 - `questions.yaml` — the shipped question bank
 - `audio/demo/`, `images/demo/` — self-generated demo media
+- `test/` — unit tests (`make test`)
 - `tools/local-server.py` — the local dev server (`make` runs it)
 - `fonts/` — the self-hosted face (Atkinson Hyperlegible Next)

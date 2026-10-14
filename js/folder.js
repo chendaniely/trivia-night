@@ -4,9 +4,16 @@
 // Pure logic — the DOM lives in app.js.
 import { parseBank } from "./validate.js";
 
-// Normalize a bank-relative media path ("audio/x.wav") for matching.
-function norm(p) {
-  return p.replace(/^\.\//, "").replace(/\\/g, "/");
+// ONE normalizer for both load paths: trim, backslashes -> "/", drop empty
+// and "." segments (so "/a/b", "./a/b", "././a//b", ".\\a\\b" and "a/./b"
+// all become "a/b"). Case-sensitive on purpose (filesystems differ).
+export function normPath(p) {
+  return String(p)
+    .trim()
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter((seg) => seg !== "" && seg !== ".")
+    .join("/");
 }
 
 export function revokeAll(urls) {
@@ -17,7 +24,8 @@ export function revokeAll(urls) {
 // missing (the path stays as-is -> 404 -> the existing "no clip"/
 // "no image" note).
 async function resolveFsa(handle, relPath) {
-  const parts = norm(relPath).split("/").filter(Boolean);
+  const parts = normPath(relPath).split("/");
+  if (parts[0] === "") return null;
   if (!parts.length) return null;
   let h = handle;
   for (let i = 0; i < parts.length - 1; i++) {
@@ -92,7 +100,7 @@ export async function loadFromDirHandle(handle) {
   if (!result.ok) return result;
   const urls = [];
   await swapMediaFromDirHandle(handle, result.bank, urls);
-  return { ok: true, bank: result.bank, urls };
+  return { ok: true, bank: result.bank, urls, text }; // text -> saved-game bankKey
 }
 
 // webkitdirectory fallback: match media on webkitRelativePath. The
@@ -106,12 +114,13 @@ export async function loadFromFileList(files) {
   if (!yaml) {
     return { ok: false, errors: [{ where: "folder", message: "no questions.yaml in the folder root" }] };
   }
-  const result = parseBank(await yaml.text());
+  const text = await yaml.text();
+  const result = parseBank(text);
   if (!result.ok) return result;
   const root = yaml.webkitRelativePath.split("/")[0];
   const urls = [];
   const find = (rel) =>
-    arr.find((f) => f.webkitRelativePath === `${root}/${norm(rel)}`);
+    arr.find((f) => f.webkitRelativePath === `${root}/${normPath(rel)}`);
   for (const round of result.bank.rounds)
     for (const q of round.questions) {
       if (q.audio) {
@@ -133,7 +142,7 @@ export async function loadFromFileList(files) {
         });
       }
     }
-  return { ok: true, bank: result.bank, urls };
+  return { ok: true, bank: result.bank, urls, text }; // text -> saved-game bankKey
 }
 
 // Create-new scaffold (FSA only): template keys that are optional
@@ -170,6 +179,21 @@ note instead.
 `;
 
 export async function createNew(parentHandle, name) {
+  // Never overwrite: only a NotFoundError means the name is free.
+  let exists = true;
+  try {
+    await parentHandle.getDirectoryHandle(name);
+  } catch (err) {
+    if (!err || err.name !== "NotFoundError") throw err;
+    exists = false;
+  }
+  if (exists) {
+    const err = new Error(
+      `a folder named "${name}" already exists there — pick another name`
+    );
+    err.name = "ExistsError";
+    throw err;
+  }
   const dir = await parentHandle.getDirectoryHandle(name, { create: true });
   const write = async (fileName, text) => {
     const fh = await dir.getFileHandle(fileName, { create: true });

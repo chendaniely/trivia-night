@@ -44,7 +44,7 @@ rounds:
 `;
 const r2 = parseBank(noA);
 assert.equal(r2.ok, false);
-assert.equal(r2.errors[0].where, "rounds[0].questions[1]");
+assert.equal(r2.errors[0].where, 'round 1 "R", question 2');
 assert.match(r2.errors[0].message, /a\b/);
 
 // mid-file YAML error: line 6 is `        a: bad: line`
@@ -75,7 +75,7 @@ rounds:
 `;
 const r4 = parseBank(badPts);
 assert.equal(r4.ok, false);
-assert.equal(r4.errors[0].where, "rounds[0].questions[0]");
+assert.equal(r4.errors[0].where, 'round 1 "R", question 1');
 assert.match(r4.errors[0].message, /points/);
 
 // missing rounds
@@ -93,7 +93,7 @@ rounds:
 `;
 const r6 = parseBank(noQ);
 assert.equal(r6.ok, false);
-assert.equal(r6.errors[0].where, "rounds[0].questions[0]");
+assert.equal(r6.errors[0].where, 'round 1 "R", question 1');
 assert.match(r6.errors[0].message, /q\b/);
 
 // duplicate round names -> error (Task 6 tallies key by name)
@@ -110,7 +110,7 @@ rounds:
 `;
 const r7 = parseBank(dupNames);
 assert.equal(r7.ok, false);
-assert.match(r7.errors[0].where, /rounds\[1\]/);
+assert.match(r7.errors[0].where, /round 2 "R"/);
 assert.match(r7.errors[0].message, /duplicate/);
 
 // zero-question round -> error (Task 6 column would have no first question)
@@ -121,7 +121,7 @@ rounds:
 `;
 const r8 = parseBank(emptyQ);
 assert.equal(r8.ok, false);
-assert.match(r8.errors[0].where, /rounds\[0\]/);
+assert.match(r8.errors[0].where, /round 1 "R"/);
 
 // empty rounds list -> error
 const emptyR = `title: "T"
@@ -142,7 +142,7 @@ rounds:
 `;
 const r10 = parseBank(imgsNotList);
 assert.equal(r10.ok, false);
-assert.equal(r10.errors[0].where, "rounds[0].questions[0]");
+assert.equal(r10.errors[0].where, 'round 1 "R", question 1');
 assert.match(r10.errors[0].message, /images/);
 
 // images with a non-string item -> same where
@@ -158,7 +158,62 @@ rounds:
 `;
 const r11 = parseBank(imgsBadItem);
 assert.equal(r11.ok, false);
-assert.equal(r11.errors[0].where, "rounds[0].questions[0]");
+assert.equal(r11.errors[0].where, 'round 1 "R", question 1');
 assert.match(r11.errors[0].message, /images/);
+
+// --- Task 15: host-actionable messages ---
+const wrap = (extra, roundExtra = "", top = "") => `title: "T"
+${top}rounds:
+  - name: "Movies"
+${roundExtra}    questions:
+      - q: "Q1"
+        a: "A1"
+      - q: "Q2"
+        a: "A2"
+${extra}`;
+const bad = (text) => {
+  const r = parseBank(text);
+  assert.equal(r.ok, false);
+  return r.errors;
+};
+
+// misspelled / wrong-case keys get a suggestion
+let e = bad(wrap('        image: "images/x.png"\n'));
+assert.equal(e[0].where, 'round 1 "Movies", question 2');
+assert.match(e[0].message, /unknown key "image"/);
+assert.match(e[0].message, /did you mean "images"/);
+e = bad(wrap('        Audio: "a.wav"\n'));
+assert.match(e[0].message, /unknown key "Audio"/);
+assert.match(e[0].message, /did you mean "audio"/);
+e = bad(wrap("        point: 300\n"));
+assert.match(e[0].message, /did you mean "points"/);
+e = bad(wrap('        foo: 1\n'));
+assert.match(e[0].message, /unknown key "foo"/);
+assert.doesNotMatch(e[0].message, /did you mean/);
+
+// round and top level unknown keys
+e = bad(wrap("", "    nmae: x\n"));
+assert.equal(e[0].where, 'round 1 "Movies"');
+assert.match(e[0].message, /unknown key "nmae"/);
+assert.match(e[0].message, /did you mean "name"/);
+e = bad(wrap("", "", "titel: x\n"));
+assert.match(e[0].message, /unknown key "titel"/);
+assert.match(e[0].message, /did you mean "title"/);
+
+// non-string q / a: tell the host to quote
+e = bad(wrap("      - q: \"Q3\"\n        a: 1984\n"));
+assert.equal(e[0].where, 'round 1 "Movies", question 3');
+assert.match(e[0].message, /must be text — put quotes around it: a: "1984"/);
+e = bad(wrap("      - q: \"Q3\"\n        a: true\n"));
+assert.match(e[0].message, /a: "true"/);
+e = bad(wrap("      - q: 42\n        a: \"x\"\n"));
+assert.match(e[0].message, /question\.q must be text — put quotes around it: q: "42"/);
+
+// round without a usable name
+e = bad(`title: "T"
+rounds:
+  - questions: []
+`);
+assert.ok(e.some((x) => x.where === "round 1"));
 
 console.log("validate: all assertions passed");

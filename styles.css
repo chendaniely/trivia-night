@@ -10,7 +10,8 @@
 }
 
 :root {
-  --bg: #0a1620;        /* blue-black, hue of NYC blue */
+  color-scheme: dark;   /* native audio controls, radios, scrollbars follow the theme */
+  --bg: #0a1620;       /* blue-black, hue of NYC blue */
   --panel: #13242f;
   --edge: #24405a;      /* 1px panel borders */
   --text: #f5f9fc;
@@ -21,10 +22,23 @@
   --good: #3fb950;
   --bad: #f85149;
   --font: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  /* Viewport unit (Task 20): 1px at 1920x1080, scaled by the smaller of
+     height and width — a 720p TV shows the same picture as a 1080p one
+     (2/3 the px on 2/3 the screen). Board, setup and image questions are
+     sized in it so each fits one screen at 1280x720 through 1920x1080. */
+  --u: min(0.0926vh, 0.0521vw);
+  /* Floor unit (Task 20 fix 1): 1px at 1280x720 and up, shrinking below
+     it, so setup / About px floors keep the 720p picture on a 960x540 TV
+     viewport instead of growing past the screen. */
+  --k: min(1px, 0.13889vh, 0.078125vw);
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 30px/1.45 var(--font); }
 .hidden { display: none !important; }
+/* Shown until the app runs (index.html); deliberately no vh/min-height sizing. */
+#boot { max-width: 1280px; margin: 0 auto; padding: 40px; color: var(--text);
+  opacity: 0; animation: boot-in 0s 2.5s forwards; } /* stays invisible on a healthy load */
+@keyframes boot-in { to { opacity: 1; } }
 h1 { font-size: 72px; font-weight: 800; line-height: 1.1; margin: 0 0 12px; }
 .subtitle { color: var(--muted); font-size: 30px; }
 .screen { max-width: 1280px; margin: 0 auto; padding: 40px; }
@@ -46,55 +60,106 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .btn-secondary { background: var(--blue); color: #fff; }
 .btn-quiet { background: var(--panel); color: var(--muted); border: 1px solid var(--edge); }
 .btn-quiet:hover:not(:disabled) { color: var(--text); border-color: var(--muted); filter: none; }
-.btn-row { display: flex; gap: 24px; justify-content: center; margin-top: 24px; }
-#team-inputs { display: grid; gap: 16px; margin: 24px 0; justify-items: center; }
-.team-row { display: flex; gap: 14px; align-items: center; }
-.team-row input { width: 480px; max-width: 480px; }
-.team-remove { font-size: 26px; padding: 10px 24px; }
-#add-team-btn { margin-top: 6px; }
-#mode-pick { display: flex; gap: 48px; margin: 20px 0; font-size: 32px; justify-content: center; }
-/* Setup must fit a 1280x720 TV in one screen (council Task 9): tightened
-   vertical rhythm, secondary buttons share one row. */
-#screen-setup { padding: 24px 40px; }
-#screen-setup h1 { text-align: center; }
+.btn-row { display: flex; gap: calc(24 * var(--u)); justify-content: center; margin-top: calc(20 * var(--u)); }
+.btn-row button { font-size: max(20px, calc(30 * var(--u))); padding: calc(12 * var(--u)) calc(32 * var(--u)); }
+/* Setup (Task 20): sized in --u (floors in --k), so the busiest setup —
+   4 team rows plus the Resume offer, Back to board or a two-line save
+   note — fits one screen from 960x540 to 1920x1080 and keeps the old px
+   sizes at 1080p. Secondary buttons share one row (council Task 9). */
+#screen-setup { max-width: calc(1920 * var(--u)); padding: calc(24 * var(--u)) calc(40 * var(--u)); }
+#screen-setup h1 { text-align: center; font-size: calc(72 * var(--u)); margin-bottom: calc(12 * var(--u)); }
 #screen-setup h1::after {
-  content: ""; display: block; width: 120px; height: 6px; margin: 12px auto 0;
-  background: var(--orange); border-radius: 3px;
+  content: ""; display: block; width: calc(120 * var(--u)); height: calc(6 * var(--u));
+  margin: calc(12 * var(--u)) auto 0; background: var(--orange); border-radius: 3px;
 }
-#screen-setup .subtitle { text-align: center; margin: 4px 0 0; }
-#screen-setup #start-btn { display: block; margin: 0 auto; }
+#screen-setup .subtitle { text-align: center; font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); margin: calc(4 * var(--u)) 0 0; }
+#screen-setup button { font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u)); }
+#team-inputs { display: grid; gap: calc(16 * var(--u)); margin: calc(24 * var(--u)) 0; justify-items: center; }
+.team-row { display: flex; gap: calc(14 * var(--u)); align-items: center; }
+.team-row input {
+  font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(18 * var(--u));
+  width: calc(480 * var(--u)); max-width: calc(480 * var(--u));
+}
+#screen-setup .team-remove { font-size: max(calc(18 * var(--k)), calc(26 * var(--u))); padding: calc(10 * var(--u)) calc(24 * var(--u)); }
+#add-team-btn { margin-top: calc(6 * var(--u)); }
+#mode-pick { display: flex; gap: calc(48 * var(--u)); margin: calc(20 * var(--u)) 0; font-size: max(calc(20 * var(--k)), calc(32 * var(--u))); justify-content: center; }
+#mode-pick input[type="radio"] { width: max(calc(20 * var(--k)), calc(30 * var(--u))); height: max(calc(20 * var(--k)), calc(30 * var(--u))); }
+#screen-setup .start-row { display: flex; gap: calc(20 * var(--u)); justify-content: center; }
+/* Saved-game offer (Task 18): summary + Resume on one line at the top of
+   setup, so it is on screen whatever the team count. */
+#resume-offer { display: flex; flex-wrap: wrap; gap: calc(12 * var(--u)) calc(28 * var(--u)); align-items: center; justify-content: center; margin: calc(16 * var(--u)) 0 0; }
+#resume-summary { margin: 0; font-size: max(calc(18 * var(--k)), calc(28 * var(--u))); }
+#save-note { margin: calc(12 * var(--u)) auto 0; max-width: calc(1100 * var(--u)); font-size: max(calc(18 * var(--k)), calc(26 * var(--u))); text-align: center; }
 /* Visually hidden but present (a display:none file input never opens the
    chooser on a programmatic click). tabindex=-1: no invisible tab stop. */
 #folder-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
-#screen-setup .folder-btns { display: flex; gap: 16px; justify-content: center; margin-top: 20px; }
-#screen-setup .folder-btns button { font-size: 24px; padding: 10px 24px; }
-#folder-msg { color: var(--muted); font-size: 24px; text-align: center; margin: 16px 0 0; }
-/* About page (Task 11): static text, must fit one TV screen (council Task 9):
-   24px text, two-column list. */
-#screen-about { max-width: 1100px; padding: 24px 40px; font-size: 22px; }
-#screen-about h1 { text-align: center; font-size: 52px; }
-#screen-about p { margin: 12px 0; line-height: 1.35; }
-#screen-about li { line-height: 1.35; margin: 0 0 10px; break-inside: avoid; }
-#screen-about ul { padding-left: 24px; columns: 2; column-gap: 48px; }
+#screen-setup .folder-btns { display: flex; gap: calc(16 * var(--u)); justify-content: center; margin-top: calc(20 * var(--u)); }
+#screen-setup .folder-btns button { font-size: max(calc(18 * var(--k)), calc(24 * var(--u))); padding: calc(10 * var(--u)) calc(24 * var(--u)); }
+#folder-msg { color: var(--muted); font-size: max(calc(18 * var(--k)), calc(24 * var(--u))); text-align: center; margin: calc(16 * var(--u)) 0 0; }
+/* About page (Task 11): static text, two-column list. Task 20 fix 1:
+   sized in --u (22px at 1920x1080; floors in --k) so it fits with room to grow, and
+   Back to setup sticks to the bottom edge, so the only exit is on screen
+   even when the text runs past it (small TV viewports, longer text). */
+#screen-about {
+  max-width: 1200px; padding: calc(24 * var(--u)) calc(40 * var(--u));
+  font-size: max(14px, calc(16 * var(--k)), calc(22 * var(--u)));
+}
+#screen-about h1 { text-align: center; font-size: calc(52 * var(--u)); margin-bottom: calc(12 * var(--u)); }
+#screen-about p { margin: calc(12 * var(--u)) 0; line-height: 1.35; }
+#screen-about li { line-height: 1.35; margin: 0 0 calc(10 * var(--u)); break-inside: avoid; }
+#screen-about ul { padding-left: calc(24 * var(--u)); columns: 2; column-gap: calc(48 * var(--u)); }
 #screen-about a { color: var(--orange); }
 #screen-about a:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
 #screen-about code { font-size: 0.85em; background: var(--panel); border: 1px solid var(--edge); border-radius: 6px; padding: 2px 8px; }
-#about-back-btn { display: block; margin: 20px auto 0; }
+#about-back-btn {
+  display: block; margin: calc(20 * var(--u)) auto 0; position: sticky; bottom: calc(16 * var(--u));
+  font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u));
+}
+.error-actions { display: flex; gap: 16px; margin: 16px 0 20px; }
 #error-list { font-size: 28px; color: var(--bad); padding-left: 24px; }
-.scoreboard { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; margin-bottom: 28px; }
-.score-team {
-  display: flex; align-items: baseline; gap: 14px;
+/* An unbroken 80-char key wraps instead of running off the screen (Task 20). */
+#error-list li { overflow-wrap: anywhere; }
+/* Board (Task 20): exactly one viewport tall, full width. Scoreboard,
+   hint, header row and actions take their size; the point rows split
+   what is left (grid-auto-rows 1fr), so the board never scrolls. Rows
+   never shrink below their content: a bank too big to fit scrolls
+   instead of overlapping. */
+#screen-board {
+  max-width: none; height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
+  padding: calc(24 * var(--u)) calc(32 * var(--u));
+}
+.scoreboard { display: flex; flex-wrap: wrap; gap: calc(14 * var(--u)) calc(28 * var(--u)); justify-content: center; margin-bottom: calc(20 * var(--u)); }
+.scoreboard .score-team {
+  display: flex; align-items: baseline;
   background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
-  padding: 12px 28px; font-size: 28px;
+  gap: calc(14 * var(--u)); line-height: 1.15;
+  padding: calc(10 * var(--u)) calc(28 * var(--u)); font-size: max(20px, calc(30 * var(--u)));
 }
 .score-points { font-weight: 800; font-size: 40px; color: var(--orange); font-variant-numeric: tabular-nums; }
-.board-grid { display: grid; gap: 12px; }
+.scoreboard .score-points { font-size: max(28px, calc(44 * var(--u))); }
+.board-grid {
+  display: grid; gap: calc(12 * var(--u)); flex: 1 1 0;
+  grid-template-rows: auto; grid-auto-rows: minmax(min-content, 1fr);
+}
+/* Header type is in --u, which never outgrows the width: "Childhoods",
+   the longest shipped word, fits its column (6 rounds) at every target
+   size; balance keeps two-line names even. break-word is the last resort
+   for one absurdly long word. */
 .board-header {
-  font-size: 32px; font-weight: 700; line-height: 1.2; text-align: center;
-  padding: 18px 12px; background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
+  font-size: max(20px, calc(44 * var(--u))); font-weight: 700; line-height: 1.15; text-align: center;
+  display: grid; place-items: center; text-wrap: balance;
+  padding: calc(12 * var(--u)) calc(10 * var(--u)); color: var(--text);
+  background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
   overflow-wrap: break-word; min-width: 0;
 }
-.board-header.clickable:hover { background: var(--blue); border-color: var(--blue); }
+/* Clickable headers and cells are <button>s (Task 21): the global button
+   chrome (hover lift, brightness) is switched off so the old look stands,
+   and keyboard focus gets the hover fill plus the shared button ring. */
+.board-header.clickable, .board-cell.clickable { width: 100%; transition: none; }
+.board-header.clickable:hover, .board-header.clickable:active,
+.board-cell.clickable:hover, .board-cell.clickable:active { filter: none; transform: none; }
+.board-header.clickable:hover, .board-header.clickable:focus-visible { background: var(--blue); border-color: var(--blue); }
 /* Row position IS difficulty: subtle 5-step ramp easy (top) to hard (bottom). */
 .board-cell.tier-0 { background: #111f2a; }
 .board-cell.tier-1 { background: #13242f; }
@@ -102,46 +167,98 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .board-cell.tier-3 { background: #1a3242; }
 .board-cell.tier-4 { background: #1f3b4e; }
 .board-cell {
-  font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums;
+  font-size: max(32px, calc(64 * var(--u))); line-height: 1.1;
+  font-weight: 800; font-variant-numeric: tabular-nums;
   display: grid; place-items: center; text-align: center;
-  min-height: 88px; padding: 10px 8px;
+  padding: calc(6 * var(--u)) 8px; color: var(--text); /* explicit: buttons default to dark text */
   background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
 }
 .clickable { cursor: pointer; }
-.board-cell.clickable:hover { background: var(--orange); border-color: var(--orange); color: #0a1620; }
+.board-cell.clickable:hover, .board-cell.clickable:focus-visible { background: var(--orange); border-color: var(--orange); color: #0a1620; }
 .board-cell.used { color: var(--muted); background: transparent; border: 2px dashed var(--edge); }
 .board-gap { visibility: hidden; }
 /* Trivia: the header is the click target; cells are inert (Task 7.8). */
 .board-grid.trivia .board-cell { opacity: 0.45; }
 .board-header.dim { opacity: 0.45; }
-.board-hint { color: var(--muted); font-size: 26px; margin: 0 0 18px; text-align: center; }
-/* Question screen must fit 1280x720 in the worst case (longest shipped q +
-   revealed answer + 3 long team names wrapping to 2 rows, council Task 13):
-   tighter rhythm + slightly smaller mark buttons. */
-#screen-question { padding: 24px 40px; }
-.question-wrap { display: grid; gap: 20px; justify-items: start; }
-.question-wrap h2 { font-size: 32px; font-weight: 700; color: var(--muted); margin: 0; }
-.question-text { font-size: 52px; line-height: 1.3; margin: 0; white-space: pre-line; max-width: 1080px; }
+.board-hint { color: var(--muted); font-size: max(18px, calc(26 * var(--u))); line-height: 1.3; margin: 0 0 calc(14 * var(--u)); text-align: center; }
+/* Question screens: the worst case (longest shipped q + revealed answer +
+   long team names, council Task 13) must fit one screen. Task 20 fix 1:
+   sized in --u with px floors (question 32, answer 28, buttons 20), so
+   it fits a 960x540 TV viewport too; unchanged at 1080p. Text-only
+   questions override the question/answer size with --qf (fix 2, below). */
+#screen-question { padding: calc(24 * var(--u)) calc(40 * var(--u)); }
+.question-wrap { display: grid; gap: calc(20 * var(--u)); justify-items: start; }
+.question-wrap h2 { font-size: max(20px, calc(32 * var(--u))); font-weight: 700; color: var(--muted); margin: 0; }
+.question-text { font-size: max(32px, calc(52 * var(--u))); line-height: 1.3; margin: 0; white-space: pre-line; max-width: 1080px; }
 .answer-text {
-  font-size: 42px; line-height: 1.25; font-weight: 800; color: var(--orange);
+  font-size: max(28px, calc(42 * var(--u))); line-height: 1.25; font-weight: 800; color: var(--orange);
   margin: 0; max-width: 1080px; animation: reveal-in 240ms ease;
 }
-.team-btns, .controls { display: flex; gap: 24px; flex-wrap: wrap; }
+.team-btns, .controls { display: flex; gap: calc(24 * var(--u)); flex-wrap: wrap; }
+.controls button { font-size: max(20px, calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u)); }
 /* .team-btns holds only the team mark buttons (blue fill); the controls
    row (Back/Reveal/Done/Next) keeps its own .btn-* classes. */
-.team-btns button { font-size: 30px; padding: 14px 32px; background: var(--blue); color: #fff; border-radius: 14px; }
+.team-btns button {
+  font-size: max(20px, calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u));
+  background: var(--blue); color: #fff; border-radius: 14px;
+}
 .team-btns button.marked-green { background: var(--good); color: #06130a; }
 .team-btns button.marked-red { background: var(--bad); color: #160505; }
 .btn-primary { background: var(--orange); color: #0a1620; }
 .audio-block { display: grid; gap: 8px; }
-.audio-block audio { width: 480px; height: 48px; }
-.no-clip { color: var(--muted); font-style: italic; margin: 0; font-size: 28px; }
+.audio-block audio { width: calc(480 * var(--u)); height: max(32px, calc(48 * var(--u))); }
+.no-clip { color: var(--muted); font-style: italic; margin: 0; font-size: max(18px, calc(28 * var(--u))); }
 .images-block { display: flex; gap: 16px; flex-wrap: wrap; }
-.images-block img {
-  max-width: 640px; max-height: 480px; width: auto; height: auto;
-  object-fit: contain; border-radius: 12px; border: 1px solid var(--edge); background: var(--panel);
+.no-image { color: var(--muted); font-style: italic; margin: 0; font-size: max(18px, calc(28 * var(--u))); }
+/* Image questions (Task 20): question + answer on the left (45%), the
+   image box on the right (55%) filling the height left by the category,
+   audio, team buttons and controls — nothing scrolls, and the picture is
+   as large as fits (contained, top-right, scaled up or down). The screen
+   is one viewport tall to make that height definite; text-only questions
+   use a centred column (below). Explicit rows + margins (no row-gap): an
+   absent audio or answer leaves no empty gap. Row 5 is the slack: text
+   too long to fit pushes the buttons down (the page scrolls) instead of
+   covering the answer. */
+#screen-question { max-width: 1760px; height: 100vh; height: 100dvh; }
+.question-wrap:not(.has-images) { max-width: 1200px; margin: 0 auto; }
+/* Text-only questions (Task 20 fix 2; audio allowed): the question is what
+   the room reads, so --qf grows with the screen, as large as the worst
+   shipped question + revealed answer + 4 long team names still fits in
+   either mode from 960x540 to 1920x1080. Bounded by height and by width
+   (wider type means more lines). Lines stay ~48 characters (max-width in
+   em), so the column widens with the type; the answer keeps 0.8x. */
+#screen-question .question-wrap:not(.has-images) {
+  --qf: clamp(32px, min(16px + 5.9vh, 4.6vw), 96px);
+  max-width: max(1200px, calc(21 * var(--qf)));
 }
-.no-image { color: var(--muted); font-style: italic; margin: 0; font-size: 28px; }
+#screen-question .question-wrap:not(.has-images) .question-text { font-size: var(--qf); max-width: 20.8em; }
+#screen-question .question-wrap:not(.has-images) .answer-text { font-size: calc(0.8 * var(--qf)); max-width: 26em; }
+.question-wrap.has-images {
+  height: 100%; row-gap: 0; column-gap: calc(40 * var(--u));
+  grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
+}
+/* Text-only questions (Task 21): ~165px of height spare under the large
+   question, so the mark buttons and controls grow from 20px to 27px at
+   1280x720 (40 --u), reading as part of the screen from the couch. Image
+   questions keep the compact size above. */
+#screen-question .question-wrap:not(.has-images) .team-btns button,
+#screen-question .question-wrap:not(.has-images) .controls button {
+  font-size: max(20px, calc(40 * var(--u))); padding: calc(16 * var(--u)) calc(36 * var(--u));
+}
+.has-images > * { grid-column: 1 / -1; margin-top: calc(20 * var(--u)); }
+.has-images > h2 { grid-row: 1; margin-top: 0; }
+.has-images > .audio-block { grid-row: 2; }
+.has-images > .question-text { grid-row: 3; grid-column: 1; }
+.has-images > .answer-text { grid-row: 4; grid-column: 1; }
+.has-images > .images-block { grid-row: 3 / 6; grid-column: 2; justify-self: stretch; min-height: 0; flex-wrap: nowrap; }
+.has-images > .team-btns { grid-row: 6; }
+.has-images > .controls { grid-row: 7; }
+/* A frame would show the letterbox, so the picture goes unframed here. */
+.has-images .images-block img {
+  flex: 1 1 0; min-width: 0; width: 100%; height: 100%; max-width: none; max-height: none;
+  object-fit: contain; object-position: right top; border: 0; border-radius: 0; background: none;
+}
 .tally-row {
   display: flex; align-items: baseline; gap: 16px;
   background: var(--panel); border: 1px solid var(--edge);
@@ -151,7 +268,13 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 /* Motion: responds to action, <=240ms; off under prefers-reduced-motion. */
 @keyframes screen-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes reveal-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .screen:not(.hidden) { animation: screen-in 200ms ease; }
+/* Full-height screens (Task 20) fade only: the 10px rise would push them
+   past the viewport bottom and flash a scrollbar on the way in. */
+#screen-board:not(.hidden), #screen-question:not(.hidden) { animation-name: fade-in; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  /* The boot note's animation is a delay-reveal, not motion: keep it. */
+  #boot { animation: boot-in 0s 2.5s forwards !important; }
 }

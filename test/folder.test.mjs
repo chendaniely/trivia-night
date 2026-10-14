@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { parseBank } from "../js/validate.js";
-import { NEW_TEMPLATE, loadFromFileList, revokeAll } from "../js/folder.js";
+import { normPath, NEW_TEMPLATE, NEW_FOLDER_README, createNew, loadFromFileList, loadFromDirHandle, revokeAll } from "../js/folder.js";
 
 // create-new template parses on first load (optional keys are comments)
 const t = parseBank(NEW_TEMPLATE);
@@ -42,3 +42,107 @@ assert.equal(r.urls.length, 2);
 const r2 = await loadFromFileList([mk("tv/other/readme.txt", "x")]);
 assert.equal(r2.ok, false);
 assert.equal(r2.errors[0].where, "folder");
+
+// createNew: in-memory fake of the FileSystemDirectoryHandle API
+function notFound(n) {
+  const e = new Error(`"${n}" not found`);
+  e.name = "NotFoundError";
+  return e;
+}
+function fakeDir() {
+  const dirs = new Map();
+  const files = new Map();
+  return {
+    dirs,
+    files,
+    async getDirectoryHandle(n, o = {}) {
+      if (!dirs.has(n)) {
+        if (!o.create) throw notFound(n);
+        dirs.set(n, fakeDir());
+      }
+      return dirs.get(n);
+    },
+    async getFileHandle(n, o = {}) {
+      if (!files.has(n)) {
+        if (!o.create) throw notFound(n);
+        files.set(n, "");
+      }
+      return {
+        async createWritable() {
+          let buf = "";
+          return {
+            async write(x) { buf += x; },
+            async close() { files.set(n, buf); },
+          };
+        },
+      };
+    },
+  };
+}
+
+const parent = fakeDir();
+await createNew(parent, "night");
+const night = parent.dirs.get("night");
+assert.equal(night.files.get("questions.yaml"), NEW_TEMPLATE);
+assert.equal(night.files.get("README.md"), NEW_FOLDER_README);
+assert.ok(night.dirs.has("audio"));
+assert.ok(night.dirs.has("images"));
+
+// existing folder: refuse, name the folder, touch nothing
+const host = fakeDir();
+const mine = await host.getDirectoryHandle("night", { create: true });
+const fh = await mine.getFileHandle("questions.yaml", { create: true });
+const w = await fh.createWritable();
+await w.write("title: HOST BANK\n");
+await w.close();
+await assert.rejects(createNew(host, "night"), (err) => {
+  assert.equal(err.name, "ExistsError");
+  assert.ok(err.message.includes('"night"'), err.message);
+  return true;
+});
+assert.equal(mine.files.get("questions.yaml"), "title: HOST BANK\n");
+assert.equal(mine.files.size, 1);
+
+// a non-NotFound probe error is not "free to create"
+const broken = {
+  async getDirectoryHandle() {
+    const e = new Error("denied");
+    e.name = "NotAllowedError";
+    throw e;
+  },
+};
+await assert.rejects(createNew(broken, "night"), { name: "NotAllowedError" });
+
+// normPath: one normalizer for both load paths
+for (const [input, want] of [
+  ["/a/b.png", "a/b.png"],
+  ["./a/b.png", "a/b.png"],
+  ["././a//b.png", "a/b.png"],
+  [".\\a\\b.png", "a/b.png"],
+  ["a/./b.png", "a/b.png"],
+  ["  images/x.png ", "images/x.png"],
+])
+  assert.equal(normPath(input), want, `normPath(${JSON.stringify(input)})`);
+
+// webkitdirectory path matches every spelling of the same file
+for (const spelling of ["/images/x.png", "./images/x.png", "././images//x.png", ".\\images\\x.png", "images/./x.png"]) {
+  const y = yaml.replace('"audio/x.wav"', '"audio/none.wav"').replace('"images/here.png"', JSON.stringify(spelling));
+  const rr = await loadFromFileList([mk("q/questions.yaml", y), mk("q/images/x.png", "png")]);
+  assert.ok(rr.ok, JSON.stringify(rr.errors));
+  assert.ok(rr.bank.rounds[0].questions[0].images[0].startsWith("blob:"), `matched ${spelling}`);
+  revokeAll(rr.urls);
+}
+
+// both loaders hand back the raw questions.yaml text (Task 18: the saved
+// game's bankKey is a hash of exactly this text)
+assert.equal(r.text, yaml);
+const plain = 'title: "T"\nrounds:\n  - name: "R"\n    questions:\n      - q: "Q"\n        a: "A"\n';
+const dirWithYaml = {
+  async getFileHandle(n) {
+    if (n !== "questions.yaml") throw notFound(n);
+    return { async getFile() { return new Blob([plain]); } };
+  },
+};
+const rd = await loadFromDirHandle(dirWithYaml);
+assert.ok(rd.ok, JSON.stringify(rd.errors));
+assert.equal(rd.text, plain);
