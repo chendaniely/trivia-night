@@ -67,6 +67,20 @@ document.addEventListener(
   true
 );
 
+// A held Enter/OK auto-repeats keydown -> click on the focused button, which
+// would get past the click lock above once it expires (Reveal -> a team
+// mark, Done -> the next cell). Swallow repeats; Space activates on keyup.
+document.addEventListener(
+  "keydown",
+  (e) => {
+    if (e.repeat && e.key === "Enter") {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  },
+  true
+);
+
 // --- Saved game (Task 18) ---------------------------------------------------
 // One localStorage slot per board (persist.js), written after Start, Done,
 // every trivia Next, Reset game and Resume. Loading a bank never writes,
@@ -153,7 +167,10 @@ function startNewBank(bank, urls, bankKey) {
   document.title = bank.title;
   const store = storage();
   resumable = resumableSave(store, bankKey);
-  otherSave = resumable ? null : latestOtherSave(store, bankKey);
+  // The hint shows when this board has nothing to resume, or when another
+  // board's game is NEWER than the one Resume would restore.
+  otherSave = latestOtherSave(store, bankKey);
+  if (otherSave && resumable && Date.parse(otherSave.savedAt) <= Date.parse(resumable.savedAt)) otherSave = null;
   saveOff = !canSave(store);
   const names = prefillNames();
   // Bank swap (retry / folder mode): previous game state no longer applies

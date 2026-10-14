@@ -210,6 +210,8 @@ assert.equal(latestOtherSave(s3, "folder"), null, "it is this board's own save")
 writeSave(s3, makeSave(playedGame("third", "Third"), minutes(3)));
 assert.equal(latestOtherSave(s3, "folder").bankKey, "third");
 assert.equal(latestOtherSave(fake(), "x"), null, "nothing saved");
+// an older save of this board's own does not hide a newer other-board one
+assert.equal(latestOtherSave(s3, "folder").bankKey, "third", "skips this board's own slot");
 
 // canSave: a probe write; no trace left behind
 const s4 = fake();

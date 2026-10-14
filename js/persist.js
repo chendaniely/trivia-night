@@ -158,11 +158,11 @@ export function resumableSave(storage, bankKey) {
   return s && hasProgress(s) ? s : null;
 }
 
-// The newest saved game with progress, when it belongs to another board
-// (e.g. a folder board after a reload brought up the shipped one).
+// The newest saved game with progress on a board OTHER than bankKey (e.g. a
+// folder board after a reload brought up the shipped one) — even when this
+// board has an older save of its own; the caller compares savedAt.
 export function latestOtherSave(storage, bankKey) {
-  const s = listSaves(storage).find(hasProgress);
-  return s && s.bankKey !== bankKey ? s : null;
+  return listSaves(storage).find((s) => hasProgress(s) && s.bankKey !== bankKey) ?? null;
 }
 
 // Can this browser save at all? (a probe write, removed straight away)
