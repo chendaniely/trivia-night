@@ -992,7 +992,7 @@ introduced by the Task 8 council's own "fixes".
 **Files:**
 - Modify: `questions.yaml` (only)
 
-- [ ] **Step 1: Replace `questions.yaml` with exactly this content**
+- [x] **Step 1: Replace `questions.yaml` with exactly this content**
 
 ```yaml
 title: "Trivia Night"
@@ -1105,15 +1105,17 @@ rounds:
       - q: >
           Name either of the two classic English words that contain all
           five vowels exactly once, in alphabetical order.
-        a: "Facetious or abstemious"
+        a: "Facetious or abstemious (rarer ones like 'arsenious' and 'caesious' also count)"
 ```
 
-- [ ] **Step 2: Verify** — the README one-liner prints `6 rounds, 29
+- [x] **Step 2: Verify** — the README one-liner prints `6 rounds, 29
   questions`; `make test` green; a node check that the Alaska
   (one-row) and X-state answers hold over all 50 state names.
-- [ ] **Step 3: Commit** — `fix(bank): 🤖 correct 7 wrong answers and 6 shaky questions`.
+- [x] **Step 3: Commit** — `fix(bank): 🤖 correct 7 wrong answers and 6 shaky questions`.
 
 ---
+
+> Council 2026-10-14 (Task 14): backward — byte-identical to the brief, approved. Forward — independent fact-check of all 29: no wrong answers; one Important: the five-vowel finale is not unique (arsenious, caesious) → answer now accepts rarer words (bdf25d8; plan block updated to match). Minors kept as-is: Wings vs Truffaut order, Thriller "studio album" hedge. Commits c2cc6c5, bdf25d8.
 
 ### Task 15: Validation messages a host can act on
 
