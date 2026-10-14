@@ -1654,6 +1654,8 @@ and plan in line with the code as it stands after Tasks 14–22.
 
 ---
 
+> Council 2026-10-14 (Task 23): backward — every behavioural claim in README, About and the spec traced to code; Shared interfaces and File structure match the real exports and tracked files; approved. Forward (host's-eye read of README) — accurate but missing a "Before the night" checklist, an "On the night, if…" recovery list, and safe question-drafts wording (could have pushed real questions into the public bank) → fix round 1 (b6159ea, c0e217c); re-review verified each recovery claim against the code. About still fits at 960×540–1920×1080. Commits 39b9be6, 069f0a9, 3be9c64, c4e6bb8, b6159ea, c0e217c.
+
 ## Deferred to the final Claude Code pass (partner note 2026-10-12)
 
 The working model (qwen3.8 27b) is TEXT-ONLY: it cannot read images.
