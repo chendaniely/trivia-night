@@ -9,7 +9,7 @@
 // greens, advances; no taps = pass); last question -> tally.
 // Audio: questions with q.audio get a player in EVERY renderer (both modes);
 // a missing clip swaps the player for a "no clip" note (Review Focus 3).
-import { state, showScreen } from "./app.js";
+import { state, showScreen, lockInput, saveGame } from "./app.js";
 import { renderBoard, pointsFor } from "./board.js";
 
 // Folder-mode media are already blob: URLs; a shipped-bank path is
@@ -116,6 +116,7 @@ function cycleMark(idx) {
 function reveal() {
   if (!current || revealed) return;
   revealed = true;
+  lockInput(); // Done slides into Reveal's slot: no double-click Done
   renderQuestion();
 }
 
@@ -128,6 +129,7 @@ function done() {
     state.scoring.give(idx, m === "green" ? pts : -pts, round.name);
   }
   state.used.set(`${ri}:${qi}`, true);
+  saveGame();
   current = null;
   marks = new Map();
   revealed = false;
@@ -218,6 +220,7 @@ export function startColumn(ri) {
 function revealCol() {
   if (!col || colRevealed) return;
   colRevealed = true;
+  lockInput(); // Next slides into Reveal's slot: no double-click Next
   renderColumn();
 }
 
@@ -235,11 +238,13 @@ function nextQuestion() {
   const pts = pointsFor(round, qi);
   for (const idx of colMarks.keys()) state.scoring.give(idx, pts, round.name);
   state.used.set(`${ri}:${qi}`, true);
+  saveGame(); // mid-column refresh keeps the awarded questions (Task 18)
   colMarks = new Map();
   colRevealed = false; // fresh question: answer hidden again
   const next = firstUnused(round, ri, qi + 1);
   if (next !== -1) {
     col = { ri, qi: next };
+    lockInput(); // same screen, new question: a double-click must not pass it
     renderColumn();
     return;
   }
@@ -257,6 +262,13 @@ function backToBoard() {
   colRevealed = false;
   renderBoard();
   showScreen("board");
+}
+
+// Browser Back on the question screen (Task 18): exactly that screen's own
+// "Back to board" — marks discarded, no cell consumed.
+export function leaveQuestion() {
+  if (current) back();
+  else if (col) backToBoard();
 }
 
 function renderColumn() {

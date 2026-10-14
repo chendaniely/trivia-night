@@ -1,6 +1,6 @@
-// Board grid + scoreboard + reset + setup return. No state of its own:
+// Board grid + scoreboard + setup return + reset game. No state of its own:
 // reads app.js state. Clicks route through the callbacks wired by app.js.
-import { state, showScreen } from "./app.js";
+import { state, showScreen, saveGame } from "./app.js";
 
 let onCellClick = () => {};
 let onColumnClick = () => {};
@@ -75,21 +75,25 @@ export function renderBoard() {
 
   const actions = document.createElement("div");
   actions.className = "btn-row";
-  const resetBtn = document.createElement("button");
-  resetBtn.id = "reset-btn";
-  resetBtn.className = "btn-secondary";
-  resetBtn.textContent = "Reset scores";
-  resetBtn.addEventListener("click", () => {
-    scoring.reset();
-    used.clear();
-    renderBoard();
-  });
   const setupBtn = document.createElement("button");
   setupBtn.id = "setup-btn";
   setupBtn.className = "btn-secondary";
   setupBtn.textContent = "Setup";
   setupBtn.addEventListener("click", () => showScreen("setup"));
-  actions.append(resetBtn, setupBtn);
+  // Destructive, so quiet, last in the row and behind a confirm (Task 18):
+  // it clears every score AND every played cell.
+  const resetBtn = document.createElement("button");
+  resetBtn.id = "reset-btn";
+  resetBtn.className = "btn-quiet";
+  resetBtn.textContent = "Reset game";
+  resetBtn.addEventListener("click", () => {
+    if (!confirm("Reset all scores and clear the board? This can't be undone.")) return;
+    scoring.reset();
+    used.clear();
+    saveGame();
+    renderBoard();
+  });
+  actions.append(setupBtn, resetBtn);
 
   let hint = null;
   if (mode === "trivia") {

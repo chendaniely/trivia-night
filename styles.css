@@ -63,6 +63,10 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 }
 #screen-setup .subtitle { text-align: center; margin: 4px 0 0; }
 #screen-setup #start-btn { display: block; margin: 0 auto; }
+/* Saved-game offer (Task 18): summary + Resume on one line at the top of
+   setup, so it is on screen whatever the team count. */
+#resume-offer { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; justify-content: center; margin: 16px 0 0; }
+#resume-summary { margin: 0; font-size: 28px; }
 /* Visually hidden but present (a display:none file input never opens the
    chooser on a programmatic click). tabindex=-1: no invisible tab stop. */
 #folder-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
