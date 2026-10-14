@@ -115,17 +115,21 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .board-grid.trivia .board-cell { opacity: 0.45; }
 .board-header.dim { opacity: 0.45; }
 .board-hint { color: var(--muted); font-size: 26px; margin: 0 0 18px; text-align: center; }
-.question-wrap { display: grid; gap: 30px; justify-items: start; }
+/* Question screen must fit 1280x720 in the worst case (longest shipped q +
+   revealed answer + 3 long team names wrapping to 2 rows, council Task 13):
+   tighter rhythm + slightly smaller mark buttons. */
+#screen-question { padding: 24px 40px; }
+.question-wrap { display: grid; gap: 20px; justify-items: start; }
 .question-wrap h2 { font-size: 32px; font-weight: 700; color: var(--muted); margin: 0; }
 .question-text { font-size: 52px; line-height: 1.3; margin: 0; white-space: pre-line; max-width: 1080px; }
 .answer-text {
-  font-size: 48px; line-height: 1.25; font-weight: 800; color: var(--orange);
+  font-size: 42px; line-height: 1.25; font-weight: 800; color: var(--orange);
   margin: 0; max-width: 1080px; animation: reveal-in 240ms ease;
 }
 .team-btns, .controls { display: flex; gap: 24px; flex-wrap: wrap; }
 /* .team-btns holds only the team mark buttons (blue fill); the controls
    row (Back/Reveal/Done/Next) keeps its own .btn-* classes. */
-.team-btns button { font-size: 34px; padding: 18px 40px; background: var(--blue); color: #fff; border-radius: 14px; }
+.team-btns button { font-size: 30px; padding: 14px 32px; background: var(--blue); color: #fff; border-radius: 14px; }
 .team-btns button.marked-green { background: var(--good); color: #06130a; }
 .team-btns button.marked-red { background: var(--bad); color: #160505; }
 .btn-primary { background: var(--orange); color: #0a1620; }

@@ -931,6 +931,37 @@ Remote already configured. Pushing `main` triggers the deploy. Set the repo's Pa
 
 ---
 
+### Task 13: Reveal answer in trivia mode — partner request 2026-10-13
+
+**Design:** Port the existing Jeopardy reveal pattern into the column
+flow: `colRevealed` flag (reset per question — startColumn, next
+advance, back-to-board, resetFlow), "Reveal answer" `.btn-secondary`
+between Back and Next, `.answer-text` paragraph appended when revealed,
+button hidden once revealed (one-way, same as Jeopardy). No scoring
+change — Reveal only shows the answer on screen. Sync rule: README
+trivia bullet + About "Trivia:" item mention Reveal.
+
+**Files:**
+- Modify: `js/question.js`, `README.md`, `index.html` (About item),
+  `styles.css` (council fit fix)
+
+- [x] **Step 1: Implement + docs.** (commit `aa5f30d`)
+- [x] **Step 2: Verify (Playwright, text-only)** — port 8098: trivia
+  mode controls = [Back to board, Reveal answer, Next]; Reveal shows
+  `.answer-text` ("Argo") and the button disappears; green mark
+  survives reveal; Next resets reveal for question 2 of 5 (Reveal
+  button back, no answer text); console clean (favicon only).
+- [x] **Step 3: Council + commit.** Council 2026-10-13: backward — NO
+  MISMATCHES (flag reset at all four colMarks sites, answer paragraph
+  at the same DOM position as Jeopardy, no leak paths, docs match).
+  Forward — 🟠 worst case (longest shipped q + revealed answer + 3 long
+  team names wrapping to 2 rows) put controls 70px below the 720 fold
+  (measured 790px, pre-existing pattern in the jeopardy renderer too)
+  → fit fix commit (padding 40→24, wrap gap 30→20, answer 48→42px,
+  team buttons 34/18→30/14): measured worst case now 700px.
+
+---
+
 ## Deferred to the final Claude Code pass (partner note 2026-10-12)
 
 The working model (qwen3.8 27b) is TEXT-ONLY: it cannot read images.

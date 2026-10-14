@@ -27,7 +27,8 @@ make test         # unit tests
    - **Jeopardy** — click a dollar cell, mark teams green (correct) or
      red (wrong), **Reveal** the answer, **Done** to bank points.
    - **Trivia** — click a category name to start the round (the dollar
-     cells aren't clickable), mark a team green when they answer.
+     cells aren't clickable), mark a team green when they answer,
+     **Reveal** to show the answer, **Next** to move on.
 3. **Back to board** is on every question screen if you mistap.
 4. **Setup** mid-game: the same number of teams resumes the game
    (rename in place); a different number starts fresh.
