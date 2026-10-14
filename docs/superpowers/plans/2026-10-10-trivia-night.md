@@ -1248,21 +1248,21 @@ random team names, so board 2 of the night means retyping every team
 - Modify: `index.html`, `js/app.js`, `js/folder.js`, `js/question.js`,
   `styles.css` (only if the new button needs it), `test/folder.test.mjs`
 
-- [ ] **Step 1: Error-screen exit** — `#screen-error` gains a
+- [x] **Step 1: Error-screen exit** — `#screen-error` gains a
   `Back to setup` button (`#error-back-btn`, `.btn-quiet`) after
   `#retry-btn`, visible only when a bank is loaded (`state.bank !==
   null`); it calls `showScreen("setup")` and changes no state. A load
   failure while a game is in memory leaves that game intact (verify:
   scores + used cells survive bad-folder → Back to setup → Start with the
   same teams = resume).
-- [ ] **Step 2: Visible failures** — Load-folder picker failures other
+- [x] **Step 2: Visible failures** — Load-folder picker failures other
   than AbortError go through `renderError([{ where: "folder", message }])`
   (the error screen is always visible and now has an exit). Create new
   messages stay in `#folder-msg` (Create new lives on setup only).
-- [ ] **Step 3: Fallback input reachable** — move `#folder-input` out of
+- [x] **Step 3: Fallback input reachable** — move `#folder-input` out of
   `#screen-setup` (a direct child of `<main>`), keeping it visually
   hidden + `tabindex="-1"`; its `change` handler is unchanged.
-- [ ] **Step 4: One path normalizer** — export `normPath(p)` from
+- [x] **Step 4: One path normalizer** — export `normPath(p)` from
   `js/folder.js`: trim; backslashes → `/`; drop empty and `.` segments
   (so leading `/`, `./`, `././` and `//` all collapse); used by BOTH the
   FSA walk and the webkitRelativePath match. Node tests cover `/a/b.png`,
@@ -1273,27 +1273,29 @@ random team names, so board 2 of the night means retyping every team
   `blob:`/`data:`/`http(s):` URL is percent-encoded per path segment
   (`split("/").map(encodeURIComponent).join("/")`) so `#`/`?`/spaces in
   shipped-bank filenames load.
-- [ ] **Step 5: Carry team names across bank loads** — `startNewBank`
+- [x] **Step 5: Carry team names across bank loads** — `startNewBank`
   pre-fills the setup rows with the CURRENT row values when every row is
   non-empty (fresh scores, same names); otherwise (app start, or rows
   blank) the two random names as today. `state.teamNames` still resets
   (no stale state).
-- [ ] **Step 6: Show the bank title** — the setup `<h1>` shows
+- [x] **Step 6: Show the bank title** — the setup `<h1>` shows
   `state.bank.title` (shipped bank: "Trivia Night", unchanged look);
   `document.title` follows it.
-- [ ] **Step 7: Verify (Playwright, Chrome, fresh port, read your
+- [x] **Step 7: Verify (Playwright, Chrome, fresh port, read your
   screenshots)** — bad folder mid-game → error screen shows Back to
   setup → back → same-count Start resumes scores/used cells; Try again
   → cancel → still on the error screen with Back available; folder with
   `/images/x.png` and `./audio/x.wav` refs loads both media via FSA stub
   AND webkitdirectory upload; second folder load keeps typed team names;
   folder bank title shows in the setup h1. `node --test` green.
-- [ ] **Step 8: Commit(s)** — `fix(app): 🤖 …` / `fix(folder): 🤖 …`;
+- [x] **Step 8: Commit(s)** — `fix(app): 🤖 …` / `fix(folder): 🤖 …`;
   README + About updated in the same commit if any human-visible
   behavior they describe changed (Back to setup on the error screen;
   names carry across boards).
 
 ---
+
+> Council 2026-10-14 (Task 17): backward — spec compliant incl. two ruled additions (12-error cap + "…and N more"; Create new name trim + friendly NotAllowedError), approved. Forward — Important: a count cap can't bound wrapped height → error-screen buttons moved above the list (82ebd70; both buttons at y≈204 at 720p and 1080p with 12 wrapped errors). Carried: Load-folder-mid-game confirm + name precedence + bankKey wiring → Task 18; mediaSrc + media-cache reset → Task 19; error-screen fit + long-token wrap → Task 20; "write real filenames" → Task 23. Commits 21aba93, b87e688, 82ebd70.
 
 ### Task 18: Game safety — saved games, guarded resets, team identity
 
