@@ -1524,24 +1524,24 @@ hidden → a blank navy page with no explanation.
   `package.json`, `.github/workflows/deploy-gh-pages.yml`, `index.html`,
   `js/app.js` (hide the boot note), `styles.css`, `README.md`
 
-- [ ] **Step 1: gitignore** — add `images/*` + `!images/demo/` with the
+- [x] **Step 1: gitignore** — add `images/*` + `!images/demo/` with the
   same copyright comment style as `audio/`. Verify `git check-ignore
   images/x.png` ignores and `images/demo/blue-checker.png` stays tracked.
-- [ ] **Step 2: Local server** — PEP 723 header (no dependencies,
+- [x] **Step 2: Local server** — PEP 723 header (no dependencies,
   `requires-python = ">=3.9"`); optional second arg HOST (default
   `127.0.0.1`); `.m4a` → `audio/mp4`; on start print the URL(s) to open
   (for a LAN bind, the Mac's LAN IP). Makefile: `serve` = `uv run
   tools/local-server.py $(PORT)`, new `serve-lan` = same with `0.0.0.0`.
   Verify both targets answer 200 (`curl` from the Mac on 127.0.0.1 and on
   the LAN IP for serve-lan).
-- [ ] **Step 3: package.json** — `"test": "node --test"`; remove `main`.
-- [ ] **Step 4: Deploy gate** — the workflow runs `node --test` and the
+- [x] **Step 3: package.json** — `"test": "node --test"`; remove `main`.
+- [x] **Step 4: Deploy gate** — the workflow runs `node --test` and the
   README bank one-liner before publishing (failure = no deploy); bump to
   the current majors (keep `publish_branch: gh-pages`, `publish_dir: .`,
   `github_token`; read the v4 README to confirm the inputs are
   unchanged). Validate the workflow YAML parses (`npx -y js-yaml …`).
   Do NOT push; the deploy is exercised when the partner merges.
-- [ ] **Step 5: Old-browser fallback** — `index.html` gets a classic
+- [x] **Step 5: Old-browser fallback** — `index.html` gets a classic
   (non-module) inline polyfill for `Element.prototype.replaceChildren`
   (built on `textContent = ""` + `append`), and a visible-by-default
   `#boot` note inside `<main>` ("Loading… If this message stays, this
@@ -1550,7 +1550,7 @@ hidden → a blank navy page with no explanation.
   never shows once the app loads (screenshot), and that with the module
   blocked (Playwright `route` abort for `js/app.js`) the note is what
   the TV would show.
-- [ ] **Step 6: README** — a short "Putting it on the TV" section: (1)
+- [x] **Step 6: README** — a short "Putting it on the TV" section: (1)
   mirror the Mac (recommended: everything works, including Load folder
   and real clips); (2) the TV's browser on the live URL (shipped board
   only — your real clips/photos aren't in the repo); (3) the TV's browser
@@ -1561,10 +1561,12 @@ hidden → a blank navy page with no explanation.
   folder) or `question-drafts/`, not in the shipped `questions.yaml`;
   commands use `uv` (requires uv + node). Audio line: `.m4a`/`.mp3` play
   best on TV browsers; `.wav` works.
-- [ ] **Step 7: Commit(s)** — `build(…)`/`ci(deploy)`/`fix(app)` per
+- [x] **Step 7: Commit(s)** — `build(…)`/`ci(deploy)`/`fix(app)` per
   area, 🤖 prefix.
 
 ---
+
+> Council 2026-10-14 (Task 22): backward — spec compliant incl. carried rulings (one printed URL + "always open the same address", TV checklist with the confirm dialog and font, no vh on #boot), approved. Forward — Important (also flagged by an automated commit security review): `make serve-lan` served the whole repo with listings (.git history, question-drafts, test logs) to anyone on the Wi-Fi → allowlist of the app's own files for both serve modes, no listings, dot segments rejected (dc242ce); controller curl matrix: 8 app paths 200, 20 probes 404; re-review tried ~25 bypasses (double-encoding, backslash, case, raw-socket absolute-form), all 404. Also: LAN-fallback warning; boot note delayed 2.5 s so it never flashes on a healthy load. Deploy workflow (tests + bank validation gate; checkout@v7, setup-node@v7, actions-gh-pages@v4) not yet run — first run on merge. Commits 6d1aa38, 93209a5, 1a32341, 8217b2c, ac11dd5, dc242ce.
 
 ### Task 23: Docs reconciliation + plan/spec catch-up
 
