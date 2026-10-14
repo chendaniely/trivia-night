@@ -16,6 +16,7 @@ make              # serves on http://127.0.0.1:8080
 make serve PORT=8090   # any other port
 make serve-lan    # reachable from the TV's own browser (see below)
 make test         # unit tests
+make smoke        # end-to-end check in Chrome (needs `make serve` running in another terminal)
 ```
 
 Run these from the repo folder. You need [uv](https://docs.astral.sh/uv/)
@@ -96,8 +97,8 @@ A week before, on the Mac and TV you'll actually use:
   or clear it (or **Back to board** drops the marks). After Done the
   points are banked and the cell is closed; there is no undo, so adjust
   by announcing it.
-- **Private/incognito window:** it can't save ("Saving is off" shows on
-  setup). Use a normal window.
+- **Some private windows can't save:** setup says "Saving is off". Use a
+  normal window.
 
 ## Using it at the event
 

@@ -11,4 +11,8 @@ serve-lan:
 test:
 	node --test
 
-.PHONY: serve serve-lan test
+# End-to-end check in Chrome against a running `make serve` (URL=... to override)
+smoke:
+	node tools/smoke.mjs $(URL)
+
+.PHONY: serve serve-lan test smoke
