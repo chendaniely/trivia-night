@@ -22,6 +22,11 @@
   --good: #3fb950;
   --bad: #f85149;
   --font: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  /* Viewport unit (Task 20): 1px at 1920x1080, scaled by the smaller of
+     height and width — a 720p TV shows the same picture as a 1080p one
+     (2/3 the px on 2/3 the screen). Board, setup and image questions are
+     sized in it so each fits one screen at 1280x720 through 1920x1080. */
+  --u: min(0.0926vh, 0.0521vw);
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 30px/1.45 var(--font); }
@@ -47,34 +52,42 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .btn-secondary { background: var(--blue); color: #fff; }
 .btn-quiet { background: var(--panel); color: var(--muted); border: 1px solid var(--edge); }
 .btn-quiet:hover:not(:disabled) { color: var(--text); border-color: var(--muted); filter: none; }
-.btn-row { display: flex; gap: 24px; justify-content: center; margin-top: 24px; }
-#team-inputs { display: grid; gap: 16px; margin: 24px 0; justify-items: center; }
-.team-row { display: flex; gap: 14px; align-items: center; }
-.team-row input { width: 480px; max-width: 480px; }
-.team-remove { font-size: 26px; padding: 10px 24px; }
-#add-team-btn { margin-top: 6px; }
-#mode-pick { display: flex; gap: 48px; margin: 20px 0; font-size: 32px; justify-content: center; }
-/* Setup must fit a 1280x720 TV in one screen (council Task 9): tightened
-   vertical rhythm, secondary buttons share one row. */
-#screen-setup { padding: 24px 40px; }
-#screen-setup h1 { text-align: center; }
+.btn-row { display: flex; gap: calc(24 * var(--u)); justify-content: center; margin-top: calc(20 * var(--u)); }
+.btn-row button { font-size: max(20px, calc(30 * var(--u))); padding: calc(12 * var(--u)) calc(32 * var(--u)); }
+/* Setup (Task 20): sized in --u, so the busiest setup — 4 team rows plus
+   the Resume offer, Back to board or a two-line save note — fits one
+   screen at 1280x720 and keeps the old px sizes at 1080p. Secondary
+   buttons share one row (council Task 9). */
+#screen-setup { padding: calc(24 * var(--u)) calc(40 * var(--u)); }
+#screen-setup h1 { text-align: center; font-size: calc(72 * var(--u)); margin-bottom: calc(12 * var(--u)); }
 #screen-setup h1::after {
-  content: ""; display: block; width: 120px; height: 6px; margin: 12px auto 0;
-  background: var(--orange); border-radius: 3px;
+  content: ""; display: block; width: calc(120 * var(--u)); height: calc(6 * var(--u));
+  margin: calc(12 * var(--u)) auto 0; background: var(--orange); border-radius: 3px;
 }
-#screen-setup .subtitle { text-align: center; margin: 4px 0 0; }
-#screen-setup .start-row { display: flex; gap: 20px; justify-content: center; }
+#screen-setup .subtitle { text-align: center; font-size: max(20px, calc(30 * var(--u))); margin: calc(4 * var(--u)) 0 0; }
+#screen-setup button { font-size: max(20px, calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u)); }
+#team-inputs { display: grid; gap: calc(16 * var(--u)); margin: calc(24 * var(--u)) 0; justify-items: center; }
+.team-row { display: flex; gap: calc(14 * var(--u)); align-items: center; }
+.team-row input {
+  font-size: max(20px, calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(18 * var(--u));
+  width: calc(480 * var(--u)); max-width: calc(480 * var(--u));
+}
+#screen-setup .team-remove { font-size: max(18px, calc(26 * var(--u))); padding: calc(10 * var(--u)) calc(24 * var(--u)); }
+#add-team-btn { margin-top: calc(6 * var(--u)); }
+#mode-pick { display: flex; gap: calc(48 * var(--u)); margin: calc(20 * var(--u)) 0; font-size: max(20px, calc(32 * var(--u))); justify-content: center; }
+#mode-pick input[type="radio"] { width: max(20px, calc(30 * var(--u))); height: max(20px, calc(30 * var(--u))); }
+#screen-setup .start-row { display: flex; gap: calc(20 * var(--u)); justify-content: center; }
 /* Saved-game offer (Task 18): summary + Resume on one line at the top of
    setup, so it is on screen whatever the team count. */
-#resume-offer { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; justify-content: center; margin: 16px 0 0; }
-#resume-summary { margin: 0; font-size: 28px; }
-#save-note { margin: 12px auto 0; max-width: 1100px; font-size: 26px; text-align: center; }
+#resume-offer { display: flex; flex-wrap: wrap; gap: calc(12 * var(--u)) calc(28 * var(--u)); align-items: center; justify-content: center; margin: calc(16 * var(--u)) 0 0; }
+#resume-summary { margin: 0; font-size: max(18px, calc(28 * var(--u))); }
+#save-note { margin: calc(12 * var(--u)) auto 0; max-width: calc(1100 * var(--u)); font-size: max(18px, calc(26 * var(--u))); text-align: center; }
 /* Visually hidden but present (a display:none file input never opens the
    chooser on a programmatic click). tabindex=-1: no invisible tab stop. */
 #folder-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
-#screen-setup .folder-btns { display: flex; gap: 16px; justify-content: center; margin-top: 20px; }
-#screen-setup .folder-btns button { font-size: 24px; padding: 10px 24px; }
-#folder-msg { color: var(--muted); font-size: 24px; text-align: center; margin: 16px 0 0; }
+#screen-setup .folder-btns { display: flex; gap: calc(16 * var(--u)); justify-content: center; margin-top: calc(20 * var(--u)); }
+#screen-setup .folder-btns button { font-size: max(18px, calc(24 * var(--u))); padding: calc(10 * var(--u)) calc(24 * var(--u)); }
+#folder-msg { color: var(--muted); font-size: max(18px, calc(24 * var(--u))); text-align: center; margin: calc(16 * var(--u)) 0 0; }
 /* About page (Task 11): static text, must fit one TV screen (council Task 9):
    24px text, two-column list. */
 #screen-about { max-width: 1200px; padding: 24px 40px; font-size: 22px; }
@@ -88,17 +101,43 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 #about-back-btn { display: block; margin: 20px auto 0; }
 .error-actions { display: flex; gap: 16px; margin: 16px 0 20px; }
 #error-list { font-size: 28px; color: var(--bad); padding-left: 24px; }
-.scoreboard { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; margin-bottom: 28px; }
+/* An unbroken 80-char key wraps instead of running off the screen (Task 20). */
+#error-list li { overflow-wrap: anywhere; }
+/* Board (Task 20): exactly one viewport tall, full width. Scoreboard,
+   hint, header row and actions take their size; the point rows split
+   what is left (grid-auto-rows 1fr), so the board never scrolls. Rows
+   never shrink below their content: a bank too big to fit scrolls
+   instead of overlapping. */
+#screen-board {
+  max-width: none; height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
+  padding: calc(24 * var(--u)) calc(32 * var(--u));
+}
+.scoreboard { display: flex; flex-wrap: wrap; gap: calc(14 * var(--u)) calc(28 * var(--u)); justify-content: center; margin-bottom: calc(20 * var(--u)); }
 .score-team {
   display: flex; align-items: baseline; gap: 14px;
   background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
   padding: 12px 28px; font-size: 28px;
 }
+.scoreboard .score-team {
+  gap: calc(14 * var(--u)); line-height: 1.15;
+  padding: calc(10 * var(--u)) calc(28 * var(--u)); font-size: max(20px, calc(30 * var(--u)));
+}
 .score-points { font-weight: 800; font-size: 40px; color: var(--orange); font-variant-numeric: tabular-nums; }
-.board-grid { display: grid; gap: 12px; }
+.scoreboard .score-points { font-size: max(28px, calc(44 * var(--u))); }
+.board-grid {
+  display: grid; gap: calc(12 * var(--u)); flex: 1 1 0;
+  grid-template-rows: auto; grid-auto-rows: minmax(min-content, 1fr);
+}
+/* Header type is in --u, which never outgrows the width: "Childhoods",
+   the longest shipped word, fits its column (6 rounds) at every target
+   size; balance keeps two-line names even. break-word is the last resort
+   for one absurdly long word. */
 .board-header {
-  font-size: 32px; font-weight: 700; line-height: 1.2; text-align: center;
-  padding: 18px 12px; background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
+  font-size: max(20px, calc(44 * var(--u))); font-weight: 700; line-height: 1.15; text-align: center;
+  display: grid; place-items: center; text-wrap: balance;
+  padding: calc(12 * var(--u)) calc(10 * var(--u));
+  background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
   overflow-wrap: break-word; min-width: 0;
 }
 .board-header.clickable:hover { background: var(--blue); border-color: var(--blue); }
@@ -109,9 +148,10 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .board-cell.tier-3 { background: #1a3242; }
 .board-cell.tier-4 { background: #1f3b4e; }
 .board-cell {
-  font-size: 40px; font-weight: 800; font-variant-numeric: tabular-nums;
+  font-size: max(32px, calc(64 * var(--u))); line-height: 1.1;
+  font-weight: 800; font-variant-numeric: tabular-nums;
   display: grid; place-items: center; text-align: center;
-  min-height: 88px; padding: 10px 8px;
+  padding: calc(6 * var(--u)) 8px;
   background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
 }
 .clickable { cursor: pointer; }
@@ -121,7 +161,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 /* Trivia: the header is the click target; cells are inert (Task 7.8). */
 .board-grid.trivia .board-cell { opacity: 0.45; }
 .board-header.dim { opacity: 0.45; }
-.board-hint { color: var(--muted); font-size: 26px; margin: 0 0 18px; text-align: center; }
+.board-hint { color: var(--muted); font-size: max(18px, calc(26 * var(--u))); line-height: 1.3; margin: 0 0 calc(14 * var(--u)); text-align: center; }
 /* Question screen must fit 1280x720 in the worst case (longest shipped q +
    revealed answer + 3 long team names wrapping to 2 rows, council Task 13):
    tighter rhythm + slightly smaller mark buttons. */
@@ -149,6 +189,35 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
   object-fit: contain; border-radius: 12px; border: 1px solid var(--edge); background: var(--panel);
 }
 .no-image { color: var(--muted); font-style: italic; margin: 0; font-size: 28px; }
+/* Image questions (Task 20): question + answer on the left (45%), the
+   image box on the right (55%) filling the height left by the category,
+   audio, team buttons and controls — nothing scrolls, and the picture is
+   as large as fits (contained, top-right, scaled up or down). The screen
+   is one viewport tall to make that height definite; text-only questions
+   keep the old 1200px column. Explicit rows + margins (no row-gap): an
+   absent audio or answer leaves no empty gap. Row 5 is the slack: text
+   too long to fit pushes the buttons down (the page scrolls) instead of
+   covering the answer. */
+#screen-question { max-width: 1760px; height: 100vh; height: 100dvh; }
+.question-wrap:not(.has-images) { max-width: 1200px; margin: 0 auto; }
+.question-wrap.has-images {
+  height: 100%; row-gap: 0; column-gap: calc(40 * var(--u));
+  grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
+}
+.has-images > * { grid-column: 1 / -1; margin-top: calc(20 * var(--u)); }
+.has-images > h2 { grid-row: 1; margin-top: 0; }
+.has-images > .audio-block { grid-row: 2; }
+.has-images > .question-text { grid-row: 3; grid-column: 1; }
+.has-images > .answer-text { grid-row: 4; grid-column: 1; }
+.has-images > .images-block { grid-row: 3 / 6; grid-column: 2; justify-self: stretch; min-height: 0; flex-wrap: nowrap; }
+.has-images > .team-btns { grid-row: 6; }
+.has-images > .controls { grid-row: 7; }
+/* A frame would show the letterbox, so the picture goes unframed here. */
+.has-images .images-block img {
+  flex: 1 1 0; min-width: 0; width: 100%; height: 100%; max-width: none; max-height: none;
+  object-position: right top; border: 0; border-radius: 0; background: none;
+}
 .tally-row {
   display: flex; align-items: baseline; gap: 16px;
   background: var(--panel); border: 1px solid var(--edge);
@@ -158,7 +227,11 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 /* Motion: responds to action, <=240ms; off under prefers-reduced-motion. */
 @keyframes screen-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes reveal-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .screen:not(.hidden) { animation: screen-in 200ms ease; }
+/* Full-height screens (Task 20) fade only: the 10px rise would push them
+   past the viewport bottom and flash a scrollbar on the way in. */
+#screen-board:not(.hidden), #screen-question:not(.hidden) { animation-name: fade-in; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

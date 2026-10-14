@@ -185,6 +185,7 @@ function renderQuestion() {
   qText.textContent = question.q.trim(); // block scalars fold to one paragraph
   const { ab, ib } = mediaFor("j", ri, qi, question);
 
+  if (ib) wrap.classList.add("has-images"); // image beside the text (Task 20)
   wrap.append(cat, ...(ab ? [ab] : []), ...(ib ? [ib] : []), qText);
   if (revealed) {
     const ans = document.createElement("p");
@@ -311,6 +312,7 @@ function renderColumn() {
   qText.textContent = question.q.trim();
   const { ab, ib } = mediaFor("c", ri, qi, question);
 
+  if (ib) wrap.classList.add("has-images"); // image beside the text (Task 20)
   wrap.append(cat, ...(ab ? [ab] : []), ...(ib ? [ib] : []), qText);
   if (colRevealed) {
     const ans = document.createElement("p");
