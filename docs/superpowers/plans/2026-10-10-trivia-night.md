@@ -1688,3 +1688,48 @@ tie up loose ends — this is the list:
    `uv run` may fetch Python if none >= 3.9 is installed).
 8. **The deploy workflow's first run after merging:** watch the Actions
    tab; the gate runs tests + bank validation.
+
+---
+
+## Final whole-branch review (Claude Code, 2026-10-14)
+
+> Opus reviewer over `f603230..2d6d943` with a scripted game night in
+> Chrome: ready to merge with fixes. Important: a held remote OK/Enter got
+> past the 350 ms click lock (key repeats marked a team or opened the next
+> cell); the other-board saved-game hint hid behind an older practice save
+> (+ setup overflowed 1080p with Resume + hint + 4 teams). Minor: boot note
+> invisible under reduced motion; spec said images sit above the text; dead
+> CSS. One fix wave (`69f8f96`, `5e88703`, `cb89a51`, `a5e7ed4`) added a
+> tracked `make smoke` Chrome test; scoped re-review clean. Parked: a
+> duplicated persist assertion (the newer-other-save comparison is covered
+> by `make smoke`), and `tools/smoke.mjs` needs system Chrome.
+
+### Task 24: Case study for the partner's blog — partner request 2026-10-14
+
+Partner request (2026-10-14, after the fixes): "a separate documentation
+… something I can use as context for a blog post" — how Qwen 3.8 27B on a
+DGX Spark (via opencode + plugins/skills) performed on this project, with
+screenshots along the way, the full process and the partner's asks, a
+critical and honest review of Qwen's implementation, a separate record of
+the mistakes the Claude pass found and how they were fixed, what Claude
+picked up that Qwen did not, Claude's opinion on viability, and whether
+the installed plugins/skills helped. Mermaid diagrams welcome.
+
+**Files:**
+- Create: `docs/case-study/` (README + numbered chapters, appendices,
+  `assets/` screenshots). Written by Claude Opus 5.5 (the judgment is the
+  controller's own); not linked from `README.md` (human-facing app docs
+  only, per AGENTS.md).
+
+- [x] **Step 1: Research** — commit history (every commit, per-model
+  trailers, the plan's own history), the opencode session database
+  (prompts, tool calls, errors, compactions; credentials redacted), the
+  opencode config (secrets redacted), and screenshots of 14 historical
+  commits served from `git archive` exports at 1280×720.
+- [x] **Step 2: Write** — setup and method; timeline with the partner's
+  prompts; Claude's review of Qwen; the Claude pass's findings, fixes and
+  its own mistakes; plugins and skills; verdict; gallery; appendices.
+- [x] **Step 3: Verify** — every Mermaid diagram parsed with the real
+  mermaid parser in headless Chrome; every image link resolves; no
+  credentials, LAN addresses or private conversations in the folder.
+- [x] **Step 4: Commit** — `docs(case-study): 🤖 …`.
