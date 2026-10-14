@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { parseBank } from "../js/validate.js";
-import { NEW_TEMPLATE, NEW_FOLDER_README, createNew, loadFromFileList, revokeAll } from "../js/folder.js";
+import { normPath, NEW_TEMPLATE, NEW_FOLDER_README, createNew, loadFromFileList, revokeAll } from "../js/folder.js";
 
 // create-new template parses on first load (optional keys are comments)
 const t = parseBank(NEW_TEMPLATE);
@@ -112,3 +112,23 @@ const broken = {
   },
 };
 await assert.rejects(createNew(broken, "night"), { name: "NotAllowedError" });
+
+// normPath: one normalizer for both load paths
+for (const [input, want] of [
+  ["/a/b.png", "a/b.png"],
+  ["./a/b.png", "a/b.png"],
+  ["././a//b.png", "a/b.png"],
+  [".\\a\\b.png", "a/b.png"],
+  ["a/./b.png", "a/b.png"],
+  ["  images/x.png ", "images/x.png"],
+])
+  assert.equal(normPath(input), want, `normPath(${JSON.stringify(input)})`);
+
+// webkitdirectory path matches every spelling of the same file
+for (const spelling of ["/images/x.png", "./images/x.png", "././images//x.png", ".\\images\\x.png", "images/./x.png"]) {
+  const y = yaml.replace('"audio/x.wav"', '"audio/none.wav"').replace('"images/here.png"', JSON.stringify(spelling));
+  const rr = await loadFromFileList([mk("q/questions.yaml", y), mk("q/images/x.png", "png")]);
+  assert.ok(rr.ok, JSON.stringify(rr.errors));
+  assert.ok(rr.bank.rounds[0].questions[0].images[0].startsWith("blob:"), `matched ${spelling}`);
+  revokeAll(rr.urls);
+}

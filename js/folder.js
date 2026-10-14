@@ -4,9 +4,16 @@
 // Pure logic — the DOM lives in app.js.
 import { parseBank } from "./validate.js";
 
-// Normalize a bank-relative media path ("audio/x.wav") for matching.
-function norm(p) {
-  return p.replace(/^\.\//, "").replace(/\\/g, "/");
+// ONE normalizer for both load paths: trim, backslashes -> "/", drop empty
+// and "." segments (so "/a/b", "./a/b", "././a//b", ".\\a\\b" and "a/./b"
+// all become "a/b"). Case-sensitive on purpose (filesystems differ).
+export function normPath(p) {
+  return String(p)
+    .trim()
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter((seg) => seg !== "" && seg !== ".")
+    .join("/");
 }
 
 export function revokeAll(urls) {
@@ -17,7 +24,8 @@ export function revokeAll(urls) {
 // missing (the path stays as-is -> 404 -> the existing "no clip"/
 // "no image" note).
 async function resolveFsa(handle, relPath) {
-  const parts = norm(relPath).split("/").filter(Boolean);
+  const parts = normPath(relPath).split("/");
+  if (parts[0] === "") return null;
   if (!parts.length) return null;
   let h = handle;
   for (let i = 0; i < parts.length - 1; i++) {
@@ -111,7 +119,7 @@ export async function loadFromFileList(files) {
   const root = yaml.webkitRelativePath.split("/")[0];
   const urls = [];
   const find = (rel) =>
-    arr.find((f) => f.webkitRelativePath === `${root}/${norm(rel)}`);
+    arr.find((f) => f.webkitRelativePath === `${root}/${normPath(rel)}`);
   for (const round of result.bank.rounds)
     for (const q of round.questions) {
       if (q.audio) {

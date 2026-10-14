@@ -12,6 +12,14 @@
 import { state, showScreen } from "./app.js";
 import { renderBoard, pointsFor } from "./board.js";
 
+// Folder-mode media are already blob: URLs; a shipped-bank path is
+// percent-encoded per segment so "#", "?" and spaces in filenames load.
+function mediaSrc(p) {
+  return /^(blob:|data:|https?:)/i.test(p)
+    ? p
+    : p.split("/").map(encodeURIComponent).join("/");
+}
+
 function audioBlock(question) {
   if (!question.audio) return null;
   const wrap = document.createElement("div");
@@ -19,7 +27,7 @@ function audioBlock(question) {
   const a = document.createElement("audio");
   a.controls = true;
   a.preload = "auto";
-  a.src = question.audio; // relative path: works from /<repo>/ subpath
+  a.src = mediaSrc(question.audio); // relative path: works from /<repo>/ subpath
   a.addEventListener("error", () => {
     const note = document.createElement("p");
     note.className = "no-clip";
@@ -36,7 +44,7 @@ function imageBlock(images) {
   wrap.className = "images-block";
   for (const src of images) {
     const img = document.createElement("img");
-    img.src = src; // relative path: works from /<repo>/ subpath
+    img.src = mediaSrc(src); // relative path: works from /<repo>/ subpath
     img.loading = "lazy";
     img.alt = "";
     img.addEventListener("error", () => {
