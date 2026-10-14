@@ -65,16 +65,17 @@ folder (Load folder) or in `question-drafts/`, not in the shipped
 1. Name your teams — fun names are suggested automatically, so you can
    just hit **Start** or edit, add, or remove teams (2 or more).
 2. Pick a mode:
-   - **Jeopardy** — click a dollar cell, mark teams green (correct) or
+   - **Jeopardy** — click a point cell, mark teams green (correct) or
      red (wrong), **Reveal** the answer, **Done** to bank points.
-   - **Trivia** — click a category name to start the round (the dollar
+   - **Trivia** — click a category name to start the round (the point
      cells aren't clickable), mark a team green when they answer,
      **Reveal** to show the answer, **Next** to move on.
    No mouse needed: a TV remote's D-pad (or Tab / Shift-Tab) moves
    between cells, categories and buttons, and OK (Enter / Space) presses
    them.
 3. **Back to board** is on every question screen if you mistap (the
-   browser's Back button does the same).
+   browser's Back button does the same). It drops that question's marks
+   and keeps the cell and everyone's scores.
 4. **Setup** mid-game: rename teams or switch modes and **Start** carries
    on with the same game; adding or removing a team starts a fresh game
    (it asks first). Changed your mind? **Back to board** on the setup
@@ -106,9 +107,14 @@ rounds:
         a: "The answer"
 ```
 
-Unknown keys are reported (typo guard): a misspelled `image:` or `Audio:` is flagged with a "did you mean" hint instead of being silently ignored.
+Unknown keys are reported (typo guard): a misspelled `image:` or `Audio:`
+is flagged with a "did you mean" hint instead of being silently ignored.
+Problems are located the way you'd look for them, e.g. `round 2 "Movies",
+question 3`; YAML syntax errors give a line number.
 
 - One round per column; top row is easy, bottom row is hard.
+- Write media paths as real filenames, not URL-encoded:
+  `audio/My Song.m4a`, not `audio/My%20Song.m4a`.
 - Optional per question: `points:` (positive integer), `audio:` (a
   `.m4a`/`.mp3`/`.wav` path), `images:` (list of paths). Missing files show a
   note, not an error.
@@ -121,9 +127,12 @@ Unknown keys are reported (typo guard): a misspelled `image:` or `Audio:` is fla
 Prefer to keep questions, clips, and photos together? Use **Load
 folder** in the app — a folder with `questions.yaml`, `audio/`, and
 `images/` becomes its own board — and **Create new** scaffolds one for
-you (Chrome or Edge only). Loading another board mid-game asks first;
-it keeps the team names you typed (unless that board has a saved game —
-then Resume is offered), and if a folder has a problem the error screen
+you (Chrome or Edge only). For Create new, pick or make a folder inside
+Documents, not Documents itself (Chrome refuses Documents, Desktop and
+your home folder as the picked folder); Chrome then asks to allow
+editing: allow it. It never overwrites an existing folder. Loading
+another board mid-game asks first; it keeps the team names you typed
+(unless that board has a saved game — then Resume is offered), and if a folder has a problem the error screen
 lists it — **Back to setup** returns to your game untouched.
 
 ## Layout
@@ -131,5 +140,6 @@ lists it — **Back to setup** returns to your game untouched.
 - `index.html`, `styles.css`, `js/` — the app (vanilla, no build step)
 - `questions.yaml` — the shipped question bank
 - `audio/demo/`, `images/demo/` — self-generated demo media
+- `test/` — unit tests (`make test`)
 - `tools/local-server.py` — the local dev server (`make` runs it)
 - `fonts/` — the self-hosted face (Atkinson Hyperlegible Next)

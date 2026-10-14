@@ -97,7 +97,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 #screen-setup .folder-btns button { font-size: max(calc(18 * var(--k)), calc(24 * var(--u))); padding: calc(10 * var(--u)) calc(24 * var(--u)); }
 #folder-msg { color: var(--muted); font-size: max(calc(18 * var(--k)), calc(24 * var(--u))); text-align: center; margin: calc(16 * var(--u)) 0 0; }
 /* About page (Task 11): static text, two-column list. Task 20 fix 1:
-   sized in --u (floors in --k) so it fits 1280x720 with room to grow, and
+   sized in --u (22px at 1280x720; floors in --k) so it fits with room to grow, and
    Back to setup sticks to the bottom edge, so the only exit is on screen
    even when the text runs past it (small TV viewports, longer text). */
 #screen-about {
