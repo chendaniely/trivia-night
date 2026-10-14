@@ -177,7 +177,8 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 /* Question screens: the worst case (longest shipped q + revealed answer +
    long team names, council Task 13) must fit one screen. Task 20 fix 1:
    sized in --u with px floors (question 32, answer 28, buttons 20), so
-   it fits a 960x540 TV viewport too; unchanged at 1080p. */
+   it fits a 960x540 TV viewport too; unchanged at 1080p. Text-only
+   questions override the question/answer size with --qf (fix 2, below). */
 #screen-question { padding: calc(24 * var(--u)) calc(40 * var(--u)); }
 .question-wrap { display: grid; gap: calc(20 * var(--u)); justify-items: start; }
 .question-wrap h2 { font-size: max(20px, calc(32 * var(--u))); font-weight: 700; color: var(--muted); margin: 0; }
@@ -211,12 +212,24 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
    audio, team buttons and controls — nothing scrolls, and the picture is
    as large as fits (contained, top-right, scaled up or down). The screen
    is one viewport tall to make that height definite; text-only questions
-   keep the old 1200px column. Explicit rows + margins (no row-gap): an
+   use a centred column (below). Explicit rows + margins (no row-gap): an
    absent audio or answer leaves no empty gap. Row 5 is the slack: text
    too long to fit pushes the buttons down (the page scrolls) instead of
    covering the answer. */
 #screen-question { max-width: 1760px; height: 100vh; height: 100dvh; }
 .question-wrap:not(.has-images) { max-width: 1200px; margin: 0 auto; }
+/* Text-only questions (Task 20 fix 2; audio allowed): the question is what
+   the room reads, so --qf grows with the screen, as large as the worst
+   shipped question + revealed answer + 4 long team names still fits in
+   either mode from 960x540 to 1920x1080. Bounded by height and by width
+   (wider type means more lines). Lines stay ~48 characters (max-width in
+   em), so the column widens with the type; the answer keeps 0.8x. */
+#screen-question .question-wrap:not(.has-images) {
+  --qf: clamp(32px, min(16px + 5.9vh, 4.6vw), 96px);
+  max-width: max(1200px, calc(21 * var(--qf)));
+}
+#screen-question .question-wrap:not(.has-images) .question-text { font-size: var(--qf); max-width: 20.8em; }
+#screen-question .question-wrap:not(.has-images) .answer-text { font-size: calc(0.8 * var(--qf)); max-width: 26em; }
 .question-wrap.has-images {
   height: 100%; row-gap: 0; column-gap: calc(40 * var(--u));
   grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
