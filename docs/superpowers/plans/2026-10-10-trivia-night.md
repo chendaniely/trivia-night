@@ -1133,7 +1133,7 @@ YAML syntax errors keep their real line numbers (unchanged).
 **Files:**
 - Modify: `js/validate.js`, `test/validate.test.mjs`
 
-- [ ] **Step 1: Failing tests first** in `test/validate.test.mjs`:
+- [x] **Step 1: Failing tests first** in `test/validate.test.mjs`:
   - `image: "images/x.png"` on a question → `ok:false`, message contains
     `unknown key "image"` and `did you mean "images"`.
   - `Audio:` (wrong case) → unknown key with `did you mean "audio"`;
@@ -1148,19 +1148,21 @@ YAML syntax errors keep their real line numbers (unchanged).
     `round 1 "Movies", question 2`; a round-level error has `where` ===
     `round 1 "Movies"` (or `round 1` when the name is missing/invalid).
   - update the existing assertions that expect `rounds[0].questions[1]`.
-- [ ] **Step 2: Implement** — allowed-key sets per level; suggestion =
+- [x] **Step 2: Implement** — allowed-key sets per level; suggestion =
   case-insensitive equal, or a singular/plural pair (`image`↔`images`,
   `point`↔`points`), or edit distance ≤ 2 against the allowed set;
   first match wins. Keep `{ line?, where, message }` and the
   never-half-succeeds rule; `renderError` in app.js needs no change
   (it prints `where: message`).
-- [ ] **Step 3: Verify** — `node --test` green; the README one-liner on
+- [x] **Step 3: Verify** — `node --test` green; the README one-liner on
   the shipped `questions.yaml` still prints `6 rounds, 29 questions`;
   `NEW_TEMPLATE` in `js/folder.js` still parses (folder test).
-- [ ] **Step 4: Commit** — `fix(validate): 🤖 …`. README "Writing your own
+- [x] **Step 4: Commit** — `fix(validate): 🤖 …`. README "Writing your own
   questions" gains one line: unknown keys are reported (typo guard).
 
 ---
+
+> Council 2026-10-14 (Task 15): backward — spec compliant, approved (controller re-ran node --test: 4/4). Forward — clear; realistic banks (comments, key order, points:, padded names) still load; error-list length cap carried into Task 17; deferred minors: quote-hint for non-number/boolean values, suggestion noise for 1–2 char keys. Commit a91b6e7.
 
 ### Task 16: Create new — picker first, never overwrite
 
