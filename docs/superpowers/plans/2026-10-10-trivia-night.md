@@ -737,7 +737,9 @@ is reused across the teams currently in setup.
 Six rounds, deliberately hard (spec): Movies: Oscar (5), Movies: Cult Classics (5), Movies: Childhoods (5), Music (4 — placeholder questions, NO `audio:` references: spec ships music as placeholders until real clips are dropped into `audio/`; the generated demo clips stay in `audio/demo/` for folder-mode use), Nerd Culture (5 — e.g. "name the game by its fishing minigame"), Words (5 — e.g. "cartoon character by their nose"). Easy → hard within each round. Long questions use `>` block scalars.
 The stub's `missing.wav` fallback-test question does NOT survive this replace — the shipped bank has no broken references; the missing-clip path stays verified by Task 7's record. Same for Task 7.6: the shipped bank carries no `audio:`/`images:` refs at all (host content, copyright); the media renderers stay verified by the stub/demo record.
 
-- [ ] **Step 2: Verify**
+- [x] **Step 2: Verify** (box missed at the time; the run is
+  recorded below and was re-confirmed 2026-10-13: one-liner →
+  `6 rounds, 29 questions`)
 
 Run: `node --input-type=module -e "import { readFileSync } from 'node:fs'; import { parseBank } from './js/validate.js'; const r = parseBank(readFileSync('questions.yaml','utf8')); if (!r.ok) { console.error(r.errors); process.exit(1); } console.log(r.bank.rounds.length + ' rounds,', r.bank.rounds.reduce((n, x) => n + x.questions.length, 0) + ' questions');"`
 Expected: `6 rounds, 29 questions`
@@ -856,7 +858,10 @@ Expected: `200`. (Site root 404s until Task 3 adds `index.html` — expected.)
 
 - [x] **Step 4: Commit + push** (per AGENTS.md, type(scope) format)
 
-- [ ] **Step: Handoff for the user (not agent work)**
+- [x] **Step: Handoff for the user (not agent work)** (done —
+  evidence: `https://chendaniely.github.io/trivia-night/` has served
+  the full app on every deploy since; Pages source is clearly the
+  `gh-pages` branch)
 
 Remote already configured. Pushing `main` triggers the deploy. Set the repo's Pages source to the `gh-pages` branch (Settings → Pages → Branch: gh-pages). Site: `https://chendaniely.github.io/trivia-night/`. Until Task 3 lands, the site root has no `index.html`.
 
