@@ -8,6 +8,11 @@ node_modules/
 audio/*
 !audio/demo/
 
+# Real host photos stay out of the repo too (copyright / privacy).
+# Only generated demo images are tracked.
+images/*
+!images/demo/
+
 # Working question drafts stay local (real content, not demo material).
 question-drafts/*
 !question-drafts/.gitkeep
