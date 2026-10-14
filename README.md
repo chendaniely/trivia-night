@@ -51,6 +51,8 @@ rounds:
         a: "The answer"
 ```
 
+Unknown keys are reported (typo guard): a misspelled `image:` or `Audio:` is flagged with a "did you mean" hint instead of being silently ignored.
+
 - One round per column; top row is easy, bottom row is hard.
 - Optional per question: `points:` (positive integer), `audio:` (a
   `.wav`/`.mp3` path), `images:` (list of paths). Missing files show a
