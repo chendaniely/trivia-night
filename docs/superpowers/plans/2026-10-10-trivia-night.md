@@ -1183,7 +1183,7 @@ picker; the real picker for the gesture check):
 - Modify: `js/app.js` (Create new handler), `js/folder.js` (`createNew`),
   `test/folder.test.mjs`
 
-- [ ] **Step 1: Failing tests** in `test/folder.test.mjs` with a small
+- [x] **Step 1: Failing tests** in `test/folder.test.mjs` with a small
   in-memory fake of the FileSystemDirectoryHandle API (getDirectoryHandle
   / getFileHandle with `{create}`, NotFoundError DOMException-shaped
   errors with `name === "NotFoundError"`, createWritable → write/close):
@@ -1196,7 +1196,7 @@ picker; the real picker for the gesture check):
     byte-identical.
   - a non-NotFound error from the existence probe propagates (not
     treated as "free to create").
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
   - `createNew`: probe `parent.getDirectoryHandle(name)` WITHOUT create
     first; resolves → throw `ExistsError` ("a folder named "<name>"
     already exists there — pick another name"); `NotFoundError` →
@@ -1208,7 +1208,7 @@ picker; the real picker for the gesture check):
     cancel/empty → return quietly; ExistsError → show its message in
     `#folder-msg` (the setup screen stays). Success message unchanged.
   - Load folder's picker call is unchanged (read-only is right there).
-- [ ] **Step 3: Verify in Chrome** (Playwright, `channel: "chrome"`, a
+- [x] **Step 3: Verify in Chrome** (Playwright, `channel: "chrome"`, a
   fresh `make serve PORT=…`): stub `window.showDirectoryPicker` to return
   an OPFS directory handle (`navigator.storage.getDirectory()`) and to
   record `navigator.userActivation.isActive` at call time. Reference
@@ -1219,10 +1219,12 @@ picker; the real picker for the gesture check):
   "Round One" with 100/200; Create new again with the same name → the
   ExistsError message shows and the folder's `questions.yaml` is
   unchanged.
-- [ ] **Step 4: Commit** — `fix(folder): 🤖 …`. The README/About Create
+- [x] **Step 4: Commit** — `fix(folder): 🤖 …`. The README/About Create
   new lines stay accurate (check; adjust only if wording now misleads).
 
 ---
+
+> Council 2026-10-14 (Task 16): backward — spec compliant, approved; controller re-ran the Chrome check (7 s prompt → activation still active at the readwrite picker; ExistsError shown, existing questions.yaml unchanged). Forward — clear; name trim + friendly NotAllowedError message carried into Task 17; Documents-folder caveat carried into Task 23. Commit 66604e1.
 
 ### Task 17: Loading flows — error-screen exit, shared paths, carried names
 
