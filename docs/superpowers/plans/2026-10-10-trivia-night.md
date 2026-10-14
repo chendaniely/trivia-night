@@ -117,6 +117,7 @@ state = { mode: "jeopardy" | "trivia", teamNames: string[], bank: Bank, bankKey:
 showScreen(id: "setup" | "board" | "question" | "tally" | "error" | "about")
 renderError(errors: BankError[]), setLoader(fn), saveGame(), lockInput()
 ```
+
 ---
 
 ### Task 1: Scoring engine (pure)
@@ -577,7 +578,7 @@ refine roles, do not recolor.
   (wght 200–800; verified via fontTools `fvar`); `font-display: swap`;
   system-ui fallback. Weight contrast is the typographic device: 400
   body, 700 headers, 800 tabular numerals + scores.
-- Base scale 28 → 30px; h1 56 → 72px/800. (superseded by Task 20: sizes now scale with the viewport — cells 64u, headers 44u, hint 26u; text-only questions fill the screen)
+- Base scale 28 → 30px; h1 56 → 72px/800. (px superseded by Task 20: base and h1 now scale with the viewport)
 - Board (the hero): 1px `--edge` borders on headers/cells (depth via edges,
   no shadow card kit); cells min-height 88px with 40px/800 tabular
   numerals; category headers 32px/700; a subtle 5-step background ramp
@@ -588,7 +589,7 @@ refine roles, do not recolor.
 - Question screen: h2 eyebrow 32px/700 muted; question 52px/400; answer
   48px/800 orange, slide-in reveal; setup title gets a short orange
   rule; team buttons keep the ✓/✕ suffix, dark text on green/red fills.
-  (superseded by Task 20: sizes now scale with the viewport — cells 64u, headers 44u, hint 26u; text-only questions fill the screen)
+  (px superseded by Task 20: question and answer now scale with the viewport; text-only questions fill the screen)
 - Motion (responds to action, ≤240ms): screen fade/slide-in, answer reveal
   slide, button hover lift + press sink; `prefers-reduced-motion` kills it.
 
@@ -610,7 +611,7 @@ refine roles, do not recolor.
   72px/800, cell 40px/800 min-height 88px border 1px #24405a, tier ramp
   #111f2a→#1f3b4e, header 32px/700, points 40px/800 #f26522, question
   52px/400, answer 48px/800 + `reveal-in 0.24s`, marked-green #3fb950,
-  trivia img 640px loaded, tally row 14px/1px. (superseded by Task 20: sizes now scale with the viewport — cells 64u, headers 44u, hint 26u; text-only questions fill the screen) Console: only the
+  trivia img 640px loaded, tally row 14px/1px. (cell, header and scoreboard px superseded by Task 20: cells 64u, headers 44u, hint 26u) Console: only the
   expected favicon 404 + the 3 intentional missing.png probe 404s.
   After-screenshots saved to `.playwright-mcp/ui-after-*.png` (NOT read —
   text-only model).
@@ -664,7 +665,7 @@ target — the category headers are.
   root cause (since 7.5) had Done/Next blue, breaking orange = primary.
   Fixed (controls row → own `.controls` class, layout only), verified on
   8089: Back panel/muted, Reveal blue, Done orange, mark buttons 34px
-  blue. (superseded by Task 20: sizes now scale with the viewport — cells 64u, headers 44u, hint 26u; text-only questions fill the screen)
+  blue.
 
 ---
 

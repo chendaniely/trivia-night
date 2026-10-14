@@ -210,4 +210,5 @@ rounds:
 - Local folder mode: directory pick, "create new" scaffolding, and a
   graceful fallback message on non-Chromium browsers.
 - One self-check for the YAML validator: a malformed file must produce an
-  error naming the offending line (syntax) or round/question (schema), and the app must not half-load.
+  error naming the offending line (syntax) or round/question (schema),
+  and the app must not half-load.
