@@ -46,7 +46,7 @@ styles of play (see modes below).
   answered as usual).
 - Any question may reference images (`images:` — list of relative paths,
   same convention as `audio:`); the question screen shows them TV-sized
-  above the question text, in both modes.
+  beside the question text (image right, text left), in both modes.
 - Demo data in the repo (questions + a few safe self-generated clips and
   images) so the Pages deployment works out of the box. The committed demo
   clips/images exist to exercise the media paths; the shipped bank
