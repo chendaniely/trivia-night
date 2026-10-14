@@ -17,7 +17,7 @@
 - Audio: real clips never committed (copyright). Demo clips generated into `audio/demo/` are committed. A missing clip shows a "no clip" note; the question stays playable.
 - One board per data source. Loading a new file/folder starts fresh state. No multi-board state machine.
 - Points: default 100/200/300/400/500 by question position; per-question `points:` overrides.
-- Teams: 2–4, named on the setup screen.
+- Teams: 2 or more (no cap, Task 7.9), named on the setup screen.
 - YAML questions must support block scalars (`>`, `|`).
 - UI: dark, high-contrast, legible from ~10 ft on a TV.
 - AGENTS.md protocol: commit after every task (Conventional Commits, 🤖 prefix, Co-Authored-By line), backward + forward council review after every task, Playwright verification for every UI task.
@@ -29,59 +29,94 @@
 2. Long questions written as block scalars → render as clean paragraphs, no indentation or line-break artifacts. (Task 4)
 3. Missing audio file → "no clip" note, no crash, question flow continues. (Task 7)
 4. Question count ≠ 5 tiers (e.g. 3 or 7) → grid rows adapt to the longest round. (Task 4)
-5. Invalid taps (tapping a team after reveal, double-awarding) → state machine ignores them; scores never double-count. (Tasks 5, 6)
+5. Stale taps (after Done/Next/Back, or a finished column header) are ignored; scores never double-count. (Tasks 7.5, 7.8)
 
 ## File structure
 
 ```
-index.html               app shell: one <main>, screen containers, loads js/app.js
-styles.css               dark TV-readable theme
+index.html               app shell: one <main>, screen containers (setup, board, question, tally, error, about), loads js/app.js
+styles.css               dark TV-readable theme, viewport-unit layout (Task 20)
 js/yaml.js               vendored js-yaml (ESM), with refresh note in header
-js/scoring.js            pure: team scores, give/reset/roundTotal
-js/validate.js           pure: parseBank(text) -> { ok, bank | errors }
-js/board.js              board grid rendering + scoreboard + reset
-js/question.js           question flow for both modes (claim, reveal, award, pass)
+js/scoring.js            pure: team scores, give/reset/roundTotal, snapshot/restore
+js/validate.js           pure: parseBank(text) -> { ok, bank | errors }, typo guard
+js/persist.js            pure: saved games, one slot per board (Task 18)
+js/teams.js              pure: randomTeamName (adjective + noun, no word reuse)
+js/board.js              board grid rendering + scoreboard + reset + focusBoard
+js/question.js           question flow for both modes (claim, reveal, award, pass, media)
 js/folder.js             local folder mode: FSA pick, webkitdirectory fallback, create-new
-js/app.js                entry: state, screen switching, data loading, setup screen
-questions.yaml           shipped question bank (stub in Task 3, full in Task 8)
-audio/demo/              generated demo clips (Task 7)
-tools/make-demo-audio.mjs  dependency-free Node script that writes the demo WAVs
-test/scoring.test.mjs    node:assert self-checks
-test/validate.test.mjs   node:assert self-checks
-.github/workflows/deploy-gh-pages.yml
+js/app.js                entry: state, screen switching, data loading, setup/about/error screens
+questions.yaml           shipped question bank (references no media)
+question-drafts/         .gitkeep only; drafts stay local, never served
+audio/demo/              generated demo clips (arpeggio.wav, note-440.wav, note-523.wav)
+images/demo/             generated demo images (blue-checker.png, orange-solid.png)
+fonts/atkinson-hyperlegible-next.woff2   self-hosted face
+tools/make-demo-audio.mjs   dependency-free Node script that writes the demo WAVs
+tools/make-demo-images.mjs  dependency-free Node script that writes the demo PNGs
+tools/local-server.py    uv-run dev server (allowlist; `make serve` / `make serve-lan`)
+Makefile                 serve, serve-lan, test
+test/*.test.mjs          node --test: scoring, validate, persist, folder, teams
+.github/workflows/deploy-gh-pages.yml   gated deploy (tests + bank validation)
+AGENTS.md                agent process protocol
+README.md                human-facing docs
+docs/superpowers/        specs/ and plans/ (this file)
+package.json, package-lock.json, opencode.json, .gitignore
 ```
 
 Already in the repo (pre-plan, Tasks 1–9 must not re-create these): `.gitignore` (gitignores `audio/` except `audio/demo/`, node_modules, .venv, .playwright-mcp), `package.json` + lock (playwright devDeps, `"type": "module"`), `opencode.json` (Playwright MCP registration).
 
-**Shared interfaces** (exact; every task uses these names):
+**Shared interfaces** (exact; every task uses these names; updated 2026-10-14 to match the code after Task 22):
 
 ```js
 // js/scoring.js
 createScoring(teamNames: string[]) -> Scoring
+restoreScoring(snap: Snapshot) -> Scoring
 Scoring.teams: { name: string, points: number }[]
 Scoring.give(teamIdx: number, points: number, roundName: string)
 Scoring.reset()
 Scoring.roundTotal(roundName: string) -> number
 Scoring.roundTeamTotal(roundName: string, teamIdx: number) -> number
+Scoring.snapshot() -> { teams: {name, points}[], log: [roundName, {teamIdx, points}[]][] }
 
 // js/validate.js
 parseBank(text: string) -> { ok: true, bank: Bank } | { ok: false, errors: BankError[] }
-BankError = { line?: number, where: string, message: string }
+BankError = { line?: number, where: string, message: string }  // where: "yaml" or e.g. round 2 "Movies", question 3
 Bank = { title: string, rounds: Round[] }
 Round = { name: string, questions: Question[] }
-Question = { q: string, a: string, audio?: string, points?: number }
+Question = { q: string, a: string, audio?: string, images?: string[], points?: number }
+
+// js/teams.js
+TEAM_ADJ, TEAM_NOUN: string[]
+randomTeamName(existingNames: string[]) -> string
+
+// js/persist.js (pure; callers pass a Storage or null)
+SAVE_PREFIX, MAX_SLOTS
+slotKey(bankKey), bankKeyOf(text), makeSave(game, now?), parseSave(json), hasProgress(save),
+ageText(savedAt, now?), saveSummary(save, now?), otherBoardHint(save, now?, shipped?),
+listSaves(storage), writeSave(storage, save), readSave(storage, bankKey),
+resumableSave(storage, bankKey), latestOtherSave(storage, bankKey), canSave(storage)
 
 // js/board.js
 renderBoard() -> void  (renders into #screen-board)
 setCellClick(fn: (roundIdx, qIdx) => void)
 setColumnClick(fn: (roundIdx) => void)
+pointsFor(round, qIdx) -> number
+focusBoard(from?: { ri, qi? }) -> void  (D-pad focus after a screen change)
+
+// js/question.js
+startQuestion(ri, qi), startColumn(ri), resetFlow(), leaveQuestion()
+
+// js/folder.js
+loadFromDirHandle(handle) -> Promise<{ ok: true, bank, urls, text } | { ok: false, errors }>
+loadFromFileList(files) -> same shape
+createNew(parentHandle, name) -> Promise<dirHandle>  (never overwrites; throws ExistsError)
+normPath(p), revokeAll(urls), NEW_TEMPLATE, NEW_FOLDER_README
 
 // js/app.js (module-level, consumed by board.js / question.js / folder.js)
-state = { mode: "jeopardy" | "trivia", teamNames: string[], bank: Bank,
+state = { mode: "jeopardy" | "trivia", teamNames: string[], bank: Bank, bankKey: string,
           used: Map /* "roundIdx:qIdx" -> true */, scoring: Scoring }
-showScreen(id: "setup" | "board" | "question" | "tally" | "error")
+showScreen(id: "setup" | "board" | "question" | "tally" | "error" | "about")
+renderError(errors: BankError[]), setLoader(fn), saveGame(), lockInput()
 ```
-
 ---
 
 ### Task 1: Scoring engine (pure)
@@ -154,7 +189,7 @@ Note: js-yaml exports `load` (verified v4 and v5) — there is no `parse` export
 ```js
 import { parseBank } from "../js/validate.js";
 // - valid bank (title + 2 rounds, one question using a `>` block scalar) -> ok, bank.rounds[0].questions[0].q is the folded text
-// - question missing `a` -> ok:false, errors[0].where === 'rounds[0].questions[1]', message names the missing field
+// - question missing `a` -> ok:false, errors[0].where === 'rounds[0].questions[1]', message names the missing field (superseded: Task 15 — where is now the human locator `round 1 "Name", question 2`)
 // - mid-file YAML error: line 6 is `        a: bad: line` (unquoted value containing a colon)
 //   -> ok:false, errors[0].line === 6 (js-yaml marks are 0-based; store mark.line+1)
 //   NOTE (verified): EOF-truncated errors (e.g. unclosed quote) mark EOF, not the
@@ -169,7 +204,7 @@ Expected: FAIL — module not found
 
 - [x] **Step 4: Implement `js/validate.js`**
 
-`load` in try/catch: on syntax error return `errors: [{ line: err.mark.line + 1, where: "yaml", message: err.reason }]` (mark is 0-based; for mid-file errors that is the offending line). On success, walk the structure; collect every schema error with `where` like `rounds[1].questions[2]`. Also reject: empty rounds list, zero-question rounds, duplicate round names (Task 6 tallies key by name). Return `{ ok: errors.length === 0, ... }`.
+`load` in try/catch: on syntax error return `errors: [{ line: err.mark.line + 1, where: "yaml", message: err.reason }]` (mark is 0-based; for mid-file errors that is the offending line). On success, walk the structure; collect every schema error with `where` like `rounds[1].questions[2]` (superseded: Task 15 — `round 2 "Movies", question 3`, 1-based with the round name). Also reject: empty rounds list, zero-question rounds, duplicate round names (Task 6 tallies key by name). Return `{ ok: errors.length === 0, ... }`.
 
 - [x] **Step 5: Run test to verify it passes**
 
@@ -265,7 +300,7 @@ Co-Authored-By: Qwen 3.8 27B <qwen-coder@alibabacloud.com>"
 
 - [x] **Step 1: Implement `js/board.js`**
 
-Grid: columns = rounds (header = round name; in Trivia mode the header is the click target for the whole column), rows = max question count across rounds (Review Focus 4). Rounds with fewer questions simply have fewer cells — no placeholder cells (spec: the board only shows cells that have content). Cell text = points (position default 100×n, or `q.points`). Used cells (key `roundIdx:qIdx` in `state.used`) render dimmed with no click. Scoreboard strip: team names + live points. Reset button → `state.scoring.reset()`, clear `state.used`, re-render. Clicks route through app.js callbacks `onCellClick(roundIdx, qIdx)` / `onColumnClick(roundIdx)`; until Tasks 5–6 land those callbacks are no-ops, so the board is fully navigable-looking but inert.
+Grid: columns = rounds (header = round name; in Trivia mode the header is the click target for the whole column), rows = max question count across rounds (Review Focus 4). Rounds with fewer questions simply have fewer cells — no placeholder cells (spec: the board only shows cells that have content). (Task 20 added one invisible `.board-gap` spacer cell, `visibility: hidden`, to keep the grid aligned; it holds no content and is not focusable.) Cell text = points (position default 100×n, or `q.points`). Used cells (key `roundIdx:qIdx` in `state.used`) render dimmed with no click. Scoreboard strip: team names + live points. Reset button → `state.scoring.reset()`, clear `state.used`, re-render. Clicks route through app.js callbacks `onCellClick(roundIdx, qIdx)` / `onColumnClick(roundIdx)`; until Tasks 5–6 land those callbacks are no-ops, so the board is fully navigable-looking but inert.
 
 - [x] **Step 2: Verify with Playwright**
 
@@ -542,7 +577,7 @@ refine roles, do not recolor.
   (wght 200–800; verified via fontTools `fvar`); `font-display: swap`;
   system-ui fallback. Weight contrast is the typographic device: 400
   body, 700 headers, 800 tabular numerals + scores.
-- Base scale 28 → 30px; h1 56 → 72px/800.
+- Base scale 28 → 30px; h1 56 → 72px/800. (superseded by Task 20: sizes now scale with the viewport — cells 64u, headers 44u, hint 26u; text-only questions fill the screen)
 - Board (the hero): 1px `--edge` borders on headers/cells (depth via edges,
   no shadow card kit); cells min-height 88px with 40px/800 tabular
   numerals; category headers 32px/700; a subtle 5-step background ramp
@@ -553,6 +588,7 @@ refine roles, do not recolor.
 - Question screen: h2 eyebrow 32px/700 muted; question 52px/400; answer
   48px/800 orange, slide-in reveal; setup title gets a short orange
   rule; team buttons keep the ✓/✕ suffix, dark text on green/red fills.
+  (superseded by Task 20: sizes now scale with the viewport — cells 64u, headers 44u, hint 26u; text-only questions fill the screen)
 - Motion (responds to action, ≤240ms): screen fade/slide-in, answer reveal
   slide, button hover lift + press sink; `prefers-reduced-motion` kills it.
 
@@ -574,7 +610,7 @@ refine roles, do not recolor.
   72px/800, cell 40px/800 min-height 88px border 1px #24405a, tier ramp
   #111f2a→#1f3b4e, header 32px/700, points 40px/800 #f26522, question
   52px/400, answer 48px/800 + `reveal-in 0.24s`, marked-green #3fb950,
-  trivia img 640px loaded, tally row 14px/1px. Console: only the
+  trivia img 640px loaded, tally row 14px/1px. (superseded by Task 20: sizes now scale with the viewport — cells 64u, headers 44u, hint 26u; text-only questions fill the screen) Console: only the
   expected favicon 404 + the 3 intentional missing.png probe 404s.
   After-screenshots saved to `.playwright-mcp/ui-after-*.png` (NOT read —
   text-only model).
@@ -594,7 +630,7 @@ refine roles, do not recolor.
 
 Partner request (2026-10-12): (a) every question screen needs a Back button
 — an accidental cell tap must be recoverable without losing state; (b) in
-trivia mode it must be obvious that the dollar amounts are NOT the click
+trivia mode it must be obvious that the point amounts are NOT the click
 target — the category headers are.
 
 **Design:**
@@ -628,7 +664,7 @@ target — the category headers are.
   root cause (since 7.5) had Done/Next blue, breaking orange = primary.
   Fixed (controls row → own `.controls` class, layout only), verified on
   8089: Back panel/muted, Reveal blue, Done orange, mark buttons 34px
-  blue.
+  blue. (superseded by Task 20: sizes now scale with the viewport — cells 64u, headers 44u, hint 26u; text-only questions fill the screen)
 
 ---
 
@@ -889,7 +925,7 @@ Remote already configured. Pushing `main` triggers the deploy. Set the repo's Pa
 - [x] **Step 1: About screen + wiring + minimal CSS.**
 - [x] **Step 2: Verify (Playwright, text-only)** — port 8094: About
   visible with all five how-to items (Setup, Jeopardy, Trivia,
-  Mistapped?, Mid-game); link href
+  Mistapped?, Mid-game) (superseded: Task 23 — the About now has eight items: Setup, Jeopardy, Trivia, On the TV, No mouse?, Oops?, Mid-game, Your own games); link href
   https://github.com/chendaniely/trivia-night; questions.yaml line
   present; Back to setup returns with typed team value intact;
   console only the favicon 404.
@@ -1578,14 +1614,14 @@ and plan in line with the code as it stands after Tasks 14–22.
   comment), `docs/superpowers/specs/2026-10-10-trivia-night-design.md`,
   `docs/superpowers/plans/2026-10-10-trivia-night.md`
 
-- [ ] **Step 1: Human docs** — "dollar cell(s)" → "point cell(s)"
+- [x] **Step 1: Human docs** — "dollar cell(s)" → "point cell(s)"
   (README + About; spec: points, not dollars); About "Mistapped?" line
   accurate (Back to board discards that question's marks and keeps the
   cell and scores); every behavior added in Tasks 15–22 that a host
   meets is in README and About (Resume, Reset game confirm, team-list
   change confirm, error-screen Back, carried names, typo-guard
   validation); `styles.css` About comment says 22px (matches code).
-- [ ] **Step 2: Spec** — team count "2 or more (no cap, Task 7.9)"
+- [x] **Step 2: Spec** — team count "2 or more (no cap, Task 7.9)"
   everywhere it says 2–4 / "4 teams max"; trivia loop includes the
   optional Reveal (Task 13); YAML schema lists `images:`; validation
   sentence: syntax errors carry line numbers, schema errors carry a
@@ -1595,7 +1631,7 @@ and plan in line with the code as it stands after Tasks 14–22.
   three TV routes (Task 22) recorded under Decided/Builder's calls as
   builder's calls flagged for review; no separate "final scoreboard"
   screen — the board's scoreboard is it.
-- [ ] **Step 3: Plan** — Global Constraints "Teams: 2–4" → no cap;
+- [x] **Step 3: Plan** — Global Constraints "Teams: 2–4" → no cap;
   Review Focus 5 → "Stale taps (after Done/Next/Back, or a finished
   column header) are ignored; scores never double-count. (Tasks 7.5,
   7.8)"; Shared interfaces + File structure match the real exports and
@@ -1606,14 +1642,14 @@ and plan in line with the code as it stands after Tasks 14–22.
   with the Task 13/20 values where they changed; Task 11 "all five
   how-to items" → current count. Do NOT rewrite history records — append
   "(superseded: …)" notes, the way earlier tasks did.
-- [ ] **Step 4: Deferred section** — mark item 1 (visual review) and
+- [x] **Step 4: Deferred section** — mark item 1 (visual review) and
   item 2 (demo media) done 2026-10-14 with one-line evidence (shots in
   `.playwright-mcp/claude-pass-2026-10-14/`; WAV pitches 440/523/
   440→523→659 Hz, no edge clicks, −8 dBFS peak; PNGs clean); item 3
   (font on the real TV) stays open; add item 4: the 30-second real-picker
   check (Create new → allow edit → Load folder on the result) in the
   partner's Chrome, and item 5: open the live URL on the friend's TV.
-- [ ] **Step 5: Commit** — `docs(…): 🤖 …`.
+- [x] **Step 5: Commit** — `docs(…): 🤖 …`.
 
 ---
 
@@ -1624,15 +1660,28 @@ Everything below needs image input and is deliberately left to a
 multimodal model. The partner will run a Claude Code pass at the end to
 tie up loose ends — this is the list:
 
-1. **UI pass visual review (Task 7.7):** take fresh 1280×720 screenshots
+1. **DONE 2026-10-14** — **UI pass visual review (Task 7.7):** take fresh 1280×720 screenshots
    of all five screens (setup, board, question with a revealed answer,
    trivia column, tally) against the no-store server and judge: board
    legibility at TV distance, font rendering, orange/blue role
    discipline (orange = primary action + scores only), motion feel
-   (reveal + screen fade). Before-shots from 2026-10-11 are in
+   (reveal + screen fade). Evidence: fresh shots in
+   `.playwright-mcp/claude-pass-2026-10-14/`, read and judged. Before-shots from 2026-10-11 are in
    `.playwright-mcp/ui-before-*.png` (gitignored, untracked).
-2. **Demo media eyeball:** the two self-generated PNGs in `images/demo/`
+2. **DONE 2026-10-14** — **Demo media eyeball:** the two self-generated PNGs in `images/demo/`
    and the demo WAVs in `audio/demo/` were verified by bytes/dimensions,
-   never looked at.
+   never looked at. Evidence: WAV pitches 440 / 523 / 440→523→659 Hz, no
+   edge clicks, −8 dBFS peak; PNGs clean.
 3. **Font fallback on a real TV:** confirm the self-hosted woff2 render
    (not the swap fallback) on the actual TV browser at the event.
+4. **Real-picker check (30 seconds), in the partner's Chrome:** Create new
+   (inside Documents, not Documents itself) → allow editing → Load folder
+   on the result. The picker is stubbed in every automated test.
+5. **Open the live URL on the friend's TV** (TV browser, if that route is
+   used): font, Reset game dialog, audio.
+6. **Two trackpad swipe-backs on the board stay in the app** (real device;
+   Chrome's history intervention can't be scripted).
+7. **Run `make serve` once on the event Mac before the night** (the first
+   `uv run` may fetch Python if none >= 3.9 is installed).
+8. **The deploy workflow's first run after merging:** watch the Actions
+   tab; the gate runs tests + bank validation.
