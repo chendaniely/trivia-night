@@ -27,6 +27,10 @@
      (2/3 the px on 2/3 the screen). Board, setup and image questions are
      sized in it so each fits one screen at 1280x720 through 1920x1080. */
   --u: min(0.0926vh, 0.0521vw);
+  /* Floor unit (Task 20 fix 1): 1px at 1280x720 and up, shrinking below
+     it, so setup / About px floors keep the 720p picture on a 960x540 TV
+     viewport instead of growing past the screen. */
+  --k: min(1px, 0.13889vh, 0.078125vw);
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 30px/1.45 var(--font); }
@@ -54,51 +58,59 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .btn-quiet:hover:not(:disabled) { color: var(--text); border-color: var(--muted); filter: none; }
 .btn-row { display: flex; gap: calc(24 * var(--u)); justify-content: center; margin-top: calc(20 * var(--u)); }
 .btn-row button { font-size: max(20px, calc(30 * var(--u))); padding: calc(12 * var(--u)) calc(32 * var(--u)); }
-/* Setup (Task 20): sized in --u, so the busiest setup — 4 team rows plus
-   the Resume offer, Back to board or a two-line save note — fits one
-   screen at 1280x720 and keeps the old px sizes at 1080p. Secondary
-   buttons share one row (council Task 9). */
+/* Setup (Task 20): sized in --u (floors in --k), so the busiest setup —
+   4 team rows plus the Resume offer, Back to board or a two-line save
+   note — fits one screen from 960x540 to 1920x1080 and keeps the old px
+   sizes at 1080p. Secondary buttons share one row (council Task 9). */
 #screen-setup { padding: calc(24 * var(--u)) calc(40 * var(--u)); }
 #screen-setup h1 { text-align: center; font-size: calc(72 * var(--u)); margin-bottom: calc(12 * var(--u)); }
 #screen-setup h1::after {
   content: ""; display: block; width: calc(120 * var(--u)); height: calc(6 * var(--u));
   margin: calc(12 * var(--u)) auto 0; background: var(--orange); border-radius: 3px;
 }
-#screen-setup .subtitle { text-align: center; font-size: max(20px, calc(30 * var(--u))); margin: calc(4 * var(--u)) 0 0; }
-#screen-setup button { font-size: max(20px, calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u)); }
+#screen-setup .subtitle { text-align: center; font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); margin: calc(4 * var(--u)) 0 0; }
+#screen-setup button { font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u)); }
 #team-inputs { display: grid; gap: calc(16 * var(--u)); margin: calc(24 * var(--u)) 0; justify-items: center; }
 .team-row { display: flex; gap: calc(14 * var(--u)); align-items: center; }
 .team-row input {
-  font-size: max(20px, calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(18 * var(--u));
+  font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(18 * var(--u));
   width: calc(480 * var(--u)); max-width: calc(480 * var(--u));
 }
-#screen-setup .team-remove { font-size: max(18px, calc(26 * var(--u))); padding: calc(10 * var(--u)) calc(24 * var(--u)); }
+#screen-setup .team-remove { font-size: max(calc(18 * var(--k)), calc(26 * var(--u))); padding: calc(10 * var(--u)) calc(24 * var(--u)); }
 #add-team-btn { margin-top: calc(6 * var(--u)); }
-#mode-pick { display: flex; gap: calc(48 * var(--u)); margin: calc(20 * var(--u)) 0; font-size: max(20px, calc(32 * var(--u))); justify-content: center; }
-#mode-pick input[type="radio"] { width: max(20px, calc(30 * var(--u))); height: max(20px, calc(30 * var(--u))); }
+#mode-pick { display: flex; gap: calc(48 * var(--u)); margin: calc(20 * var(--u)) 0; font-size: max(calc(20 * var(--k)), calc(32 * var(--u))); justify-content: center; }
+#mode-pick input[type="radio"] { width: max(calc(20 * var(--k)), calc(30 * var(--u))); height: max(calc(20 * var(--k)), calc(30 * var(--u))); }
 #screen-setup .start-row { display: flex; gap: calc(20 * var(--u)); justify-content: center; }
 /* Saved-game offer (Task 18): summary + Resume on one line at the top of
    setup, so it is on screen whatever the team count. */
 #resume-offer { display: flex; flex-wrap: wrap; gap: calc(12 * var(--u)) calc(28 * var(--u)); align-items: center; justify-content: center; margin: calc(16 * var(--u)) 0 0; }
-#resume-summary { margin: 0; font-size: max(18px, calc(28 * var(--u))); }
-#save-note { margin: calc(12 * var(--u)) auto 0; max-width: calc(1100 * var(--u)); font-size: max(18px, calc(26 * var(--u))); text-align: center; }
+#resume-summary { margin: 0; font-size: max(calc(18 * var(--k)), calc(28 * var(--u))); }
+#save-note { margin: calc(12 * var(--u)) auto 0; max-width: calc(1100 * var(--u)); font-size: max(calc(18 * var(--k)), calc(26 * var(--u))); text-align: center; }
 /* Visually hidden but present (a display:none file input never opens the
    chooser on a programmatic click). tabindex=-1: no invisible tab stop. */
 #folder-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
 #screen-setup .folder-btns { display: flex; gap: calc(16 * var(--u)); justify-content: center; margin-top: calc(20 * var(--u)); }
-#screen-setup .folder-btns button { font-size: max(18px, calc(24 * var(--u))); padding: calc(10 * var(--u)) calc(24 * var(--u)); }
-#folder-msg { color: var(--muted); font-size: max(18px, calc(24 * var(--u))); text-align: center; margin: calc(16 * var(--u)) 0 0; }
-/* About page (Task 11): static text, must fit one TV screen (council Task 9):
-   24px text, two-column list. */
-#screen-about { max-width: 1200px; padding: 24px 40px; font-size: 22px; }
-#screen-about h1 { text-align: center; font-size: 52px; }
-#screen-about p { margin: 12px 0; line-height: 1.35; }
-#screen-about li { line-height: 1.35; margin: 0 0 10px; break-inside: avoid; }
-#screen-about ul { padding-left: 24px; columns: 2; column-gap: 48px; }
+#screen-setup .folder-btns button { font-size: max(calc(18 * var(--k)), calc(24 * var(--u))); padding: calc(10 * var(--u)) calc(24 * var(--u)); }
+#folder-msg { color: var(--muted); font-size: max(calc(18 * var(--k)), calc(24 * var(--u))); text-align: center; margin: calc(16 * var(--u)) 0 0; }
+/* About page (Task 11): static text, two-column list. Task 20 fix 1:
+   sized in --u (floors in --k) so it fits 1280x720 with room to grow, and
+   Back to setup sticks to the bottom edge, so the only exit is on screen
+   even when the text runs past it (small TV viewports, longer text). */
+#screen-about {
+  max-width: 1200px; padding: calc(24 * var(--u)) calc(40 * var(--u));
+  font-size: max(14px, calc(16 * var(--k)), calc(22 * var(--u)));
+}
+#screen-about h1 { text-align: center; font-size: calc(52 * var(--u)); margin-bottom: calc(12 * var(--u)); }
+#screen-about p { margin: calc(12 * var(--u)) 0; line-height: 1.35; }
+#screen-about li { line-height: 1.35; margin: 0 0 calc(10 * var(--u)); break-inside: avoid; }
+#screen-about ul { padding-left: calc(24 * var(--u)); columns: 2; column-gap: calc(48 * var(--u)); }
 #screen-about a { color: var(--orange); }
 #screen-about a:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
 #screen-about code { font-size: 0.85em; background: var(--panel); border: 1px solid var(--edge); border-radius: 6px; padding: 2px 8px; }
-#about-back-btn { display: block; margin: 20px auto 0; }
+#about-back-btn {
+  display: block; margin: calc(20 * var(--u)) auto 0; position: sticky; bottom: calc(16 * var(--u));
+  font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u));
+}
 .error-actions { display: flex; gap: 16px; margin: 16px 0 20px; }
 #error-list { font-size: 28px; color: var(--bad); padding-left: 24px; }
 /* An unbroken 80-char key wraps instead of running off the screen (Task 20). */
@@ -136,7 +148,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .board-header {
   font-size: max(20px, calc(44 * var(--u))); font-weight: 700; line-height: 1.15; text-align: center;
   display: grid; place-items: center; text-wrap: balance;
-  padding: calc(12 * var(--u)) calc(10 * var(--u));
+  padding: calc(12 * var(--u)) calc(10 * var(--u)); color: var(--text);
   background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
   overflow-wrap: break-word; min-width: 0;
 }
@@ -151,7 +163,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
   font-size: max(32px, calc(64 * var(--u))); line-height: 1.1;
   font-weight: 800; font-variant-numeric: tabular-nums;
   display: grid; place-items: center; text-align: center;
-  padding: calc(6 * var(--u)) 8px;
+  padding: calc(6 * var(--u)) 8px; color: var(--text); /* explicit: buttons default to dark text */
   background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
 }
 .clickable { cursor: pointer; }
@@ -162,33 +174,38 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .board-grid.trivia .board-cell { opacity: 0.45; }
 .board-header.dim { opacity: 0.45; }
 .board-hint { color: var(--muted); font-size: max(18px, calc(26 * var(--u))); line-height: 1.3; margin: 0 0 calc(14 * var(--u)); text-align: center; }
-/* Question screen must fit 1280x720 in the worst case (longest shipped q +
-   revealed answer + 3 long team names wrapping to 2 rows, council Task 13):
-   tighter rhythm + slightly smaller mark buttons. */
-#screen-question { padding: 24px 40px; }
-.question-wrap { display: grid; gap: 20px; justify-items: start; }
-.question-wrap h2 { font-size: 32px; font-weight: 700; color: var(--muted); margin: 0; }
-.question-text { font-size: 52px; line-height: 1.3; margin: 0; white-space: pre-line; max-width: 1080px; }
+/* Question screens: the worst case (longest shipped q + revealed answer +
+   long team names, council Task 13) must fit one screen. Task 20 fix 1:
+   sized in --u with px floors (question 32, answer 28, buttons 20), so
+   it fits a 960x540 TV viewport too; unchanged at 1080p. */
+#screen-question { padding: calc(24 * var(--u)) calc(40 * var(--u)); }
+.question-wrap { display: grid; gap: calc(20 * var(--u)); justify-items: start; }
+.question-wrap h2 { font-size: max(20px, calc(32 * var(--u))); font-weight: 700; color: var(--muted); margin: 0; }
+.question-text { font-size: max(32px, calc(52 * var(--u))); line-height: 1.3; margin: 0; white-space: pre-line; max-width: 1080px; }
 .answer-text {
-  font-size: 42px; line-height: 1.25; font-weight: 800; color: var(--orange);
+  font-size: max(28px, calc(42 * var(--u))); line-height: 1.25; font-weight: 800; color: var(--orange);
   margin: 0; max-width: 1080px; animation: reveal-in 240ms ease;
 }
-.team-btns, .controls { display: flex; gap: 24px; flex-wrap: wrap; }
+.team-btns, .controls { display: flex; gap: calc(24 * var(--u)); flex-wrap: wrap; }
+.controls button { font-size: max(20px, calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u)); }
 /* .team-btns holds only the team mark buttons (blue fill); the controls
    row (Back/Reveal/Done/Next) keeps its own .btn-* classes. */
-.team-btns button { font-size: 30px; padding: 14px 32px; background: var(--blue); color: #fff; border-radius: 14px; }
+.team-btns button {
+  font-size: max(20px, calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u));
+  background: var(--blue); color: #fff; border-radius: 14px;
+}
 .team-btns button.marked-green { background: var(--good); color: #06130a; }
 .team-btns button.marked-red { background: var(--bad); color: #160505; }
 .btn-primary { background: var(--orange); color: #0a1620; }
 .audio-block { display: grid; gap: 8px; }
-.audio-block audio { width: 480px; height: 48px; }
-.no-clip { color: var(--muted); font-style: italic; margin: 0; font-size: 28px; }
+.audio-block audio { width: calc(480 * var(--u)); height: max(32px, calc(48 * var(--u))); }
+.no-clip { color: var(--muted); font-style: italic; margin: 0; font-size: max(18px, calc(28 * var(--u))); }
 .images-block { display: flex; gap: 16px; flex-wrap: wrap; }
 .images-block img {
   max-width: 640px; max-height: 480px; width: auto; height: auto;
   object-fit: contain; border-radius: 12px; border: 1px solid var(--edge); background: var(--panel);
 }
-.no-image { color: var(--muted); font-style: italic; margin: 0; font-size: 28px; }
+.no-image { color: var(--muted); font-style: italic; margin: 0; font-size: max(18px, calc(28 * var(--u))); }
 /* Image questions (Task 20): question + answer on the left (45%), the
    image box on the right (55%) filling the height left by the category,
    audio, team buttons and controls — nothing scrolls, and the picture is
