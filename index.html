@@ -80,9 +80,11 @@
     <section id="screen-tally" class="screen hidden"></section>
     <section id="screen-error" class="screen hidden">
       <h1>Question file problem</h1>
+      <div class="error-actions">
+        <button id="retry-btn">Try again</button>
+        <button id="error-back-btn" class="btn-quiet hidden">Back to setup</button>
+      </div>
       <ul id="error-list"></ul>
-      <button id="retry-btn">Try again</button>
-      <button id="error-back-btn" class="btn-quiet hidden">Back to setup</button>
     </section>
   </main>
   <script type="module" src="js/app.js"></script>

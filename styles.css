@@ -80,6 +80,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 #screen-about a:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
 #screen-about code { font-size: 0.85em; background: var(--panel); border: 1px solid var(--edge); border-radius: 6px; padding: 2px 8px; }
 #about-back-btn { display: block; margin: 20px auto 0; }
+.error-actions { display: flex; gap: 16px; margin: 16px 0 20px; }
 #error-list { font-size: 28px; color: var(--bad); padding-left: 24px; }
 .scoreboard { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; margin-bottom: 28px; }
 .score-team {
