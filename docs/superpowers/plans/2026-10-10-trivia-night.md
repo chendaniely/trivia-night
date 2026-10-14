@@ -942,13 +942,23 @@ change — Reveal only shows the answer on screen. Sync rule: README
 trivia bullet + About "Trivia:" item mention Reveal.
 
 **Files:**
-- Modify: `js/question.js`, `README.md`, `index.html` (About item)
+- Modify: `js/question.js`, `README.md`, `index.html` (About item),
+  `styles.css` (council fit fix)
 
-- [ ] **Step 1: Implement + docs.**
-- [ ] **Step 2: Verify (Playwright, text-only)** — trivia mode: Reveal
-  button present, answer appears on click, button gone after; Next
-  resets reveal for the next question; marks still apply; console clean.
-- [ ] **Step 3: Council + commit.**
+- [x] **Step 1: Implement + docs.** (commit `aa5f30d`)
+- [x] **Step 2: Verify (Playwright, text-only)** — port 8098: trivia
+  mode controls = [Back to board, Reveal answer, Next]; Reveal shows
+  `.answer-text` ("Argo") and the button disappears; green mark
+  survives reveal; Next resets reveal for question 2 of 5 (Reveal
+  button back, no answer text); console clean (favicon only).
+- [x] **Step 3: Council + commit.** Council 2026-10-13: backward — NO
+  MISMATCHES (flag reset at all four colMarks sites, answer paragraph
+  at the same DOM position as Jeopardy, no leak paths, docs match).
+  Forward — 🟠 worst case (longest shipped q + revealed answer + 3 long
+  team names wrapping to 2 rows) put controls 70px below the 720 fold
+  (measured 790px, pre-existing pattern in the jeopardy renderer too)
+  → fit fix commit (padding 40→24, wrap gap 30→20, answer 48→42px,
+  team buttons 34/18→30/14): measured worst case now 700px.
 
 ---
 
