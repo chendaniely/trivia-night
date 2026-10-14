@@ -18,12 +18,14 @@ make serve-lan    # reachable from the TV's own browser (see below)
 make test         # unit tests
 ```
 
-(Requires [uv](https://docs.astral.sh/uv/) and node. That's all.) The
-server prints the one address to open. Only the app's own files are
+Run these from the repo folder. You need [uv](https://docs.astral.sh/uv/)
+(`brew install uv`) and [node](https://nodejs.org/) (`brew install node`);
+that's all. The server prints the one address to open. Only the app's own files are
 served: `question-drafts/` and the repo's other files never are. On
 `make serve-lan`, anyone on the same Wi-Fi can still open the app and
 read `questions.yaml`, so use it on a network you trust (or mirror the
-Mac instead).
+Mac instead). It serves the shipped board only: a Load folder board lives
+on the device that loaded it.
 
 ## Putting it on the TV
 
@@ -56,9 +58,46 @@ The app needs a reasonably recent browser (about Chrome 86 / Safari 14).
 On an older one you'll see a "Loading…" note that never goes away: mirror
 the Mac instead.
 
-This repo is public, so keep the real night's questions in a local
-folder (Load folder) or in `question-drafts/`, not in the shipped
-`questions.yaml`.
+This repo is public, so never put the real night's questions in the
+shipped `questions.yaml`. Keep them in a local folder and use **Load
+folder**. `question-drafts/` is git-ignored scratch space and is never
+served: to play a draft, copy it into a folder as `questions.yaml` (with
+`audio/` and `images/` beside it) and Load folder that.
+
+## Before the night
+
+A week before, on the Mac and TV you'll actually use:
+
+- `make test`, and run the check one-liner under "Writing your own
+  questions" (it checks only the shipped `questions.yaml`; a folder
+  board is checked by loading it, and the error screen lists problems).
+- Play one full practice game on the same address and browser as the
+  night (saved games belong to the address). **Reset game** clears it.
+- On the TV: do the "Test on the actual TV" list above, and try a clip.
+- Do the Create new, then Load folder check in Chrome (below).
+- Run `make serve` once on the event Mac (the first `uv run` may fetch a
+  Python).
+
+## On the night, if...
+
+- **The page refreshed, or the remote's Back left the app:** reopen the
+  same address and press **Resume game** (not Start: Start asks to
+  discard the saved game). For a folder board, Load folder the same
+  folder first, then Resume. You land on the board with scores and played
+  cells; a question that was open isn't marked played.
+- **The TV shows a blank page or a "Loading..." that stays:** refresh
+  once, then mirror the Mac instead.
+- **A clip won't play or says "no clip":** check the filename matches
+  exactly (the real name, not URL-encoded) and use `.m4a`/`.mp3`. Or
+  play it from the Mac and just **Reveal**.
+- **A picture is missing:** the question still works; describe it or
+  show it from a phone.
+- **Wrong team marked:** before **Done**, click the team again to change
+  or clear it (or **Back to board** drops the marks). After Done the
+  points are banked and the cell is closed; there is no undo, so adjust
+  by announcing it.
+- **Private/incognito window:** it can't save ("Saving is off" shows on
+  setup). Use a normal window.
 
 ## Using it at the event
 
@@ -125,15 +164,23 @@ question 3`; YAML syntax errors give a line number.
   ```
 
 Prefer to keep questions, clips, and photos together? Use **Load
-folder** in the app — a folder with `questions.yaml`, `audio/`, and
-`images/` becomes its own board — and **Create new** scaffolds one for
-you (Chrome or Edge only). For Create new, pick or make a folder inside
-Documents, not Documents itself (Chrome refuses Documents, Desktop and
-your home folder as the picked folder); Chrome then asks to allow
-editing: allow it. It never overwrites an existing folder. Loading
-another board mid-game asks first; it keeps the team names you typed
-(unless that board has a saved game — then Resume is offered), and if a folder has a problem the error screen
-lists it — **Back to setup** returns to your game untouched.
+folder** in the app (works best in Chrome or Edge; other browsers use a
+simpler folder picker): a folder with `questions.yaml`, `audio/`, and
+`images/` becomes its own board.
+
+**Create new** scaffolds one for you (Chrome or Edge only):
+
+1. Pick (or make) a parent folder inside Documents. Chrome refuses
+   Documents, Desktop, Downloads and your home folder themselves.
+2. Chrome asks to allow editing: allow it.
+3. Type a name for the new game folder. It never overwrites an existing
+   one.
+4. Then use **Load folder** on it.
+
+Loading another board mid-game asks first; it keeps the team names you
+typed (unless that board has a saved game, then Resume is offered), and
+if a folder has a problem the error screen lists it. **Back to setup**
+returns to your game untouched.
 
 ## Layout
 
