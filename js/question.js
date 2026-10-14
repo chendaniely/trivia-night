@@ -10,7 +10,7 @@
 // Audio: questions with q.audio get a player in EVERY renderer (both modes);
 // a missing clip swaps the player for a "no clip" note (Review Focus 3).
 import { state, showScreen, lockInput, saveGame } from "./app.js";
-import { renderBoard, pointsFor } from "./board.js";
+import { renderBoard, focusBoard, pointsFor } from "./board.js";
 
 // Folder-mode media are already blob: URLs; a shipped-bank path is
 // percent-encoded per segment so "#", "?" and spaces in filenames load.
@@ -77,11 +77,30 @@ function endMedia() {
   media = null;
 }
 
+// Focus survives a re-render (Task 21): replaceChildren drops it to <body>,
+// which strands a remote. Team buttons and Reveal carry a data-focus key;
+// after the (synchronous) re-render focus returns to the same key. When
+// the key is gone (Reveal just revealed) or is forced (a fresh question),
+// it lands on the first team button — NEVER on Done/Next, so a second OK
+// press can't bank or pass the question. Focus that was on the native
+// <audio> control is simply lost (no key); that is accepted.
+function focusKeyIn(root) {
+  const a = document.activeElement;
+  return root.contains(a) ? a.dataset.focus : undefined;
+}
+
+function restoreFocus(root, key) {
+  if (!key) return;
+  const el = root.querySelector(`[data-focus="${key}"]`) || root.querySelector('[data-focus="team-0"]');
+  el?.focus();
+}
+
 let current = null; // { ri, qi } — active jeopardy question
 let marks = new Map(); // teamIdx -> "green" | "red" (jeopardy marks)
 let revealed = false;
 let col = null; // { ri, qi } — active trivia column
 let colMarks = new Map(); // teamIdx -> "green" (trivia marks)
+let lastColumn = null; // the column whose tally was just shown (Task 21)
 let colRevealed = false; // per-question (Task 13: host may need the answer)
 
 // Team buttons shared by both renderers: colored by mark state, ✓ / ✕ suffix.
@@ -91,6 +110,7 @@ function teamButtons(markMap, onMark) {
   btns.append(
     ...state.teamNames.map((name, idx) => {
       const b = document.createElement("button");
+      b.dataset.focus = `team-${idx}`;
       const m = markMap.get(idx);
       b.textContent = m === "green" ? `${name} ✓` : m === "red" ? `${name} ✕` : name;
       if (m) {
@@ -122,7 +142,7 @@ export function startQuestion(ri, qi) {
   marks = new Map();
   revealed = false;
   showScreen("question");
-  renderQuestion();
+  renderQuestion("team-0");
 }
 
 function cycleMark(idx) {
@@ -157,24 +177,28 @@ function done() {
   revealed = false;
   renderBoard();
   showScreen("board");
+  focusBoard({ ri, qi });
 }
 
 function back() {
   if (!current) return; // guard stale taps (Task 7.8)
   endMedia();
   // Accidental-tap escape: discard marks, do NOT consume the cell.
+  const { ri, qi } = current;
   current = null;
   marks = new Map();
   revealed = false;
   renderBoard();
   showScreen("board");
+  focusBoard({ ri, qi }); // the cell is still playable: focus returns to it
 }
 
-function renderQuestion() {
+function renderQuestion(focusKey) {
   const { ri, qi } = current;
   const round = state.bank.rounds[ri];
   const question = round.questions[qi];
   const root = document.getElementById("screen-question");
+  const key = focusKey ?? focusKeyIn(root);
 
   const wrap = document.createElement("div");
   wrap.className = "question-wrap";
@@ -205,6 +229,7 @@ function renderQuestion() {
   if (!revealed) {
     const rv = document.createElement("button");
     rv.className = "btn-secondary";
+    rv.dataset.focus = "reveal";
     rv.textContent = "Reveal answer";
     rv.addEventListener("click", reveal);
     controls.append(rv);
@@ -216,6 +241,7 @@ function renderQuestion() {
   controls.append(dn);
   wrap.append(controls);
   root.replaceChildren(wrap);
+  restoreFocus(root, key);
 }
 
 // --- Trivia column ----------------------------------------------------------
@@ -238,7 +264,7 @@ export function startColumn(ri) {
   colMarks = new Map();
   colRevealed = false;
   showScreen("question");
-  renderColumn();
+  renderColumn("team-0");
 }
 
 function revealCol() {
@@ -270,24 +296,28 @@ function nextQuestion() {
   if (next !== -1) {
     col = { ri, qi: next };
     lockInput(); // same screen, new question: a double-click must not pass it
-    renderColumn();
+    renderColumn("team-0");
     return;
   }
   const roundName = round.name; // capture before clearing (tally needs it)
   col = null;
+  lastColumn = ri;
   renderTally(roundName);
   showScreen("tally");
+  document.querySelector("#screen-tally button")?.focus();
 }
 
 function backToBoard() {
   if (!col) return; // guard stale taps (Task 7.8)
   endMedia();
   // Accidental-tap escape: leave the column, no cell consumed.
+  const { ri } = col;
   col = null;
   colMarks = new Map();
   colRevealed = false;
   renderBoard();
   showScreen("board");
+  focusBoard({ ri });
 }
 
 // Browser Back on the question screen (Task 18): exactly that screen's own
@@ -297,11 +327,12 @@ export function leaveQuestion() {
   else if (col) backToBoard();
 }
 
-function renderColumn() {
+function renderColumn(focusKey) {
   const { ri, qi } = col;
   const round = state.bank.rounds[ri];
   const question = round.questions[qi];
   const root = document.getElementById("screen-question");
+  const key = focusKey ?? focusKeyIn(root);
 
   const wrap = document.createElement("div");
   wrap.className = "question-wrap";
@@ -332,6 +363,7 @@ function renderColumn() {
   if (!colRevealed) {
     const rv = document.createElement("button");
     rv.className = "btn-secondary";
+    rv.dataset.focus = "reveal";
     rv.textContent = "Reveal answer";
     rv.addEventListener("click", revealCol);
     controls.append(rv);
@@ -343,6 +375,7 @@ function renderColumn() {
   controls.append(nx);
   wrap.append(controls);
   root.replaceChildren(wrap);
+  restoreFocus(root, key);
 }
 
 function renderTally(roundName) {
@@ -369,6 +402,7 @@ function renderTally(roundName) {
   back.addEventListener("click", () => {
     renderBoard();
     showScreen("board");
+    focusBoard({ ri: lastColumn ?? 0 });
   });
   wrap.append(h, rows, back);
   el.replaceChildren(wrap);

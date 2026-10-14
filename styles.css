@@ -152,7 +152,14 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
   background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
   overflow-wrap: break-word; min-width: 0;
 }
-.board-header.clickable:hover { background: var(--blue); border-color: var(--blue); }
+/* Clickable headers and cells are <button>s (Task 21): the global button
+   chrome (hover lift, brightness) is switched off so the old look stands,
+   and keyboard focus gets the hover fill plus the shared 3px ring. */
+.board-header.clickable, .board-cell.clickable { width: 100%; transition: none; }
+.board-header.clickable:hover, .board-header.clickable:active,
+.board-cell.clickable:hover, .board-cell.clickable:active { filter: none; transform: none; }
+.board-header.clickable:hover, .board-header.clickable:focus-visible { background: var(--blue); border-color: var(--blue); }
+.board-header.clickable:focus-visible, .board-cell.clickable:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
 /* Row position IS difficulty: subtle 5-step ramp easy (top) to hard (bottom). */
 .board-cell.tier-0 { background: #111f2a; }
 .board-cell.tier-1 { background: #13242f; }
@@ -167,7 +174,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
   background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
 }
 .clickable { cursor: pointer; }
-.board-cell.clickable:hover { background: var(--orange); border-color: var(--orange); color: #0a1620; }
+.board-cell.clickable:hover, .board-cell.clickable:focus-visible { background: var(--orange); border-color: var(--orange); color: #0a1620; }
 .board-cell.used { color: var(--muted); background: transparent; border: 2px dashed var(--edge); }
 .board-gap { visibility: hidden; }
 /* Trivia: the header is the click target; cells are inert (Task 7.8). */
@@ -234,6 +241,14 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
   height: 100%; row-gap: 0; column-gap: calc(40 * var(--u));
   grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
   grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
+}
+/* Text-only questions (Task 21): ~165px of height spare under the large
+   question, so the mark buttons and controls grow from 20px to 27px at
+   1280x720 (40 --u), reading as part of the screen from the couch. Image
+   questions keep the compact size above. */
+#screen-question .question-wrap:not(.has-images) .team-btns button,
+#screen-question .question-wrap:not(.has-images) .controls button {
+  font-size: max(20px, calc(40 * var(--u))); padding: calc(16 * var(--u)) calc(36 * var(--u));
 }
 .has-images > * { grid-column: 1 / -1; margin-top: calc(20 * var(--u)); }
 .has-images > h2 { grid-row: 1; margin-top: 0; }

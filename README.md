@@ -29,6 +29,9 @@ make test         # unit tests
    - **Trivia** — click a category name to start the round (the dollar
      cells aren't clickable), mark a team green when they answer,
      **Reveal** to show the answer, **Next** to move on.
+   No mouse needed: a TV remote's D-pad (or Tab / Shift-Tab) moves
+   between cells, categories and buttons, and OK (Enter / Space) presses
+   them.
 3. **Back to board** is on every question screen if you mistap (the
    browser's Back button does the same).
 4. **Setup** mid-game: rename teams or switch modes and **Start** carries

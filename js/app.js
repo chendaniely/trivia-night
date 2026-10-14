@@ -1,7 +1,7 @@
 // Entry: state, screen switching, data loading, setup screen.
 import { parseBank } from "./validate.js";
 import { createScoring, restoreScoring } from "./scoring.js";
-import { renderBoard, setCellClick, setColumnClick } from "./board.js";
+import { renderBoard, focusBoard, setCellClick, setColumnClick } from "./board.js";
 import { startQuestion, startColumn, resetFlow, leaveQuestion } from "./question.js";
 import { randomTeamName } from "./teams.js";
 import {
@@ -281,6 +281,7 @@ function showRunningGame() {
   setMode(state.mode);
   renderBoard();
   showScreen("board");
+  focusBoard();
 }
 
 // Start and Resume both land here: the setup rows now ARE the running
@@ -382,6 +383,7 @@ window.addEventListener("popstate", () => {
   } else if (on === "tally") {
     renderBoard();
     showScreen("board");
+    focusBoard();
   } else if (on === "setup") {
     showRunningGame();
   }
