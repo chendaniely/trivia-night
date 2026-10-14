@@ -1479,27 +1479,29 @@ opened. Every mark/reveal re-render drops focus to `<body>`.
 **Files:**
 - Modify: `js/board.js`, `js/question.js`, `styles.css`
 
-- [ ] **Step 1: Buttons** — clickable board cells (Jeopardy) and
+- [x] **Step 1: Buttons** — clickable board cells (Jeopardy) and
   clickable category headers (Trivia) render as `<button type="button">`
   keeping their classes and look (reset button chrome: font, color,
   width, background from the existing tier/panel rules). Inert cells
   (used, trivia-mode cells, finished headers) stay non-focusable.
   `:focus-visible` on cells/headers: the same 3px `var(--text)` outline
   used by buttons, plus the hover fill.
-- [ ] **Step 2: Focus survives re-renders** — question screens restore
+- [x] **Step 2: Focus survives re-renders** — question screens restore
   focus to the equivalent control after a mark/Reveal re-render (e.g. a
   `data-focus` key per team button / control); when the board renders
   after a question, focus goes to the cell that was just played's
   position's next clickable cell, or the first clickable cell/header.
-- [ ] **Step 3: Verify (Playwright, Chrome, fresh port)** — keyboard
+- [x] **Step 3: Verify (Playwright, Chrome, fresh port)** — keyboard
   only (Tab/Shift-Tab/Enter/Space; arrow keys not required): open a
   Jeopardy cell, mark a team twice (green → red), Reveal, Done, and run
   a Trivia column to the tally and back, never touching the mouse;
   screenshots (READ them) show a visible focus ring on a cell and on a
   header. Layout from Task 20 unchanged (re-run its fit script).
-- [ ] **Step 4: Commit** — `feat(board): 🤖 …`.
+- [x] **Step 4: Commit** — `feat(board): 🤖 …`.
 
 ---
+
+> Council 2026-10-14 (Task 21): backward — spec compliant incl. carried rulings (no keydown handlers, focus never lands on Done/Next, synchronous keyed focus restore, Tab reaches the native audio control, text-only team/control buttons 27px at 720p), approved; controller re-ran the fit suite (160 states fit at five sizes; only the error screen scrolls, by design). Forward — clear in Chrome (no focus ring or scroll jump for mouse users; inert cells non-focusable). Deferred minors: block Enter auto-repeat after Reveal; cell aria-labels with the category; popstate-from-tally focus. Commit 7a8cb84.
 
 ### Task 22: Infra + TV compatibility
 
