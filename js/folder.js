@@ -100,7 +100,7 @@ export async function loadFromDirHandle(handle) {
   if (!result.ok) return result;
   const urls = [];
   await swapMediaFromDirHandle(handle, result.bank, urls);
-  return { ok: true, bank: result.bank, urls };
+  return { ok: true, bank: result.bank, urls, text }; // text -> saved-game bankKey
 }
 
 // webkitdirectory fallback: match media on webkitRelativePath. The
@@ -114,7 +114,8 @@ export async function loadFromFileList(files) {
   if (!yaml) {
     return { ok: false, errors: [{ where: "folder", message: "no questions.yaml in the folder root" }] };
   }
-  const result = parseBank(await yaml.text());
+  const text = await yaml.text();
+  const result = parseBank(text);
   if (!result.ok) return result;
   const root = yaml.webkitRelativePath.split("/")[0];
   const urls = [];
@@ -141,7 +142,7 @@ export async function loadFromFileList(files) {
         });
       }
     }
-  return { ok: true, bank: result.bank, urls };
+  return { ok: true, bank: result.bank, urls, text }; // text -> saved-game bankKey
 }
 
 // Create-new scaffold (FSA only): template keys that are optional

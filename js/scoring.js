@@ -1,10 +1,25 @@
 // Pure scoring state for trivia-night. No DOM, no IO — runs in node.
 // give(teamIdx, points, roundName): points may be negative (Jeopardy wrong).
 // roundTotal(roundName): signed sum of everything awarded in that round.
+// snapshot() / restoreScoring(snap): plain JSON-safe copy for saved games
+// (Task 18) — { teams: [{name, points}], log: [[roundName, [{teamIdx, points}]]] }.
 export function createScoring(teamNames) {
-  const teams = teamNames.map((name) => ({ name, points: 0 }));
-  const log = new Map(); // roundName -> [{ teamIdx, points }]
+  return build(teamNames.map((name) => ({ name, points: 0 })), new Map());
+}
 
+export function restoreScoring(snap) {
+  const teams = snap.teams.map((t) => ({ name: t.name, points: t.points }));
+  const log = new Map(
+    snap.log.map(([round, entries]) => [
+      round,
+      entries.map((e) => ({ teamIdx: e.teamIdx, points: e.points })),
+    ])
+  );
+  return build(teams, log);
+}
+
+function build(teams, log) {
+  // log: roundName -> [{ teamIdx, points }]
   function give(teamIdx, points, roundName) {
     teams[teamIdx].points += points;
     if (!log.has(roundName)) log.set(roundName, []);
@@ -26,5 +41,15 @@ export function createScoring(teamNames) {
       .reduce((sum, e) => sum + e.points, 0);
   }
 
-  return { teams, give, reset, roundTotal, roundTeamTotal };
+  function snapshot() {
+    return {
+      teams: teams.map((t) => ({ name: t.name, points: t.points })),
+      log: [...log].map(([round, entries]) => [
+        round,
+        entries.map((e) => ({ teamIdx: e.teamIdx, points: e.points })),
+      ]),
+    };
+  }
+
+  return { teams, give, reset, roundTotal, roundTeamTotal, snapshot };
 }

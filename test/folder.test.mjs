@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { parseBank } from "../js/validate.js";
-import { normPath, NEW_TEMPLATE, NEW_FOLDER_README, createNew, loadFromFileList, revokeAll } from "../js/folder.js";
+import { normPath, NEW_TEMPLATE, NEW_FOLDER_README, createNew, loadFromFileList, loadFromDirHandle, revokeAll } from "../js/folder.js";
 
 // create-new template parses on first load (optional keys are comments)
 const t = parseBank(NEW_TEMPLATE);
@@ -132,3 +132,17 @@ for (const spelling of ["/images/x.png", "./images/x.png", "././images//x.png", 
   assert.ok(rr.bank.rounds[0].questions[0].images[0].startsWith("blob:"), `matched ${spelling}`);
   revokeAll(rr.urls);
 }
+
+// both loaders hand back the raw questions.yaml text (Task 18: the saved
+// game's bankKey is a hash of exactly this text)
+assert.equal(r.text, yaml);
+const plain = 'title: "T"\nrounds:\n  - name: "R"\n    questions:\n      - q: "Q"\n        a: "A"\n';
+const dirWithYaml = {
+  async getFileHandle(n) {
+    if (n !== "questions.yaml") throw notFound(n);
+    return { async getFile() { return new Blob([plain]); } };
+  },
+};
+const rd = await loadFromDirHandle(dirWithYaml);
+assert.ok(rd.ok, JSON.stringify(rd.errors));
+assert.equal(rd.text, plain);
