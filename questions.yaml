@@ -108,4 +108,4 @@ rounds:
       - q: >
           Name either of the two classic English words that contain all
           five vowels exactly once, in alphabetical order.
-        a: "Facetious or abstemious"
+        a: "Facetious or abstemious (rarer ones like 'arsenious' and 'caesious' also count)"
