@@ -1320,13 +1320,13 @@ guards the destructive paths with a confirm.
 - May add: `js/persist.js` (+ `test/persist.test.mjs`) if the
   save/restore logic is cleaner as its own pure module
 
-- [ ] **Step 1: Scoring snapshot (pure, TDD)** — `Scoring.snapshot()` →
+- [x] **Step 1: Scoring snapshot (pure, TDD)** — `Scoring.snapshot()` →
   plain JSON-safe `{ teams: [{name, points}], log: [[roundName,
   [{teamIdx, points}]]] }`; `restoreScoring(snapshot)` → a Scoring whose
   `teams`, `roundTotal`, `roundTeamTotal` match the original. Tests:
   round-trip through `JSON.stringify`/`JSON.parse`, then `give` still
   works on the restored object.
-- [ ] **Step 2: Saved game** — key `trivia-night:game` in localStorage
+- [x] **Step 2: Saved game** — key `trivia-night:game` in localStorage
   (every access in try/catch: private mode / disabled storage must never
   break play). Snapshot `{ v: 1, bankKey, mode, scoring:
   Scoring.snapshot(), used: [...keys], savedAt }`. `bankKey` = a short
@@ -1334,7 +1334,7 @@ guards the destructive paths with a confirm.
   loaded source (shipped or folder), computed where the text is read and
   passed into `startNewBank`. Save after Start, after `done()`, after
   every `nextQuestion()` award, after Reset game, and after a resume.
-- [ ] **Step 3: Resume** — when a bank loads and a saved game with the
+- [x] **Step 3: Resume** — when a bank loads and a saved game with the
   same `bankKey` has progress (any used cell or any non-zero score), the
   setup screen shows a primary `Resume game` button (`#resume-btn`) above
   Start with a one-line summary (team names + scores), and the rows are
@@ -1342,17 +1342,17 @@ guards the destructive paths with a confirm.
   and used cells and shows the board. Pressing Start instead →
   `confirm("Discard the saved game in progress and start a new one?")`;
   cancel = stay on setup.
-- [ ] **Step 4: Leave guards** — while a game has progress:
+- [x] **Step 4: Leave guards** — while a game has progress:
   `beforeunload` asks before leaving (`preventDefault` + `returnValue =
   ""`); on Start, `history.pushState` one entry and on `popstate` push it
   back — if the question screen is showing, run that screen's Back to
   board path (same as its button); on the tally screen, go to the board;
   elsewhere stay put.
-- [ ] **Step 5: Reset game** — the board's "Reset scores" button becomes
+- [x] **Step 5: Reset game** — the board's "Reset scores" button becomes
   `Reset game` (`.btn-quiet`, placed AFTER Setup), and asks
   `confirm("Reset all scores and clear the board? This can't be undone.")`
   before clearing; the saved game is updated after a confirmed reset.
-- [ ] **Step 6: Team identity on setup** — rows carry the index of the
+- [x] **Step 6: Team identity on setup** — rows carry the index of the
   scoring team they came from (rows built for a running game get it;
   rows added later have none; Remove keeps the survivors' indices).
   Start resumes (rename in place, scores + used kept) ONLY when the rows
@@ -1360,12 +1360,12 @@ guards the destructive paths with a confirm.
   added or removed). Any other change while a game has progress →
   `confirm("The team list changed, so this starts a fresh game — all
   scores reset. Continue?")`; cancel = stay on setup.
-- [ ] **Step 7: Input lock** — ignore clicks for 350 ms after a screen
+- [x] **Step 7: Input lock** — ignore clicks for 350 ms after a screen
   change and after Reveal / Next re-render the question screen (one
   capture-phase document listener + a `lockInput()` helper called by
   `showScreen` and those two renders). Team mark taps do NOT lock (fast
   green → red cycling stays possible).
-- [ ] **Step 8: Verify (Playwright, Chrome, fresh port, read your
+- [x] **Step 8: Verify (Playwright, Chrome, fresh port, read your
   screenshots)** — play 2 Jeopardy cells, `page.reload()` → Resume shows
   the right summary → resume → scores + used cells back; same for a
   half-played trivia column (awarded questions persist); Start instead of
@@ -1375,11 +1375,13 @@ guards the destructive paths with a confirm.
   → board, cell not consumed; double-click on Reveal does not trigger
   Done; storage disabled (e.g. `localStorage` throwing via
   `addInitScript`) → the game still plays. `node --test` green.
-- [ ] **Step 9: Commit(s)** — `feat(game): 🤖 …` etc.; README + About
+- [x] **Step 9: Commit(s)** — `feat(game): 🤖 …` etc.; README + About
   updated in the same commit: Resume after a refresh, Reset game asks
   first, changing the team list starts fresh (asks first).
 
 ---
+
+> Council 2026-10-14 (Task 18): backward — spec compliant, approved (Chrome verify ALL CHECKS PASSED, spot-checked). Forward (opus) — CRITICAL: a folder-board night lost its save on refresh (reload shows the shipped board; Start overwrote the single slot) → one save slot per board (`trivia-night:game:<bankKey>`, 10 newest kept, title stored) + a setup hint naming the other board's saved game; IMPORTANT: a mis-tapped Remove mid-game couldn't be undone → setup Back to board (and browser Back) while a game runs. Folded in: "saved N ago", Resume keeps edited names, "Saving is off" line, consent flag reset, README/About wording (739d029). Re-review: all addressed. Deferred: Resume restores the saved mode over a changed radio; trackpad double swipe-back needs a real-device check (Task 23). Commits 9dc83be, cf26ed4, 739d029.
 
 ### Task 19: Question media — clips keep playing, dark controls
 
