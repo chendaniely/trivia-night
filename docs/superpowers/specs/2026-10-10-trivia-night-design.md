@@ -4,7 +4,8 @@
 
 Dan builds and operates a single-device trivia host app for a home trivia
 night: Sunday Nov 8 2026, ~3–7pm, at his friend's place, on their TV.
-~6–10 people, split into 2–3 teams (headcount not final, so 4 teams max).
+~6–10 people, split into 2–3 teams (headcount not final, so any number of
+teams from 2 up is accepted).
 Dan and the host couple (friend + wife Helena) are strong at trivia —
 questions should be deliberately hard. The whole evening runs from one
 screen the host controls; nobody else touches a device.
@@ -29,22 +30,27 @@ styles of play (see modes below).
     consumes the cell, back to the board; zero marks = nobody got it.
   - **Trivia mode** — host clicks a category → its questions run in order
     (easy → hard), one at a time → host taps every team that got it (green,
-    each gains the tier points; click again to clear) → "Next" (no taps =
-    pass) → column tally shown at the end of the column.
+    each gains the tier points; click again to clear), optionally pressing
+    "Reveal answer" to show the answer (Task 13) → "Next" (no taps =
+    pass) → column tally shown at the end of the column. The board's
+    scoreboard is the final standings; there is no separate final screen.
 - Setup screen at launch: enter team names, pick mode. The board has a
   "Setup" button that returns to it with names and mode prefilled; starting
-  with the same team count keeps scores and played cells (names update in
-  place, mode can change), a different count starts a fresh game.
-- Team scoreboard with points; score reset available, and loading
-  another folder set starts a fresh board.
+  with the same teams (renames and a mode switch allowed) keeps scores and
+  played cells; adding or removing a team starts a fresh game after a
+  confirm.
+- Team scoreboard with points; "Reset game" (asks first) clears scores and
+  played cells, and loading another folder set starts a fresh board.
 - Music round: a question may reference an audio clip; the question screen
   plays it through the TV speakers (host-triggered, then the question is
   answered as usual).
 - Any question may reference images (`images:` — list of relative paths,
   same convention as `audio:`); the question screen shows them TV-sized
   above the question text, in both modes.
-- Demo data in the repo (questions + a few safe self-generated clips) so
-  the Pages deployment works out of the box.
+- Demo data in the repo (questions + a few safe self-generated clips and
+  images) so the Pages deployment works out of the box. The committed demo
+  clips/images exist to exercise the media paths; the shipped bank
+  references none of them.
 - Local folder mode: host loads questions + audio from a folder on their
   own computer; a "create new" action scaffolds that folder structure.
 
@@ -97,8 +103,10 @@ styles of play (see modes below).
   (gitignored) — never installed into the user's global or active
   environment.
 - Question content: one `questions.yaml` plus `audio/` and `images/`
-  folders. The app validates the file on load and reports bad lines with
-  line numbers.
+  folders. The app validates the file on load: YAML syntax errors carry a
+  line number; schema errors carry a 1-based round/question locator such
+  as `round 2 "Movies", question 3` (Task 15 ruling). Unknown keys are
+  reported with a "did you mean" hint (typo guard).
 - Long question/answer text should use YAML block scalars (`>` folded, `|`
   literal) so colons and quotes need no escaping. Parser must handle them.
 - Audio clips: prefer `.m4a`/`.mp3` (widest TV-browser support).
@@ -146,10 +154,19 @@ styles of play (see modes below).
   background with NYC flag orange #F26522 as primary action / score accent
   and NYC blue #236192 as surfaces / secondary buttons; green and red stay
   reserved for correct / wrong team marks.
-- Teams: 2–4 names accepted (partner said 2–3; +1 headroom for uncertain
-  headcount).
+- Teams: 2 or more, no cap (Task 7.9; partner said 2–3, headcount was
+  uncertain, so the app adds/removes teams freely).
 - Points: default tier values 100/200/300/400/500 by position, overridable
-  per question in YAML. Displayed as points, not dollars.
+  per question in YAML. Displayed as points, not dollars ("point cells").
+- Saved games (Task 18, builder's call, flagged for review): the game is
+  saved in the browser as it is played, one slot per board (10 most
+  recent kept); after a reload, "Resume game" on setup restores scores,
+  played cells and mode. A changed `questions.yaml` is a new board.
+- Three ways to put it on the TV (Task 22, builder's call, flagged for
+  review): mirror the Mac (recommended; everything works); the TV's own
+  browser on the live Pages URL (shipped board only); the TV's own browser
+  on the Mac over Wi-Fi via `make serve-lan`. Test on the real TV before
+  the night.
 - Ship a starter question bank: multiple movie categories (Oscar,
   cult classics, childhoods), music, nerd culture, words. Deliberately
   hard. Music questions ship as placeholders until real clips are dropped
@@ -170,10 +187,13 @@ rounds:
       - q: "Name this song by its intro"
         a: "Happy"
         audio: "audio/happy-intro.m4a"   # optional
+        images: ["images/poster.png"]    # optional, list
+        points: 300                      # optional, overrides the tier value
 ```
 
 - Difficulty = position in the round's question list (first = easiest).
 - Optional `points:` on a question overrides the tier default.
+- Optional `images:` is a list of paths, same convention as `audio:`.
 - Optional `audio:` is a path relative to the project root. When present,
   the question screen gets a play control.
 - A round with fewer questions than tiers is fine; the board only shows
@@ -182,11 +202,12 @@ rounds:
 ## Left to the builder
 
 - Exact screens: setup, board, question, answer reveal, column tally,
-  final scoreboard.
+  about, error. No separate final-scoreboard screen: the board's
+  scoreboard is it.
 - Visual design: dark, high contrast, large type, TV-readable.
 - State and reset semantics (reset scores, return to board, replay a cell
   in Jeopardy mode after reveal).
 - Local folder mode: directory pick, "create new" scaffolding, and a
   graceful fallback message on non-Chromium browsers.
 - One self-check for the YAML validator: a malformed file must produce an
-  error naming the offending line, and the app must not half-load.
+  error naming the offending line (syntax) or round/question (schema), and the app must not half-load.
