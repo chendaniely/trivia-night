@@ -221,21 +221,28 @@ document.getElementById("create-new-btn").addEventListener("click", async () => 
     );
     return;
   }
-  const name = prompt("New game folder name", "my-trivia-night");
-  if (!name) return;
+  // Picker FIRST: it needs the click's user activation (expires in ~5 s,
+  // so a slow prompt() before it would break it) and readwrite asks for
+  // write access in the same single prompt.
   let parent;
   try {
-    parent = await window.showDirectoryPicker();
+    parent = await window.showDirectoryPicker({ mode: "readwrite", startIn: "documents" });
   } catch (err) {
     if (err && err.name === "AbortError") return;
     setFolderMsg("Could not pick the parent folder: " + err.message);
     return;
   }
+  const name = prompt("New game folder name", "my-trivia-night");
+  if (!name) return;
   try {
     await createNew(parent, name);
     setFolderMsg(`Created ${name}/ with a starter questions.yaml — load it with Load folder.`);
   } catch (err) {
-    setFolderMsg("Could not create the folder: " + err.message);
+    setFolderMsg(
+      err && err.name === "ExistsError"
+        ? err.message
+        : "Could not create the folder: " + err.message
+    );
   }
 });
 

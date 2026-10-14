@@ -170,6 +170,21 @@ note instead.
 `;
 
 export async function createNew(parentHandle, name) {
+  // Never overwrite: only a NotFoundError means the name is free.
+  let exists = true;
+  try {
+    await parentHandle.getDirectoryHandle(name);
+  } catch (err) {
+    if (!err || err.name !== "NotFoundError") throw err;
+    exists = false;
+  }
+  if (exists) {
+    const err = new Error(
+      `a folder named "${name}" already exists there — pick another name`
+    );
+    err.name = "ExistsError";
+    throw err;
+  }
   const dir = await parentHandle.getDirectoryHandle(name, { create: true });
   const write = async (fileName, text) => {
     const fh = await dir.getFileHandle(fileName, { create: true });
