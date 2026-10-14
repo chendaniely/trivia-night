@@ -1437,7 +1437,7 @@ off).
 - Modify: `styles.css`; `js/board.js` / `js/question.js` only if markup
   must change for the layout
 
-- [ ] **Step 1: Board fits** — viewport-relative sizing (e.g. `clamp()`
+- [x] **Step 1: Board fits** — viewport-relative sizing (e.g. `clamp()`
   with `vh`/`vw`) for board cell height + numeral size, header type +
   padding, scoreboard plaques, gaps and screen padding, so that the
   shipped 6×5 board with 2–4 teams has NO vertical scroll at 1280×720,
@@ -1445,17 +1445,17 @@ off).
   line), and at 1920×1080 the grid uses ≥ 85% of the viewport width.
   Numerals never smaller than 32 px at 720p; nothing smaller than today
   at 1080p.
-- [ ] **Step 2: Headers never split words** — no mid-word breaks in any
+- [x] **Step 2: Headers never split words** — no mid-word breaks in any
   shipped header at any of the sizes above (shrink type / balance
   wrapping; `overflow-wrap: break-word` remains only as a last resort
   for a single absurdly long word).
-- [ ] **Step 3: Image questions fit** — a question with one 640×480 image
+- [x] **Step 3: Image questions fit** — a question with one 640×480 image
   + a 2-line question + 3 team buttons + controls, both before and after
   Reveal, has no vertical scroll at 1280×720 and 1920×1080 (cap image
   height by viewport, or put image and text side by side on landscape —
   builder's call; images stay as large as fits).
-- [ ] **Step 4: Setup fits with 4 team rows** at 1280×720.
-- [ ] **Step 5: Verify (Playwright, Chrome, fresh port)** — a script
+- [x] **Step 4: Setup fits with 4 team rows** at 1280×720.
+- [x] **Step 5: Verify (Playwright, Chrome, fresh port)** — a script
   measuring `document.documentElement.scrollHeight` vs viewport for every
   size × mode × screen above (reference: `<scratchpad>/fit.mjs` and
   `<scratchpad>/shots.mjs`), plus screenshots you READ at 1280×720 and
@@ -1463,9 +1463,11 @@ off).
   question, tally. Orange stays primary action + scores + answer only;
   legibility at TV distance must not drop (judge from the screenshots).
   Save final shots to `.playwright-mcp/claude-pass-2026-10-14/after/`.
-- [ ] **Step 6: Commit** — `style(layout): 🤖 …`.
+- [x] **Step 6: Commit** — `style(layout): 🤖 …`.
 
 ---
+
+> Council 2026-10-14 (Task 20): backward — spec compliant incl. carried items (setup in every state, error-screen buttons + long-token wrap, dark controls), approved. Forward — Important: cells/headers had no explicit colour (would go dark-on-dark as Task 21 buttons); About fixed px (Back below the fold at 960×540); question screens scrolled at 960×540 (Fire/Android TV viewport) → fix round 1 (c3af70b). Controller self-correction: round 1's proportional scaling shrank text-only questions at 720p (52→35px) → fix round 2 (e9a092c): question text fills the screen (44/58.5/80px at 540/720/1080). Fit suite: 192/198 checks fit across 960×540, 1280×720, 1440×789, 1512×862, 1512×982, 1920×1080 (the 6 are the error screen, which scrolls by design under its buttons). Commits aff3d63, c3af70b, e9a092c.
 
 ### Task 21: Remote navigation — D-pad can drive the board
 
