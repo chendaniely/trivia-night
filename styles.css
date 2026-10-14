@@ -10,7 +10,8 @@
 }
 
 :root {
-  --bg: #0a1620;        /* blue-black, hue of NYC blue */
+  color-scheme: dark;   /* native audio controls, radios, scrollbars follow the theme */
+  --bg: #0a1620;       /* blue-black, hue of NYC blue */
   --panel: #13242f;
   --edge: #24405a;      /* 1px panel borders */
   --text: #f5f9fc;

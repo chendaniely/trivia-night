@@ -58,6 +58,25 @@ function imageBlock(images) {
   return wrap;
 }
 
+// Media nodes are built once per opened question and re-appended on every
+// re-render (marks, Reveal) so a playing clip is not torn down and rewound.
+// Leaving the question pauses the clip and drops the cache, so the next
+// question (or a re-opened cell) always builds fresh nodes.
+let media = null; // { key, ab, ib }
+
+function mediaFor(flow, ri, qi, question) {
+  const key = `${flow}:${ri}:${qi}`;
+  if (!media || media.key !== key) {
+    media = { key, ab: audioBlock(question), ib: imageBlock(question.images) };
+  }
+  return media;
+}
+
+function endMedia() {
+  media?.ab?.querySelector("audio")?.pause();
+  media = null;
+}
+
 let current = null; // { ri, qi } — active jeopardy question
 let marks = new Map(); // teamIdx -> "green" | "red" (jeopardy marks)
 let revealed = false;
@@ -86,6 +105,7 @@ function teamButtons(markMap, onMark) {
 }
 
 export function resetFlow() {
+  endMedia(); // also drops nodes pointing at a revoked blob: URL
   current = null;
   marks = new Map();
   revealed = false;
@@ -97,6 +117,7 @@ export function resetFlow() {
 // --- Jeopardy -------------------------------------------------------------
 
 export function startQuestion(ri, qi) {
+  endMedia();
   current = { ri, qi };
   marks = new Map();
   revealed = false;
@@ -122,6 +143,7 @@ function reveal() {
 
 function done() {
   if (!current) return;
+  endMedia();
   const { ri, qi } = current;
   const round = state.bank.rounds[ri];
   const pts = pointsFor(round, qi);
@@ -139,6 +161,7 @@ function done() {
 
 function back() {
   if (!current) return; // guard stale taps (Task 7.8)
+  endMedia();
   // Accidental-tap escape: discard marks, do NOT consume the cell.
   current = null;
   marks = new Map();
@@ -160,8 +183,7 @@ function renderQuestion() {
   const qText = document.createElement("p");
   qText.className = "question-text";
   qText.textContent = question.q.trim(); // block scalars fold to one paragraph
-  const ab = audioBlock(question);
-  const ib = imageBlock(question.images);
+  const { ab, ib } = mediaFor("j", ri, qi, question);
 
   wrap.append(cat, ...(ab ? [ab] : []), ...(ib ? [ib] : []), qText);
   if (revealed) {
@@ -210,6 +232,7 @@ export function startColumn(ri) {
   const round = state.bank.rounds[ri];
   const qi = firstUnused(round, ri, 0);
   if (qi === -1) return; // fully-used column (Review Focus 5: no re-awarding)
+  endMedia();
   col = { ri, qi };
   colMarks = new Map();
   colRevealed = false;
@@ -233,6 +256,7 @@ function cycleColMark(idx) {
 
 function nextQuestion() {
   if (!col) return;
+  endMedia(); // advance or tally: the finished question's clip stops
   const { ri, qi } = col;
   const round = state.bank.rounds[ri];
   const pts = pointsFor(round, qi);
@@ -256,6 +280,7 @@ function nextQuestion() {
 
 function backToBoard() {
   if (!col) return; // guard stale taps (Task 7.8)
+  endMedia();
   // Accidental-tap escape: leave the column, no cell consumed.
   col = null;
   colMarks = new Map();
@@ -284,8 +309,7 @@ function renderColumn() {
   const qText = document.createElement("p");
   qText.className = "question-text";
   qText.textContent = question.q.trim();
-  const ab = audioBlock(question);
-  const ib = imageBlock(question.images);
+  const { ab, ib } = mediaFor("c", ri, qi, question);
 
   wrap.append(cat, ...(ab ? [ab] : []), ...(ib ? [ib] : []), qText);
   if (colRevealed) {
