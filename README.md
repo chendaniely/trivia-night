@@ -66,7 +66,9 @@ Unknown keys are reported (typo guard): a misspelled `image:` or `Audio:` is fla
 Prefer to keep questions, clips, and photos together? Use **Load
 folder** in the app — a folder with `questions.yaml`, `audio/`, and
 `images/` becomes its own board — and **Create new** scaffolds one for
-you (Chrome or Edge only).
+you (Chrome or Edge only). Loading another board keeps the team names
+you typed (scores start fresh), and if a folder has a problem the error
+screen lists it — **Back to setup** returns to your game untouched.
 
 ## Layout
 

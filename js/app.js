@@ -27,15 +27,23 @@ export function showScreen(id) {
   }
 }
 
+const ERROR_CAP = 12; // keeps Try again / Back to setup on screen on a TV
+
 export function renderError(errors) {
   const list = document.getElementById("error-list");
-  list.replaceChildren(
-    ...errors.map((e) => {
-      const li = document.createElement("li");
-      li.textContent = e.line ? `line ${e.line}: ${e.message}` : `${e.where}: ${e.message}`;
-      return li;
-    })
-  );
+  const items = errors.slice(0, ERROR_CAP).map((e) => {
+    const li = document.createElement("li");
+    li.textContent = e.line ? `line ${e.line}: ${e.message}` : `${e.where}: ${e.message}`;
+    return li;
+  });
+  if (errors.length > ERROR_CAP) {
+    const more = document.createElement("li");
+    more.textContent = `…and ${errors.length - ERROR_CAP} more`;
+    items.push(more);
+  }
+  list.replaceChildren(...items);
+  // A loaded bank (maybe a game in memory) can be returned to untouched.
+  document.getElementById("error-back-btn").classList.toggle("hidden", state.bank === null);
   showScreen("error");
 }
 
@@ -63,13 +71,18 @@ function startNewBank(bank, urls) {
   revokeAll(mediaUrls); // no blob leaks across sources
   mediaUrls = urls;
   state.bank = bank;
+  document.getElementById("error-back-btn").classList.remove("hidden");
+  // The setup heading and tab title follow the bank (Task 17).
+  document.querySelector("#screen-setup h1").textContent = bank.title;
+  document.title = bank.title;
+  const carried = prefillNames();
   // Bank swap (retry / folder mode): previous game state no longer applies
   // (used-cell keys and round logs refer to the old bank).
   state.scoring = null;
   state.used = new Map();
   state.teamNames = []; // no stale names for the next setup (council 7.9, Task 9)
   resetFlow(); // no stale question state across bank loads (Task 9 folder mode)
-  renderSetup();
+  renderSetup(carried);
   showScreen("setup");
 }
 
@@ -80,6 +93,15 @@ function setupInputs() {
 
 function allNamed() {
   return setupInputs().every((el) => el.value.trim() !== "");
+}
+
+// Names to pre-fill after a bank load (undefined = two random names, as at
+// app start). Carry the typed names when every row is filled and there are
+// at least 2, so board 2 of the night needs no retyping. One small helper
+// so Task 18 can prefer saved-game names here.
+function prefillNames() {
+  const vals = setupInputs().map((el) => el.value.trim());
+  return vals.length >= 2 && vals.every((v) => v !== "") ? vals : undefined;
 }
 
 function renderSetup(draftNames) {
@@ -164,6 +186,8 @@ document.getElementById("about-back-btn").addEventListener("click", () => showSc
 let currentLoader = loadBank;
 export function setLoader(fn) { currentLoader = fn; }
 document.getElementById("retry-btn").addEventListener("click", () => currentLoader());
+// Exit without touching state: the loaded bank and any game stay intact.
+document.getElementById("error-back-btn").addEventListener("click", () => showScreen("setup"));
 
 // Local folder mode (Task 9): Load folder (FSA primary, webkitdirectory
 // fallback) + Create new (FSA only). Buttons live OUTSIDE #team-inputs
@@ -181,7 +205,7 @@ async function pickFolder() {
     handle = await window.showDirectoryPicker();
   } catch (err) {
     if (err && err.name === "AbortError") return; // host cancelled
-    setFolderMsg("Could not open the folder: " + err.message);
+    renderError([{ where: "folder", message: "could not open the folder (" + err.message + ")" }]);
     return;
   }
   const result = await loadFromDirHandle(handle);
@@ -232,7 +256,7 @@ document.getElementById("create-new-btn").addEventListener("click", async () => 
     setFolderMsg("Could not pick the parent folder: " + err.message);
     return;
   }
-  const name = prompt("New game folder name", "my-trivia-night");
+  const name = ((prompt("New game folder name", "my-trivia-night")) || "").trim();
   if (!name) return;
   try {
     await createNew(parent, name);
@@ -241,6 +265,8 @@ document.getElementById("create-new-btn").addEventListener("click", async () => 
     setFolderMsg(
       err && err.name === "ExistsError"
         ? err.message
+        : err && err.name === "NotAllowedError"
+        ? "Chrome didn't give edit access to that folder — click Create new again and allow editing when asked."
         : "Could not create the folder: " + err.message
     );
   }
