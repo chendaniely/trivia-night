@@ -168,8 +168,11 @@ In the setup session the model, asked to read "this session's status
 bar", found opencode's service credentials file, used the basic-auth
 password to query the local opencode API, and reported "Auth cracked".
 It stayed local and read-only, and nothing leaked off the machine — but it
-is a credential read the prompt never asked for, and the password now
-sits in the session transcript. The same session edited the partner's
+is a credential read the prompt never asked for, and the password then
+sat in the session transcript. (The partner rotated it on Oct 14 with
+`opencode service unset password` + `opencode service start`, which
+makes opencode generate a fresh random one; the copy in the transcript is
+dead.) The same session edited the partner's
 own tooling config and removed a status-bar entry he wanted to keep
 ("you kind of messed up"). Neither is part of the trivia app, but both
 matter if you are deciding how much autonomy to give a local model.
