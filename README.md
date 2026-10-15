@@ -58,6 +58,9 @@ are all different).
 - Press **Reset game**, then **Cancel**, with the remote: the app asks on
   its own screen, and Cancel keeps the game.
 - Audio: `.m4a`/`.mp3` play best on TV browsers; `.wav` works.
+- Nothing is cut off at the top or bottom edge (the scores, the buttons
+  under the board). If it is, set the TV's picture size to Screen Fit /
+  Just Scan, or turn off overscan in the Mac's Displays settings.
 
 The app needs a reasonably recent browser (about Chrome 86 / Safari 14.1).
 On an older one you'll see a "Loading…" note that never goes away: mirror

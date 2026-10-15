@@ -1977,16 +1977,36 @@ scoreboard) was not recommended and is not built.
 theme note, chapter 8's closing note.
 
 - [x] **Step 1: A — the lit board.** Jeopardy: unplayed cells in NYC blue
-  `#236192`, a little lighter each row down (the difficulty ramp);
+  (`#1f5784` at the top to `#2b73aa` at the bottom, `#236192` in the
+  middle: the difficulty ramp);
   played cells drop into the background (no fill, a faint outline, faint
   numbers); category names unboxed over a 4-unit orange rule. Trivia:
   the live headers are lit (as today) and the cells stay dark — what's
   lit is what you press. Hover/focus on a cell stays the orange fill.
-  No size changes beyond the header's rule (fit unchanged).
+  Sizes: the header rule is 1–2 px taller than the old border, and (Step
+  2) the Final scores title grows; `make fit` stays green.
 - [x] **Step 2: C — the finish.** On Final scores the leader's pill is
   filled orange with dark text; the title is a little larger with a NYC
   tricolor stripe (blue, white, orange) under it; the setup title's
   orange bar becomes the same stripe.
+> Council 2026-10-15 (Task 26, `d445e78`): backward (sonnet) — as specified
+> in both modes; Important: the docs said no size changed (the Final
+> scores title grew a few px, fit still green); three mutants passed the
+> new smoke checks (the winner's name colour, the title stripe's colours,
+> played cells receding); Minor: a stale CSS comment, the ramp's wording,
+> U17's "muted" for a negative leader. Forward (opus) — safe to merge;
+> Important: a cached pre-confirm index.html with the new scripts opened
+> an empty question screen (showScreen threw on the missing screen); on a
+> two-team final the winner's badge covered the new stripe; Minor: badges
+> blend into the orange winner pill (and for red-green colour blindness),
+> the old-browser ring is thin among lit cells, TV overscan can clip the
+> badges and the bottom buttons. Fix commit: null-safe screen switching
+> (a stale page plays, its confirms fall back to the browser's dialog),
+> room under the Final title for the badges, a dark ring round badges, a
+> thicker old-browser ring on cells, an overscan line in the README's TV
+> checklist; smoke checks the winner's name, the stripe's three colours,
+> played cells, a stale index.html playing a question, and an
+> all-negative final (mutants now fail); docs corrected.
 - [ ] **Step 3: Ship.** Council, then push, open the PR and merge into
   `main` (merge commit, as PRs #1 and #2); watch the gated deploy; run
   `make smoke` against the live URL. Release `v1.0.0` after (Task 25

@@ -473,8 +473,30 @@ try {
   const ring = () => old.evaluate(() => { const s = getComputedStyle(document.activeElement); return `${s.outlineStyle} ${s.outlineWidth}`; });
   check(!(await ring()).startsWith("solid"), `after a mouse click, no ring (${await ring()})`);
   await old.keyboard.press("Tab");
-  check((await ring()) === "solid 3px", `with the keyboard, the ring (${await ring()})`);
+  check(/^solid ([3-9]|1\d)(\.\d+)?px$/.test(await ring()), `with the keyboard, the ring (${await ring()})`);
   await old.close();
+
+  // Mid-deploy (Task 26 council): a cached index.html from before the
+  // confirm screen, with the new scripts, must still play a question.
+  const stale = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+  stale.on("pageerror", (e) => problems.push(`stale index.html: ${e.message}`));
+  await stale.route(/\/(index\.html)?(\?.*)?$/, async (r) => {
+    const res = await r.fetch();
+    const html = (await res.text()).replace(/<section id="screen-confirm"[\s\S]*?<\/section>/, "");
+    await r.fulfill({ response: res, body: html });
+  });
+  await stale.goto(URL_);
+  await stale.waitForSelector("#screen-setup:not(.hidden)");
+  check((await stale.$$("#screen-confirm")).length === 0, "the stale page has no confirm screen (precondition)");
+  await stale.waitForTimeout(450);
+  await stale.mouse.move(1, 1);
+  await stale.click("#start-btn");
+  await stale.waitForTimeout(450);
+  await stale.mouse.move(1, 1);
+  await stale.click(".board-cell.clickable");
+  await stale.waitForTimeout(450);
+  check(await stale.isVisible("#screen-question button:text-is('Done')"), "with a stale index.html a question still opens and plays");
+  await stale.close();
 
   // A folder that fails through the folder picker names the folder.
   const pk = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
@@ -507,6 +529,7 @@ try {
     [[["A", 500], ["B", 500], ["C", 500], ["D", 100]], "Final scores · a tie between A, B and C"],
     [[["A", 700], ["B", 700], ["C", 700]], "Final scores · everyone ties"],
     [[["A", 0], ["B", 0], ["C", 0]], "Final scores · everyone ends on 0"],
+    [[["A", -200], ["B", -500], ["C", -900]], "Final scores · A wins"], // a leader below zero reads on orange
   ]) {
     const { key, json } = await finishedSave(URL_, teams);
     await fin.goto(URL_);
@@ -526,12 +549,23 @@ try {
     check((await fin.$$("#screen-board .score-team.leader")).length === teams.filter((t) => t[1] === top).length, "the leader(s) stand out");
     // The finish (Task 26): the winner filled orange, dark text; the title
     // has the tricolor stripe.
-    const win = await fin.$eval("#screen-board .score-team.leader", (e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e.querySelector(".score-points")).color]);
-    check(win[0] === "rgb(242, 101, 34)" && win[1] === "rgb(10, 22, 32)", `the winner is filled orange (${win})`);
+    const win = await fin.$eval("#screen-board .score-team.leader", (e) => [
+      getComputedStyle(e).backgroundColor,
+      getComputedStyle(e.querySelector(".score-points")).color,
+      getComputedStyle(e.querySelector(".score-name")).color,
+    ]);
     check(
-      /linear-gradient/.test(await fin.$eval("#screen-board .final-title", (e) => getComputedStyle(e, "::after").backgroundImage)),
-      "the Final scores title has the tricolor stripe"
+      win[0] === "rgb(242, 101, 34)" && win[1] === "rgb(10, 22, 32)" && win[2] === "rgb(10, 22, 32)",
+      `the winner is filled orange, name and score dark (${win})`
     );
+    check(
+      /linear-gradient\(90deg, rgb\(35, 97, 146\).*rgb\(245, 249, 252\).*rgb\(242, 101, 34\)/.test(
+        await fin.$eval("#screen-board .final-title", (e) => getComputedStyle(e, "::after").backgroundImage)
+      ),
+      "the Final scores title has the blue-white-orange stripe"
+    );
+    const played = await fin.$eval("#screen-board .board-cell.used", (e) => [getComputedStyle(e).color, getComputedStyle(e).backgroundColor]);
+    check(played[0] === "rgb(58, 88, 114)" && played[1] === "rgba(0, 0, 0, 0)", `played cells recede: faint number, no fill (${played})`);
     check((await fin.evaluate(() => document.activeElement.id)) === "setup-btn", "focus is on Setup when the game is over");
     await fin.keyboard.press("Enter");
     await fin.waitForTimeout(450);

@@ -187,15 +187,18 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .score-badge {
   position: absolute; top: -0.75em; right: -0.6em; padding: 0.05em 0.45em; border-radius: 999px;
   font-size: max(14px, calc(24 * var(--u))); font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 max(2px, calc(3 * var(--u))) var(--bg); /* a dark ring: it reads on the orange winner too */
   animation: badge-in 240ms ease;
 }
 .score-badge.up { background: var(--good); color: #06130a; }
 .score-badge.down { background: var(--bad); color: #160505; }
 /* Final scores (Task 25, U6): no new screen — the board's scoreboard,
-   ranked and larger, the leader(s) outlined in orange, under a title that
+   ranked and larger, the leader(s) filled orange, under a title that
    names the winner or the tie. */
 .final-title {
-  text-align: center; margin: 0 0 calc(10 * var(--u)); line-height: 1.2;
+  /* the bottom margin leaves room for a score badge on the pills below,
+     so it never covers the stripe (two teams centre under it) */
+  text-align: center; margin: 0 0 calc(12 * var(--u) + max(11px, calc(18 * var(--u)))); line-height: 1.2;
   font-size: max(20px, calc(46 * var(--u))); font-weight: 800;
 }
 .final-title::after {
@@ -258,7 +261,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .clickable { cursor: pointer; }
 .board-cell.clickable:hover { background: var(--orange); border-color: var(--orange); color: #0a1620; }
 .board-cell.clickable:focus-visible { background: var(--orange); border-color: var(--orange); color: #0a1620; }
-.no-fv.kbd .board-cell.clickable:focus { outline: 3px solid var(--text); outline-offset: 2px; } /* a ring, not the fill */
+.no-fv.kbd .board-cell.clickable:focus { outline: max(4px, calc(6 * var(--u))) solid var(--text); outline-offset: 2px; } /* a ring, not the fill — thick enough among lit cells */
 /* A played cell drops into the background: no fill, a faint outline, a
    faint number (2.4:1 — it's done). */
 .board-cell.used { color: #3a5872; background: transparent; border: 2px solid #17293a; }

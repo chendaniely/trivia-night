@@ -17,6 +17,14 @@ let pending = null; // { from, opener, onOk, onCancel }
 const el = (id) => document.getElementById(id);
 
 export function askConfirm({ title, text, ok, input, onOk, onCancel }) {
+  if (!el("screen-confirm")) {
+    // A stale cached index.html (mid-deploy) has no confirm screen: the
+    // browser's own dialog keeps Reset and the rest working until a reload.
+    const value = input === undefined ? (window.confirm(`${title}\n\n${text}`) ? "" : null) : window.prompt(text, input);
+    if (value === null) onCancel?.();
+    else onOk?.(value);
+    return;
+  }
   // A confirm asked from a confirm returns to the first one's screen.
   pending = { from: pending ? pending.from : visibleScreen(), opener: document.activeElement, onOk, onCancel };
   el("confirm-title").textContent = title;

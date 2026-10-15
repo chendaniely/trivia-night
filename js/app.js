@@ -52,13 +52,17 @@ export function showScreen(id) {
   if (id !== "confirm") dropConfirm();
   document.getElementById("boot")?.classList.add("hidden");
   for (const s of SCREENS) {
-    document.getElementById(`screen-${s}`).classList.toggle("hidden", s !== id);
+    // ?.: a stale cached index.html (mid-deploy) may lack a newer screen
+    document.getElementById(`screen-${s}`)?.classList.toggle("hidden", s !== id);
   }
   lockInput();
 }
 
 export function visibleScreen() {
-  return SCREENS.find((s) => !document.getElementById(`screen-${s}`).classList.contains("hidden"));
+  return SCREENS.find((s) => {
+    const el = document.getElementById(`screen-${s}`);
+    return el && !el.classList.contains("hidden");
+  });
 }
 
 // Input lock (Task 18): for a moment after the screen changes under the
