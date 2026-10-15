@@ -1737,3 +1737,77 @@ the installed plugins/skills helped. Mermaid diagrams welcome.
   mermaid parser in headless Chrome; every image link resolves; no
   credentials, LAN addresses or private conversations in the folder.
 - [x] **Step 4: Commit** — `docs(case-study): 🤖 …`.
+
+### Task 25: UX audit + fixes — partner request 2026-10-14
+
+Partner request (2026-10-14, after the merge): "first do a UX audit …
+keep track of some of the changes we are goign to be making (start a new
+chapter) that the qwen3.8 27b model may have missed." Findings, origins,
+fix specs and the tracker live in `docs/case-study/08-ux-audit.md`
+(U1–U19); that chapter's Status column and Fix log are updated with
+every fix commit. Releases (partner, same evening): `v0.1.0` = Qwen's
+final build (`f603230`), `v0.2.0` = after the Claude pass (`e9ccb0b`),
+`v1.0.0` = after this task.
+
+**Files:**
+- Create: `docs/case-study/08-ux-audit.md`,
+  `docs/case-study/research/ux-audit-measurements.md`,
+  `docs/case-study/assets/ux-audit/`; later `tools/fit.mjs` + `make fit`.
+- Later steps modify the app (`js/`, `styles.css`, `index.html`),
+  `tools/smoke.mjs`, plus `README.md` and the About screen whenever
+  host-visible behaviour changes.
+
+- [x] **Step 1: Audit** — real Chrome via Playwright: 15 screens × 4
+  sizes + keyboard, 6-team and phone runs (68 shots), computed type sizes,
+  WCAG contrast for 16 pairs, probes (pointer target after Reveal, empty
+  space under questions, a whole board played out, empty team name).
+  Skills: ui-ux-pro-max, taste-skill redesign (audit-first),
+  external-app-review. Chapter 8: 19 findings (2 🔴, 6 🟠, 11 🟡),
+  origins by `git blame`, why each was missed, batch plan, guardrails.
+
+> Council 2026-10-14 (Task 25 Step 1): backward (sonnet) — ~75 claims
+> re-derived; corrected: contrast "passes everywhere" (trivia board
+> 3.96/2.70), README dialog warning post-dates the confirms (`ac11dd5`
+> 3 h after `cf26ed4`), spec paraphrased in quotes, probe list, shot
+> count; one false alarm (said the audit ran on Sonnet; it ran on Opus).
+> Forward (opus) — same-spot hazard is wider than Reveal (image Reveal →
+> Done, opening a cell → Done at 720p, trivia Next → Next/Reveal, Done →
+> board): U2 raised to 🔴, same-spot click guard first; undo needs an
+> explicit `{cell, round, deltas}` record in scoring (round log has no
+> question id; zero-mark Done / trivia pass log nothing), save stays
+> `v: 1` with an optional field; confirm as a 7th screen (no `<dialog>`
+> / `inert` at the Chrome 86 / Safari 14 floor; Back = Cancel; picker
+> called synchronously from OK); worst-case fit slack only 33–129 px at
+> 960×540/720p (audit used Wings, not the longest Oscar 300) → commit
+> `make fit`, one `--qf` retune; U5 contradicted the ≤240 ms guardrail;
+> new U18 (focus BODY at game end) and U19 (`:focus-visible` drops whole
+> rules before Safari 15.4). Controller re-ran 4 transitions in Chrome:
+> 3 reproduced (image Reveal → Done at 720p + 1080p, cell 2:2 → Done at
+> 720p); trivia q1 → q2 not reproduced (reviewer's cases were q2/q3);
+> focus BODY at game end reproduced. All folded into chapter 8.
+
+- [ ] **Step 2: Batch 1 — scores you can trust**, in order: committed
+  `make fit` + transition probe and the same-spot click guard (U2 part
+  1); confirm screen (U7) with the `make smoke` + README rewrite; Undo
+  last question (U1) with a shared marks→deltas function and a persisted
+  `v: 1`-compatible record; Done preview in a fixed slot below the team
+  buttons (U3). U11's disabled style lands before U1's disabled Undo.
+- [ ] **Step 3: Batch 2 — what the room sees**: one question-layout task
+  (U2 part 2 reserved answer + non-focusable placeholder, U9, U10 inline
+  "Answer:", U4 one-line header) with a single `--qf` retune; Play clip
+  button (U8); score badges (U5); final standings (U6) + focus at game
+  end (U18) after the partner's call vs the spec's "no separate
+  final-scoreboard screen".
+- [ ] **Step 4: Batch 3 — polish** (U12–U17, U19).
+- [ ] **Step 5: Release `v1.0.0`** after Steps 2–4 merge and deploy.
+
+Guardrails for every step (Tasks 18, 20, 21, the final review and this
+council): `make fit` at 960×540–1920×1080 incl. Oscar 300 / Music 400 /
+Words 500, 4 and 6 long names, all marked, revealed, both modes, an image
+question; focus never on Done/Next and restored after re-render;
+held-Enter swallowed, click lock kept, same-spot guard added; saved games
+resume (format stays `v: 1`, new fields optional, unit-tested); nothing
+newer than ~Chrome 86 / Safari 14; motion ≤240 ms with no information
+lost under reduced motion; no timers or buzzers; `make test` + `make
+smoke` + `make fit` pass; README + About in the same task when
+host-visible behaviour changes.

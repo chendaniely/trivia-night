@@ -48,6 +48,7 @@ or hurt. This folder is meant as raw material for a blog post.
 | [5. Did the plugins and skills help?](05-plugins-and-skills.md) | What loaded, what changed behaviour, good/bad, recommendations |
 | [6. Is it viable? Claude's take](06-verdict.md) | Where Qwen 3.8 27B on a Spark works and where it doesn't; a hybrid workflow |
 | [7. Gallery](07-gallery.md) | The app at 14 milestones, what Qwen "saw", before/after |
+| [8. UX audit](08-ux-audit.md) | After the merge: 19 UX problems both passes missed, why, and a tracker for the fixes |
 | [Appendix A — the partner's prompts](appendix-a-prompts.md) | Every prompt, in order |
 | [Appendix B — numbers](appendix-b-numbers.md) | Commits, lines, tests, sessions, tokens |
 | [research/](research/) | The raw research notes the chapters are built from |

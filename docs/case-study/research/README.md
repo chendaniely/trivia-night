@@ -17,6 +17,7 @@ later, with more context) wins.
 | `opencode-sessions.md` | Session-level numbers from the opencode database |
 | `opencode-behaviors.md` | Notable model behaviours with short quotes (redacted) |
 | `shots-manifest.md` | How the historical screenshots were taken |
+| `ux-audit-measurements.md` | Chapter 8's raw numbers: fit, type sizes, contrast, interaction probes, origins (Oct 14, after the merge) |
 
 Sanitized for a public repo: home-directory paths shortened to `~`, temp
 paths removed, one private name omitted, credentials never copied.
