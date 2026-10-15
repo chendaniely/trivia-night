@@ -3,8 +3,9 @@
 *A living chapter. It opens with the audit, made on Oct 14 after the
 merge and before any UX change, and checked by a two-seat council. As
 fixes land, the **Status** column in the tracker and the
-[Fix log](#fix-log) are updated. Status as of Oct 15, early morning:
-all three batches fixed on the branch, not merged yet. The app as the audit found it is release
+[Fix log](#fix-log) are updated. Status as of Oct 15: all three
+batches fixed and through their councils and a final whole-branch review,
+on the branch, not merged yet. The app as the audit found it is release
 `v0.2.0`; the release after these fixes will be `v1.0.0`.*
 
 ## The request
@@ -95,14 +96,14 @@ behavior.
 | U9 | Questions hug the top of the screen | 🟡 | Qwen's layout; Claude `e9a092c` kept it | fixed `3b40a7f` |
 | U10 | The answer is smaller than the question, with no label | 🟡 | Qwen `05fcb4d` | fixed `3b40a7f` |
 | U11 | Disabled buttons look more clickable than enabled ones | 🟡 | Qwen `1630f28` | fixed `9c417d1` |
-| U12 | Start is disabled with no reason given | 🟡 | Qwen `add404e` | fixed, Batch 3 |
-| U13 | Setup doesn't explain the two modes | 🟡 | Qwen `870b49a` | fixed, Batch 3 |
-| U14 | On the trivia board, played and unplayed cells look alike | 🟡 | Qwen `38bcbf4` | fixed, Batch 3 |
-| U15 | The column tally is a bare list | 🟡 | Qwen `127ee57` | fixed, Batch 3 |
-| U16 | Error messages use schema language | 🟡 | Qwen; Claude `a91b6e7` improved the locator | fixed, Batch 3 |
-| U17 | Negative scores look like positive ones | 🟡 | Qwen `c0aa8b8` | fixed, Batch 3 |
+| U12 | Start is disabled with no reason given | 🟡 | Qwen `add404e` | fixed `290a5dc` |
+| U13 | Setup doesn't explain the two modes | 🟡 | Qwen `870b49a` | fixed `290a5dc` |
+| U14 | On the trivia board, played and unplayed cells look alike | 🟡 | Qwen `38bcbf4` | fixed `290a5dc` |
+| U15 | The column tally is a bare list | 🟡 | Qwen `127ee57` | fixed `290a5dc` |
+| U16 | Error messages use schema language | 🟡 | Qwen; Claude `a91b6e7` improved the locator | fixed `290a5dc` |
+| U17 | Negative scores look like positive ones | 🟡 | Qwen `c0aa8b8` | fixed `290a5dc` |
 | U18 | Focus is lost when the game ends | 🟡 | Claude Sonnet `7a8cb84` | fixed `3b40a7f` |
-| U19 | Older TV browsers lose the focus ring and cell highlight | 🟡 | Qwen `1630f28`; Claude Sonnet `7a8cb84` | fixed, Batch 3 |
+| U19 | Older TV browsers lose the focus ring and cell highlight | 🟡 | Qwen `1630f28`; Claude Sonnet `7a8cb84` | fixed `290a5dc` |
 
 U2 and U3 let a wrong score through, and U1 means it then stays wrong
 for the rest of the night:
@@ -374,6 +375,8 @@ mainly by a dashed border and a darker fill, and their numbers are at
 at the host ("click a category name … the amounts are not clickable")
 stays on the TV all game. **Fix:** show progress on the column header
 ("2 of 5"), make live headers look like buttons, and drop the sentence.
+*As built:* a "3 left" pill on the header's corner, and a shorter hint
+kept — the partner asked on Oct 12 for the click target to be obvious.
 
 ### U15 🟡 The column tally is a bare list
 
@@ -493,6 +496,51 @@ The backward reviewer also raised one false alarm: it said the audit
 was run by Sonnet 5.5. It was run by Opus 5.5, as the session record
 shows.
 
+## What Claude got wrong during the fixes
+
+The fix pass had its own mistakes. Each was caught by a council
+reviewer, a fresh whole-branch reviewer, or a check failing for the
+wrong reason, before it was committed or in the fix commit right after:
+
+1. **A test helper that called itself.** A bulk find-and-replace turned
+   the click inside `tap()` into a call to `tap()`, and `make fit` hung
+   for ten minutes. Caught by a timed debug script.
+2. **Same-spot checks that tested nothing.** Half of them still passed
+   with the guard switched off (backward reviewer, with a mutant). They
+   now assert that a live button really lands under the pointer, and the
+   mutant fails every guard case.
+3. **A guard with holes.** A swallowed click still moved focus onto the
+   button under it, touch never cleared it, and it was armed by a 100 ms
+   window that a slow TV could miss (forward reviewer).
+4. **Back on a confirm left the app** when no game was running, and a
+   confirm left open by a folder load let Esc bring back the old board
+   and crash on Done (both reviewers).
+5. **A clip question pushed off the screen.** The Play clip button had a
+   row of its own, and the type retune made long clip questions scroll
+   at every size; `make fit` had no clip-and-long-text case (forward
+   reviewer).
+6. **A heading margin.** Moving the header into a row nested the `h2`,
+   which brought back its default margins: 13 px of scroll at 960×540.
+   Caught by running `make fit` on the staged commit alone.
+7. **Badges counting the wrong points.** Trivia badges showed the round's
+   whole total, including Jeopardy points from before a mode switch.
+   Caught by a new smoke check.
+8. **Checks that passed on broken features, or failed on working ones.**
+   The `.no-fv` check could not fail in Chrome; several style checks
+   read only text; "badges gone" was checked only after a reload; clip
+   checks used fixed sleeps; "marking moves no button" measured mid-way
+   through a 140 ms hover transition and failed 2 runs in 3 (backward
+   reviewers and the final reviewer).
+9. **Messages that weren't plain yet.** "rounds: rounds: must be…", a
+   top-level "root:" label, and raw js-yaml text for the likeliest
+   mistake of all, a colon in an unquoted answer (reviewers).
+10. **Pills cut with room to spare.** The one-third cap shortened two or
+    three long team names on Final scores (forward reviewer).
+11. **Process.** Step 3 code was written while Step 2's council was
+    still running (committed only after its findings were folded in),
+    and two step commits left the plan and this chapter stale until the
+    council fix commit.
+
 ## Plan
 
 The fixes come in three batches, each its own plan task with the
@@ -573,10 +621,11 @@ it.
 
 | # | What changed | Verified by |
 |---|---|---|
-| U12 | While a team has no name, the setup subtitle says "Every team needs a name." in orange, in the same line. | `make smoke` |
+| U12 | While a team has no name, the setup subtitle says "Every team needs a name." in bold (orange stays for actions and scores), in the same line, announced to screen readers. | `make smoke` (text, weight and colour) |
 | U13 | Each mode has a short description inline: "any cell; wrong answers lose points", "a category, top to bottom". No extra height. | `make smoke`; setup with four long names and Resume still fits 960×540 |
-| U14 | Live trivia headers are filled like buttons; a partly played column has a "3 left" pill on its corner (no height); played cells fade further than unplayed ones; the hint is shorter ("Trivia: click a category to play it."). | `make smoke`; `make fit`: a partly played trivia board with six teams |
+| U14 | Live trivia headers are filled like buttons (a lighter fill when focused); a partly played column has a "3 left" pill on its corner (no height); played cells fade further than unplayed ones (2.7:1); the hint is shorter ("Trivia: click a category to play it."). | `make smoke` (the pill is visible); `make fit`: a partly played trivia board with six teams |
 | U15 | The end of a column is a title card: "Music — round over", then a card per team with its points from the round and its new total. | `make smoke`; `make fit`: the tally with six long names at four sizes |
-| U16 | Errors say what to add: `has no answer — add a line like a: "the answer"`; the screen names the file or folder; the text is in the normal colour with red bullets. | `test/validate.test.mjs` (no schema words in any message); `make smoke` |
-| U17 | Scores below zero read "−500" with a true minus sign, in a muted colour, on the board, the tally and the saved-game line. | `test/display.test.mjs`; `make smoke` |
-| U19 | Every `:focus-visible` rule stands alone (an old browser drops only that rule, not the hover beside it), with a `.no-fv … :focus` ring that `app.js` switches on where `:focus-visible` is unknown. | `test/css.test.mjs`; `make smoke` (with `.no-fv` on, a focused cell gets its ring) |
+| U16 | Errors say what to add: `has no answer — add a line like a: "the answer"`; YAML that doesn't parse shows the line and says text with a colon or # needs quotes; a duplicated key is named; an empty file says so; the screen names the file or folder; the text is in the normal colour with red bullets. | `test/validate.test.mjs` (exact wording; no schema words; no message repeats its location); `make smoke` (the shipped file, and a folder through the picker) |
+| U17 | Scores below zero read "−500" with a true minus sign: muted on the board (a winner below zero stays readable on orange), and with the true minus on the tally and the saved-game line. | `test/display.test.mjs`; `make smoke` (text and colour) |
+| U19 | Every `:focus-visible` rule stands alone (an old browser drops only that rule, not the hover beside it), with a `.no-fv.kbd … :focus` ring: `app.js` sets `.no-fv` where `:focus-visible` is unknown, and `.kbd` while the keyboard or remote is in use — no ring after a mouse click, which the room would read as "next question picked". | `test/css.test.mjs`; `make smoke` on a page where `:focus-visible` throws and its rules are deleted: a ring with the keyboard, none after a click |
+| also | Score pills take at most half (two teams) or a third of the row, and a long name shortens — six long names with 4-digit scores stay on two rows at 960×540, two or three keep their full names. Tally and confirm screens centre by auto margins, so a crowded one scrolls from its top. Browser Back from a tally shows the badges too. A stale cached `index.html` can't stop the app booting mid-deploy, and the boot note says to reload first. | `make fit` (2 and 3 long names uncut; 6 with big scores on two rows); `make smoke` |

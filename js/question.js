@@ -511,6 +511,15 @@ function renderColumn(focusKey) {
 
 // The end of a trivia column (Task 25, U15): a title card — the round,
 // then each team's points from it and their new total, sized for the TV.
+// Tally -> board, by its button or the browser's Back: what this run
+// through the column added shows as badges (Task 25, U5) — not the round's
+// whole total, which can hold Jeopardy play from before a mode switch.
+export function leaveTally() {
+  renderBoard({ badges: colGains });
+  showScreen("board");
+  focusBoard({ ri: lastColumn ?? 0 });
+}
+
 function renderTally(roundName) {
   const el = document.getElementById("screen-tally");
   const wrap = document.createElement("div");
@@ -541,14 +550,7 @@ function renderTally(roundName) {
   const back = document.createElement("button");
   back.className = "btn-primary";
   back.textContent = "Back to board";
-  back.addEventListener("click", () => {
-    // What this run through the column added, as badges (Task 25, U5) —
-    // not the round's whole total, which can hold Jeopardy play from
-    // before a mode switch.
-    renderBoard({ badges: colGains });
-    showScreen("board");
-    focusBoard({ ri: lastColumn ?? 0 });
-  });
+  back.addEventListener("click", leaveTally);
   wrap.append(h, rows, back);
   el.replaceChildren(wrap);
 }

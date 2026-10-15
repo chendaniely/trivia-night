@@ -2,7 +2,7 @@
 import { parseBank } from "./validate.js";
 import { createScoring, restoreScoring } from "./scoring.js";
 import { renderBoard, focusBoard, setCellClick, setColumnClick } from "./board.js";
-import { startQuestion, startColumn, resetFlow, leaveQuestion } from "./question.js";
+import { startQuestion, startColumn, resetFlow, leaveQuestion, leaveTally } from "./question.js";
 import { randomTeamName } from "./teams.js";
 import { askConfirm, cancelConfirm, dropConfirm } from "./confirm.js";
 import {
@@ -41,6 +41,10 @@ try {
 } catch {
   document.documentElement.classList.add("no-fv");
 }
+// .kbd while the keyboard or remote is in use (the .no-fv rings show only
+// then); a pointer press clears it.
+document.addEventListener("keydown", () => document.documentElement.classList.add("kbd"), true);
+document.addEventListener("pointerdown", () => document.documentElement.classList.remove("kbd"), true);
 
 export function showScreen(id) {
   // Leaving the confirm screen any other way (a folder load, an error)
@@ -188,14 +192,21 @@ const SHIPPED = "the shipped questions.yaml";
 
 // source: which file has the problem, for the host (Task 25, U16) —
 // "the shipped questions.yaml" or 'the folder "night"'.
-export function renderError(errors, source) {
-  document.getElementById("error-source").textContent = `In ${source}:`;
+export function renderError(errors, source = "the question file") {
+  const src = document.getElementById("error-source"); // absent in a stale cached index.html
+  if (src) src.textContent = `In ${source}:`;
   const list = document.getElementById("error-list");
   const items = errors.slice(0, ERROR_CAP).map((e) => {
     const li = document.createElement("li");
-    const where = document.createElement("strong");
-    where.textContent = e.line ? `line ${e.line}` : e.where;
-    li.append(where, `: ${e.message}`);
+    const label = e.line ? `line ${e.line}` : e.where;
+    if (label) {
+      // e.g. "line 6: …" or 'round 2 "Movies", question 3: …'; a whole-file
+      // problem has no location and reads on its own.
+      const where = document.createElement("strong");
+      where.textContent = label;
+      li.append(where, ": ");
+    }
+    li.append(e.message);
     return li;
   });
   if (errors.length > ERROR_CAP) {
@@ -216,7 +227,7 @@ async function loadBank() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     text = await res.text();
   } catch (err) {
-    renderError([{ where: "loading", message: `it could not be loaded (${err.message}) — try again, or reload the page` }], SHIPPED);
+    renderError([{ message: `it could not be loaded (${err.message}) — try again, or reload the page` }], SHIPPED);
     return;
   }
   const result = parseBank(text);
@@ -487,6 +498,15 @@ window.addEventListener("beforeunload", (e) => {
 let backGuarded = false; // is the current history entry our pushed one?
 // Also armed by the confirm screen (confirm.js), so Back cancels it even
 // before a game is running.
+// A confirm cancelled before any game is running gives its history entry
+// back (confirm.js), so the next Back behaves as before it opened.
+export function disarmBackGuard() {
+  if (backGuarded && state.scoring === null) {
+    backGuarded = false;
+    history.back();
+  }
+}
+
 export function armBackGuard() {
   if (backGuarded) return;
   try {
@@ -510,9 +530,7 @@ window.addEventListener("popstate", () => {
   if (on === "question") {
     leaveQuestion();
   } else if (on === "tally") {
-    renderBoard();
-    showScreen("board");
-    focusBoard();
+    leaveTally(); // as the tally's own Back to board: badges and focus
   } else if (on === "setup") {
     showRunningGame();
   }
@@ -554,7 +572,7 @@ async function pickFolder() {
     handle = await window.showDirectoryPicker();
   } catch (err) {
     if (err && err.name === "AbortError") return; // host cancelled
-    renderError([{ where: "opening it", message: "it could not be opened (" + err.message + ") — try again" }], "the folder");
+    renderError([{ message: "it could not be opened (" + err.message + ") — try again" }], "the folder");
     return;
   }
   const result = await loadFromDirHandle(handle);

@@ -55,11 +55,11 @@ button {
 }
 button:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
 button:active:not(:disabled) { filter: brightness(0.94); transform: translateY(1px); }
-/* :focus-visible rules stand alone, each with a `.no-fv … :focus` twin
+/* :focus-visible rules stand alone, each with a `.no-fv.kbd … :focus` twin
    (Task 25, U19): before Safari 15.4 the selector is unknown and would
-   take its whole rule down — app.js sets .no-fv there. */
+   take its whole rule down — app.js sets .no-fv.kbd there. */
 button:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
-.no-fv button:focus { outline: 3px solid var(--text); outline-offset: 2px; }
+.no-fv.kbd button:focus { outline: 3px solid var(--text); outline-offset: 2px; }
 /* Disabled (Task 25, U11): the button's own look, faded — a filled grey
    read as a different, active button next to the quiet ones. */
 button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -78,7 +78,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   content: ""; display: block; width: calc(120 * var(--u)); height: calc(6 * var(--u));
   margin: calc(12 * var(--u)) auto 0; background: var(--orange); border-radius: 3px;
 }
-#screen-setup .subtitle.warn { color: var(--orange); font-weight: 700; }
+#screen-setup .subtitle.warn { color: var(--text); font-weight: 700; } /* orange is for actions, scores and the answer */
 #screen-setup .subtitle { text-align: center; font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); margin: calc(4 * var(--u)) 0 0; }
 #screen-setup button { font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u)); }
 #team-inputs { display: grid; gap: calc(16 * var(--u)); margin: calc(24 * var(--u)) 0; justify-items: center; }
@@ -93,7 +93,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 /* Each mode says what it is, on its own line of the row — no extra height
    (Task 25, U13: setup at 960x540 has none to spare). */
 #mode-pick label { white-space: nowrap; }
-#mode-pick .mode-desc { color: var(--muted); font-size: max(calc(15 * var(--k)), calc(22 * var(--u))); margin-left: 0.3em; }
+#mode-pick .mode-desc { color: var(--muted); font-size: max(14px, calc(22 * var(--u))); margin-left: 0.3em; }
 #mode-pick input[type="radio"] { width: max(calc(20 * var(--k)), calc(30 * var(--u))); height: max(calc(20 * var(--k)), calc(30 * var(--u))); }
 #screen-setup .start-row { display: flex; gap: calc(20 * var(--u)); justify-content: center; }
 /* Saved-game offer (Task 18): summary + Resume on one line at the top of
@@ -121,7 +121,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 #screen-about ul { padding-left: calc(24 * var(--u)); columns: 2; column-gap: calc(48 * var(--u)); }
 #screen-about a { color: var(--orange); }
 #screen-about a:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
-.no-fv #screen-about a:focus { outline: 3px solid var(--text); outline-offset: 2px; }
+.no-fv.kbd #screen-about a:focus { outline: 3px solid var(--text); outline-offset: 2px; }
 #screen-about code { font-size: 0.85em; background: var(--panel); border: 1px solid var(--edge); border-radius: 6px; padding: 2px 8px; }
 #about-back-btn {
   display: block; margin: calc(20 * var(--u)) auto 0; position: sticky; bottom: calc(16 * var(--u));
@@ -131,9 +131,12 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
    never sit where Reset, Undo or Done were (the same-spot guard). */
 #screen-confirm {
   max-width: calc(1500 * var(--u)); height: 100vh; height: 100dvh;
-  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  display: flex; flex-direction: column; align-items: center;
   text-align: center; padding: calc(40 * var(--u));
 }
+/* centred by auto margins (never cut off at the top when too tall) */
+#screen-confirm > :first-child { margin-top: auto; }
+#screen-confirm > :last-child { margin-bottom: auto; }
 #screen-confirm h1 { font-size: max(32px, calc(64 * var(--u))); margin: 0 0 calc(20 * var(--u)); }
 #confirm-text { font-size: max(20px, calc(34 * var(--u))); line-height: 1.35; color: var(--muted); max-width: 32em; margin: 0; }
 #screen-confirm #confirm-input {
@@ -148,7 +151,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 #error-list { font-size: 28px; color: var(--text); padding-left: 24px; }
 #error-list li::marker { color: var(--bad); }
 /* An unbroken 80-char key wraps instead of running off the screen (Task 20). */
-#error-list li { overflow-wrap: anywhere; }
+#error-list li { overflow-wrap: anywhere; white-space: pre-wrap; } /* keeps "like  a: …" set off */
 /* Board (Task 20): exactly one viewport tall, full width. Scoreboard,
    hint, header row and actions take their size; the point rows split
    what is left (grid-auto-rows 1fr), so the board never scrolls. Rows
@@ -176,7 +179,8 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
    is at most a third of the row, and a long name shortens ("…") — the
    score never does (Task 25: 4-digit scores and long names wrapped to a
    third row at 960x540). */
-.scoreboard .score-team { max-width: calc((100% - 2 * 28 * var(--u)) / 3); min-width: 0; }
+.scoreboard .score-team { max-width: calc((100% - (var(--per-row, 3) - 1) * 28 * var(--u)) / var(--per-row, 3)); min-width: 0; }
+.scoreboard .score-team.leader .score-points.neg { color: var(--text); } /* a winner below zero still reads on orange */
 .score-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scoreboard .score-points { flex: none; }
 .score-badge {
@@ -225,7 +229,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .board-cell.clickable:hover, .board-cell.clickable:active { filter: none; transform: none; }
 .board-header.clickable:hover { background: var(--blue); border-color: var(--blue); }
 .board-header.clickable:focus-visible { background: var(--blue); border-color: var(--blue); }
-.no-fv .board-header.clickable:focus { outline: 3px solid var(--text); outline-offset: 2px; } /* a ring, not a fill: focus is set by code after every question */
+.no-fv.kbd .board-header.clickable:focus { outline: 3px solid var(--text); outline-offset: 2px; } /* a ring, not a fill: focus is set by code after every question */
 /* Row position IS difficulty: subtle 5-step ramp easy (top) to hard (bottom). */
 .board-cell.tier-0 { background: #111f2a; }
 .board-cell.tier-1 { background: #13242f; }
@@ -242,16 +246,18 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .clickable { cursor: pointer; }
 .board-cell.clickable:hover { background: var(--orange); border-color: var(--orange); color: #0a1620; }
 .board-cell.clickable:focus-visible { background: var(--orange); border-color: var(--orange); color: #0a1620; }
-.no-fv .board-cell.clickable:focus { outline: 3px solid var(--text); outline-offset: 2px; } /* a ring, not the fill */
+.no-fv.kbd .board-cell.clickable:focus { outline: 3px solid var(--text); outline-offset: 2px; } /* a ring, not the fill */
 .board-cell.used { color: var(--muted); background: transparent; border: 2px dashed var(--edge); }
 .board-gap { visibility: hidden; }
 /* Trivia: the header is the click target; cells are inert (Task 7.8).
    Task 25, U14: live headers are filled like buttons; played cells fade
    further than unplayed ones, so the two read apart. */
 .board-grid.trivia .board-cell { opacity: 0.6; }
-.board-grid.trivia .board-cell.used { opacity: 0.35; }
+.board-grid.trivia .board-cell.used { opacity: 0.45; } /* 2.7:1 — faint, still legible */
 .board-grid.trivia .board-header.clickable { background: var(--blue); border-color: var(--blue); }
 .board-grid.trivia .board-header.clickable:hover { background: #2c76b0; border-color: #2c76b0; }
+.board-grid.trivia .board-header.clickable:focus-visible { background: #2c76b0; border-color: #2c76b0; }
+.no-fv.kbd .board-grid.trivia .board-header.clickable:focus { outline: 3px solid var(--text); outline-offset: 2px; }
 /* "3 left" sits on the header's corner like a score badge: no height. */
 .board-grid.trivia .board-header.clickable { position: relative; }
 .col-left {
@@ -260,7 +266,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   background: var(--panel); color: var(--text); border: 1px solid var(--edge);
 }
 .board-header.dim { opacity: 0.45; }
-.board-hint { color: var(--muted); font-size: max(18px, calc(26 * var(--u))); line-height: 1.3; margin: 0 0 calc(14 * var(--u)); text-align: center; }
+.board-hint { color: var(--muted); font-size: max(18px, calc(26 * var(--u))); line-height: 1.3; margin: 0 0 calc(20 * var(--u)); text-align: center; } /* room for the "N left" pills */
 /* Question screens (Task 25 layout, on Tasks 20/21): one viewport tall, a
    grid of rows — the header, the clip, then the question + answer in the
    flexible row, then the host's band pinned at the bottom: team buttons,
@@ -376,7 +382,10 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .has-images .answer-text { font-size: max(22px, calc(40 * var(--u))); }
 /* Column tally (Task 25, U15): a title card, centred on one screen and
    sized in --u like the rest — the round, then a card per team. */
-#screen-tally { max-width: none; height: 100vh; height: 100dvh; display: flex; align-items: center; justify-content: center; padding: calc(32 * var(--u)); }
+/* Centred by margin: auto, so a card too tall for the screen scrolls from
+   its top instead of losing its title above it (10 teams at 960x540). */
+#screen-tally { max-width: none; height: 100vh; height: 100dvh; display: flex; padding: calc(32 * var(--u)); }
+#screen-tally .tally-wrap { margin: auto; }
 .tally-wrap { display: flex; flex-direction: column; align-items: center; gap: calc(32 * var(--u)); width: 100%; }
 .tally-title { margin: 0; text-align: center; font-size: max(28px, calc(64 * var(--u))); line-height: 1.15; text-wrap: balance; }
 .tally-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(20 * var(--u)); max-width: calc(1700 * var(--u)); }

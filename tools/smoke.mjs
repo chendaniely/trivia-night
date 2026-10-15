@@ -77,23 +77,13 @@ try {
     (await page.isDisabled("#start-btn")) && (await page.textContent("#screen-setup .subtitle")) === "Every team needs a name.",
     "an empty name: Start is off and the subtitle says why"
   );
+  const warn = await page.$eval("#screen-setup .subtitle", (e) => [getComputedStyle(e).fontWeight, getComputedStyle(e).color]);
+  check(warn[0] === "700" && warn[1] === "rgb(245, 249, 252)", `the warning is bold text, not orange (${warn})`);
   await page.fill("#team-1", "Hazy Bagpipes");
   await page.fill("#team-2", "Misty Goblins");
   await click("#start-btn");
   await settle();
   check((await screen()) === "board", "Start opens the board");
-  // Older browsers without :focus-visible (U19): with .no-fv on, a
-  // focused cell gets the focus fill from plain :focus.
-  const fvFill = await page.evaluate(() => {
-    document.documentElement.classList.add("no-fv");
-    const c = document.querySelector(".board-cell.clickable");
-    c.focus();
-    const bg = getComputedStyle(c).outlineWidth;
-    document.documentElement.classList.remove("no-fv");
-    c.blur();
-    return bg;
-  });
-  check(fvFill === "3px", `without :focus-visible, a focused cell still gets its ring (${fvFill})`);
   const before = await scores();
 
   // Jeopardy: team 1 right, team 2 wrong, Reveal, Done
@@ -111,7 +101,8 @@ try {
   const p0 = await preview();
   // Marking moves nothing (Task 25 council): the ✓ / ✕ slot is reserved.
   // (the pointer leaves first: a hovered button lifts by 1 px)
-  const targetsNow = async () => (await page.mouse.move(1, 1)) ??
+  // (the pointer leaves, and the 140 ms hover lift settles, first)
+  const targetsNow = async () => (await page.mouse.move(1, 1)) ?? (await page.waitForTimeout(250)) ??
     page.$$eval("#screen-question .team-btns button, #screen-question .controls", (els) =>
       els.map((e) => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width].map(Math.round).join(); }).join("|")
     );
@@ -143,8 +134,8 @@ try {
   await settle();
   check((await badges()).length === 0, "badges are gone when the board is drawn again");
   // A score below zero reads "−100" (a true minus) in a muted colour (U17).
-  const neg = await page.$eval("#screen-board .score-team:nth-child(2) .score-points", (e) => ({ t: e.textContent, neg: e.classList.contains("neg") }));
-  check(neg.t === "\u2212100" && neg.neg, `a negative score reads ${neg.t}, muted`);
+  const neg = await page.$eval("#screen-board .score-team:nth-child(2) .score-points", (e) => ({ t: e.textContent, c: getComputedStyle(e).color }));
+  check(neg.t === "\u2212100" && neg.c === "rgb(159, 179, 200)", `a negative score reads ${neg.t}, muted (${neg.c})`);
 
   // Reload -> Resume
   await page.reload();
@@ -200,8 +191,13 @@ try {
   }));
   check(tally.title === "Movies: Oscar — round over", `the tally names the round (${tally.title})`);
   check(
-    tally.cards.length === 2 && tally.cards[0][0] === "Hazy Bagpipes" && /^[+\u2212]?\d+ this round$/.test(tally.cards[0][1]) && /^total [\u2212]?\d+$/.test(tally.cards[0][2]),
-    `each team shows its round points and total (${JSON.stringify(tally.cards)})`
+    tally.cards.length === 2 && tally.cards[0][0] === "Hazy Bagpipes" && /^\+\d+ this round$/.test(tally.cards[0][1]) && /^total \d+$/.test(tally.cards[0][2]) &&
+      tally.cards[1][2] === "total \u2212100",
+    `each team shows its round points and total, a true minus below zero (${JSON.stringify(tally.cards)})`
+  );
+  check(
+    (await page.$eval("#screen-tally .tally-round.up", (e) => getComputedStyle(e).color)) === "rgb(242, 101, 34)",
+    "points won in the round are orange"
   );
   await click("#screen-tally button");
   await settle();
@@ -217,7 +213,20 @@ try {
       (await page.evaluate(() => document.activeElement.dataset.ri)) === "0",
     "trivia Undo reopens the column, focus on its header"
   );
-  check((await page.textContent('.board-header.clickable[data-ri="0"] .col-left')) === "1 left", "a partly played column says how many are left");
+  check(
+    (await page.textContent('.board-header.clickable[data-ri="0"] .col-left')) === "1 left" &&
+      (await page.isVisible('.board-header.clickable[data-ri="0"] .col-left')),
+    "a partly played column says how many are left"
+  );
+  // Leaving a tally with the browser's Back shows the badges too.
+  await click('.board-header.clickable[data-ri="0"]');
+  await settle();
+  await click("#screen-question .team-btns button >> nth=0");
+  await click("#screen-question button:text-is('Next')");
+  await settle();
+  await page.goBack();
+  await settle();
+  check((await screen()) === "board" && /^\+\d+$/.test((await badges()).join()), `Back from a tally shows the badges (${await badges()})`);
 
   // Reset game asks on the app's confirm screen: Cancel, Esc and Back keep
   // the game; OK resets it.
@@ -413,6 +422,57 @@ try {
   check(li.text === 'round 1 "R", question 2: has no answer — add a line like a: "the answer"' && !li.red, `the error reads plainly, not all red (${li.text})`);
   await er.close();
 
+  // Older browsers (U19, made real): without :focus-visible — the check
+  // throws and its rules are dropped, as an old browser drops them — the
+  // .no-fv twins give a ring for the keyboard and nothing after a mouse
+  // click (the room would read a ring as "next question picked").
+  const old = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+  old.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
+  await old.addInitScript(() => {
+    const qs = Document.prototype.querySelector;
+    Document.prototype.querySelector = function (sel) {
+      if (sel === ":focus-visible") throw new SyntaxError("unknown pseudo-class");
+      return qs.call(this, sel);
+    };
+  });
+  await old.goto(URL_);
+  await old.waitForSelector("#screen-setup:not(.hidden)");
+  await old.evaluate(() => {
+    for (const sheet of document.styleSheets)
+      for (let i = sheet.cssRules.length - 1; i >= 0; i--)
+        if ((sheet.cssRules[i].selectorText || "").includes(":focus-visible")) sheet.deleteRule(i);
+  });
+  check(await old.evaluate(() => document.documentElement.classList.contains("no-fv")), "no :focus-visible: the app switches on .no-fv");
+  await old.waitForTimeout(450);
+  await old.mouse.move(1, 1);
+  await old.click("#start-btn"); // a mouse click; focus then goes to the first cell
+  await old.waitForTimeout(450);
+  const ring = () => old.evaluate(() => { const s = getComputedStyle(document.activeElement); return `${s.outlineStyle} ${s.outlineWidth}`; });
+  check(!(await ring()).startsWith("solid"), `after a mouse click, no ring (${await ring()})`);
+  await old.keyboard.press("Tab");
+  check((await ring()) === "solid 3px", `with the keyboard, the ring (${await ring()})`);
+  await old.close();
+
+  // A folder that fails through the folder picker names the folder.
+  const pk = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+  await pk.addInitScript(() => {
+    window.showDirectoryPicker = async () => ({
+      name: "quiz-night",
+      getFileHandle: async () => { throw new DOMException("missing", "NotFoundError"); },
+    });
+  });
+  await pk.goto(URL_);
+  await pk.waitForSelector("#screen-setup:not(.hidden)");
+  await pk.waitForTimeout(450);
+  await pk.click("#load-folder-btn");
+  await pk.waitForSelector("#screen-error:not(.hidden)");
+  check(
+    (await pk.textContent("#error-source")) === 'In the folder "quiz-night":' &&
+      (await pk.textContent("#error-list li")) === "there is no questions.yaml at its top level",
+    "a broken folder: the error names it, and the line reads on its own"
+  );
+  await pk.close();
+
   // The end of the game (Task 25, U6 + U18): when no cell is left, the
   // scoreboard is the final standings — ranked, the winner (or a tie)
   // named — and focus is on Setup, not lost.
@@ -423,7 +483,7 @@ try {
     [[["Bouncy Gophers", 300], ["Silky Marmots", 600], ["Feral Pickles", -100]], "Final scores · Silky Marmots wins"],
     [[["A", 500], ["B", 500], ["C", 500], ["D", 100]], "Final scores · a tie between A, B and C"],
     [[["A", 700], ["B", 700], ["C", 700]], "Final scores · everyone ties"],
-    [[["A", 0], ["B", 0], ["C", 0]], "Final scores · no one scored"],
+    [[["A", 0], ["B", 0], ["C", 0]], "Final scores · everyone ends on 0"],
   ]) {
     const { key, json } = await finishedSave(URL_, teams);
     await fin.goto(URL_);

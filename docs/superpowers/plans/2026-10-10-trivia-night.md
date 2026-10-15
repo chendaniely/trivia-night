@@ -1899,7 +1899,7 @@ new screen). Keyboard shortcuts stay parked. Inline execution
 > and fonts, trivia badges show the run's own gains, "everyone ties" /
 > "no one scored", the badge sits higher; smoke + fit cover each (RED
 > before, GREEN after); README/About/chapter/plan updated.
-- [ ] **Step 4: Batch 3 — polish**: U12 (the subtitle turns into "Every
+- [x] **Step 4: Batch 3 — polish**: U12 (the subtitle turns into "Every
   team needs a name." while Start is disabled), U13 (one-line mode
   descriptions), U14 (live trivia headers styled as buttons with "N
   left"; a shorter hint kept — the partner asked for the obviousness,
@@ -1913,7 +1913,45 @@ new screen). Keyboard shortcuts stay parked. Inline execution
   (no header height); the `.no-fv` fallback on cells and headers is a
   ring, not the fill (focus is set by code after every question); the
   tally card and a partly played trivia board join `make fit`.
-- [ ] **Step 5: Release `v1.0.0`** after Steps 2–4 merge and deploy.
+
+> Council 2026-10-15 (Task 25 Step 4, `290a5dc`): backward (sonnet) — items
+> as specified, no regressions; Important: "rounds: rounds:" in an error;
+> the U19 checks could not fail (Chrome's own button:focus-visible gave
+> the ring); several style checks read only text (pill hidden, warn,
+> neg, tally colours, the picker folder name, three messages); played
+> trivia cells at 2.10:1 (worse than the audit's 2.70:1). Forward (opus)
+> — Important: raw js-yaml wording for parse errors (a colon in an
+> unquoted answer says "bad indentation of a mapping entry"); the
+> one-third pill cap cut 2–3 long names with room to spare; a stale
+> cached file after a deploy stops the boot and the boot note blames the
+> browser; Minor: a crowded tally/confirm cut its top off, the "N left"
+> pill touching the hint, no focus fill on trivia headers, the .no-fv
+> ring after mouse play, error-screen leftovers, a negative winner's
+> grey score, the orange warning, 11 px mode descriptions, long round
+> names, CI only on main. Final whole-branch review (opus,
+> 5fdedc8..290a5dc): ready with fixes — Important: the "marking moves
+> no button" check is flaky (hover transition); Minor: Back to board
+> lands on Undo (no fit case), "root:" label, `make fit` not in the
+> README, IME Enter in the name field, a cancelled no-game confirm left
+> a history entry, fit writes a screenshot into agent scratch, 8 teams
+> scroll a long question at 720p (contract unstated), mid-deploy boot,
+> no badges on browser Back from a tally. One fix commit: plain parse
+> errors with the line and a quoting hint, no repeated locations; pills
+> per row (half for two teams); `.no-fv.kbd` rings (keyboard only) and a
+> trivia header focus fill; tally/confirm centred by auto margins; hint
+> spacing; trivia played cells 0.45; header aria-labels; the warning in
+> bold text with aria-live; mode descriptions ≥ 14 px; "everyone ends on
+> 0"; Back from a tally = its own button; IME-safe Enter; a cancelled
+> no-game confirm gives its history entry back; boot note says reload
+> first and missing confirm/error elements can't stop the boot; smoke
+> waits out the hover transition, a real old-browser check, colour
+> checks, the picker folder name, Back-from-tally badges; fit adds Back
+> to board onto Undo (guard), 2–3 long names uncut, no screenshot;
+> README: make fit, the six-team contract, quoting, round names, the
+> deploy rule. Rulings in the ledger.
+- [ ] **Step 5: Release `v1.0.0`** after Steps 2–4 merge and deploy. Push
+  at least a day before the night; after the deploy, wait 10 minutes and
+  Shift-reload on the Mac and the TV.
 
 Guardrails for every step (Tasks 18, 20, 21, the final review and the
 Step 1 council): `make fit` at 960×540–1920×1080 incl. Oscar 300 / Music 400 /

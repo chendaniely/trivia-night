@@ -10,7 +10,7 @@
 // Esc and Back (app.js popstate) cancel; OK runs onOk synchronously inside
 // its own click, so a folder picker opened there keeps its user activation.
 // Either way the opener's screen comes back first, with focus on the opener.
-import { showScreen, visibleScreen, armBackGuard } from "./app.js";
+import { showScreen, visibleScreen, armBackGuard, disarmBackGuard } from "./app.js";
 
 let pending = null; // { from, opener, onOk, onCancel }
 
@@ -36,6 +36,7 @@ function close(confirmed) {
   const value = el("confirm-input").value;
   showScreen(p.from);
   if (p.opener && p.opener.isConnected && p.opener !== document.body) p.opener.focus();
+  if (!confirmed) disarmBackGuard(); // no game yet: give the history entry back
   (confirmed ? p.onOk : p.onCancel)?.(value);
 }
 
@@ -49,8 +50,10 @@ export function dropConfirm() {
   pending = null;
 }
 
-el("confirm-ok").addEventListener("click", () => close(true));
-el("confirm-cancel").addEventListener("click", () => close(false));
+// (?.: a stale cached index.html without the screen must not stop the app
+// from booting mid-deploy — the confirm just isn't there until a reload.)
+el("confirm-ok")?.addEventListener("click", () => close(true));
+el("confirm-cancel")?.addEventListener("click", () => close(false));
 // Esc cancels — the one key handler besides the held-Enter swallow (an
 // exception to Task 21's "no keydown handlers"); a TV remote's Back
 // arrives as popstate instead. Enter in the text field means OK.
@@ -59,7 +62,8 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     e.preventDefault();
     close(false);
-  } else if (e.key === "Enter" && e.target === el("confirm-input")) {
+  } else if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229 && e.target === el("confirm-input")) {
+    // (an IME committing a candidate sends Enter too — not an OK)
     e.preventDefault();
     close(true);
   }

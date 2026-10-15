@@ -10,11 +10,11 @@
 </head>
 <body>
   <main id="root">
-    <p id="boot">Loading… If this message stays, this browser is too old for the app — mirror the Mac's screen instead.</p>
+    <p id="boot">Loading… If this message stays, reload the page (Shift-reload). If it still stays, this browser is too old for the app — mirror the Mac's screen instead.</p>
     <input type="file" id="folder-input" webkitdirectory tabindex="-1">
     <section id="screen-setup" class="screen hidden">
       <h1>Trivia Night</h1>
-      <p class="subtitle">Name your teams and pick a mode.</p>
+      <p class="subtitle" id="setup-subtitle" aria-live="polite">Name your teams and pick a mode.</p>
       <div id="resume-offer" class="hidden">
         <p id="resume-summary"></p>
         <button id="resume-btn">Resume game</button>
@@ -29,7 +29,7 @@
       </div>
       <div class="start-row">
         <button id="setup-back-btn" class="btn-quiet hidden">Back to board</button>
-        <button id="start-btn" disabled>Start</button>
+        <button id="start-btn" aria-describedby="setup-subtitle" disabled>Start</button>
       </div>
       <div class="folder-btns">
         <button id="load-folder-btn" class="btn-quiet">Load folder</button>
@@ -61,7 +61,8 @@
           the point cells are not clickable. Mark a team green when they
           answer; click again to clear; the line under the teams shows what
           Next will bank. Reveal shows the answer; Next moves on. The tally
-          at the end shows each team's points from the category.
+          at the end shows each team's points from the category and their
+          new total.
         </li>
         <li>
           <strong>Clips and the finish:</strong> each question's top line shows
@@ -104,8 +105,9 @@
           <code>images/</code>) and asks first mid-game; Create new
           scaffolds one (Chrome or Edge): name it, then pick a folder
           inside Documents (not Documents itself) and allow editing when
-          Chrome asks. Team names carry over. Problems are listed by round and
-          question, with typo hints; "Back to setup" keeps your game.
+          Chrome asks. Team names carry over. Problems name the file and the
+          round, question or line, and say what to type (text with a colon
+          needs quotes); "Back to setup" keeps your game.
         </li>
       </ul>
       <p>
@@ -129,11 +131,11 @@
     </section>
     <section id="screen-error" class="screen hidden">
       <h1>Question file problem</h1>
-      <p id="error-source"></p>
       <div class="error-actions">
         <button id="retry-btn">Try again</button>
         <button id="error-back-btn" class="btn-quiet hidden">Back to setup</button>
       </div>
+      <p id="error-source"></p>
       <ul id="error-list"></ul>
     </section>
   </main>

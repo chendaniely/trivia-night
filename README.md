@@ -17,7 +17,12 @@ make serve PORT=8090   # any other port
 make serve-lan    # reachable from the TV's own browser (see below)
 make test         # unit tests
 make smoke        # end-to-end check in Chrome (needs `make serve` running in another terminal)
+make fit          # every screen fits every TV size (needs `make serve`; ~15 min)
 ```
+
+Screens are checked to fit without scrolling from 960×540 to 1920×1080
+with up to six teams; more teams, or very long round names (over about
+30 characters), may scroll on a small TV.
 
 Run these from the repo folder. You need [uv](https://docs.astral.sh/uv/)
 (`brew install uv`) and [node](https://nodejs.org/) (`brew install node`);
@@ -77,6 +82,10 @@ A week before, on the Mac and TV you'll actually use:
 - Do the Create new, then Load folder check in Chrome (below).
 - Run `make serve` once on the event Mac (the first `uv run` may fetch a
   Python).
+- Push any last change to the app at least a day before, never on the
+  night: the live site takes about 10 minutes to update, and a browser
+  that loads half old, half new files may not start. After a change,
+  wait 10 minutes, then Shift-reload on the Mac and the TV.
 
 ## On the night, if...
 
@@ -165,7 +174,10 @@ folder it is in.
 Problems are located the way you'd look for them, e.g. `round 2 "Movies",
 question 3`; YAML syntax errors give a line number.
 
-- One round per column; top row is easy, bottom row is hard.
+- One round per column; top row is easy, bottom row is hard. Keep round
+  names under about 30 characters.
+- Put text with a colon or a `#` in quotes: `a: "Star Wars: A New Hope"`.
+  Without them the file won't read, and the error screen says which line.
 - Write media paths as real filenames, not URL-encoded:
   `audio/My Song.m4a`, not `audio/My%20Song.m4a`.
 - Optional per question: `points:` (positive integer), `audio:` (a
@@ -204,4 +216,5 @@ returns to your game untouched.
 - `audio/demo/`, `images/demo/` — self-generated demo media
 - `test/` — unit tests (`make test`)
 - `tools/local-server.py` — the local dev server (`make` runs it)
+- `tools/smoke.mjs`, `tools/fit.mjs` — the Chrome checks (`make smoke`, `make fit`)
 - `fonts/` — the self-hosted face (Atkinson Hyperlegible Next)

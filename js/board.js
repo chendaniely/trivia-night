@@ -33,6 +33,10 @@ export function renderBoard({ badges = [] } = {}) {
   const score = document.createElement("div");
   score.className = "scoreboard";
   if (finished) score.classList.add("final");
+  // A pill may take half the row with up to three teams (long names wrap
+  // to a second row rather than shorten), a third with more (six stay on
+  // two rows, a long name shortening).
+  score.style.setProperty("--per-row", scoring.teams.length <= 3 ? "2" : "3");
   score.append(
     ...order.map(({ t, idx }) => {
       const d = document.createElement("div");
@@ -80,6 +84,7 @@ export function renderBoard({ badges = [] } = {}) {
       l.className = "col-left";
       l.textContent = `${left} left`;
       h.append(l);
+      h.setAttribute("aria-label", `${round.name}, ${left} left`);
     }
     if (live) {
       h.classList.add("clickable");
@@ -190,7 +195,7 @@ export function renderBoard({ badges = [] } = {}) {
       leaders.length === 1
         ? `Final scores · ${leaders[0]} wins`
         : all && top === 0
-        ? "Final scores · no one scored"
+        ? "Final scores · everyone ends on 0"
         : all && leaders.length > 2
         ? "Final scores · everyone ties"
         : `Final scores · a tie between ${leaders.slice(0, -1).join(", ")} and ${leaders[leaders.length - 1]}`;

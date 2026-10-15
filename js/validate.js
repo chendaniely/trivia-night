@@ -57,25 +57,44 @@ function textFieldError(q, field) {
   return `the ${noun} must be text — put quotes around it: ${field}: "${String(v)}"`;
 }
 
+// YAML that doesn't parse, in the host's words (Task 25 council): the line
+// as written and the fix for the likeliest mistake — a colon or a # in
+// unquoted text (`a: Star Wars: A New Hope`). js-yaml often reports the
+// line after an unclosed quote, so the line above gets a mention too.
+function parseErrorMessage(err, lines) {
+  const at = err.mark ? lines[err.mark.line] : undefined;
+  const shown = at !== undefined && at.trim() ? at.trim() : undefined;
+  if (/duplicated mapping key/.test(err.reason || "") && shown) {
+    return `"${shown.split(":")[0].replace(/^-\s*/, "")}:" appears twice in the same question or round — keep one`;
+  }
+  return (
+    (shown ? `can't read this line: ${shown}` : "the file doesn't read as YAML") +
+    ` — text with a colon (:) or a # needs quotes, like  a: "Star Wars: A New Hope"; check the quotes on the line above too`
+  );
+}
+
+const EMPTY = "the file is empty — it should start with  title:  and  rounds:";
+
 export function parseBank(text) {
+  if (!text.trim()) return { ok: false, errors: [{ message: EMPTY }] };
   let data;
   try {
     data = load(text);
   } catch (err) {
     const line = err.mark ? err.mark.line + 1 : undefined;
-    return { ok: false, errors: [{ line, where: "yaml", message: err.reason || String(err) }] };
+    return { ok: false, errors: [{ line, message: parseErrorMessage(err, text.split(/\r?\n/)) }] };
   }
 
   if (typeof data !== "object" || data === null || Array.isArray(data)) {
-    return { ok: false, errors: [{ where: "the file", message: "it should start with a  title:  line, then  rounds:" }] };
+    return { ok: false, errors: [{ message: "it should start with a  title:  line, then  rounds:" }] };
   }
 
-  const errors = unknownKeyErrors(data, TOP_KEYS, "root");
+  const errors = unknownKeyErrors(data, TOP_KEYS, "the top of the file");
   if (typeof data.title !== "string" || !data.title.trim()) {
     errors.push({ where: "title", message: 'the file needs a title, like  title: "Trivia Night"' });
   }
   if (!Array.isArray(data.rounds)) {
-    errors.push({ where: "rounds", message: "rounds: must be a list of rounds, each starting with  - name:" });
+    errors.push({ where: "rounds", message: "must be a list of rounds, each starting with  - name:" });
     return { ok: false, errors };
   }
   if (data.rounds.length === 0) {
@@ -101,7 +120,7 @@ export function parseBank(text) {
       seenNames.add(round.name);
     }
     if (!Array.isArray(round.questions)) {
-      errors.push({ where, message: "questions: must be a list, each question starting with  - q:" });
+      errors.push({ where, message: "its questions: must be a list, each question starting with  - q:" });
       continue;
     }
     if (round.questions.length === 0) {

@@ -18,7 +18,7 @@ for (const list of lists) {
 assert.ok(fv.length > 0);
 const all = new Set(lists.flatMap((l) => l.split(",").map((s) => s.trim())));
 for (const s of fv) {
-  const twin = ".no-fv " + s.replace(/:focus-visible/g, ":focus");
+  const twin = ".no-fv.kbd " + s.replace(/:focus-visible/g, ":focus");
   assert.ok(all.has(twin), `no fallback for "${s}" (expected "${twin}")`);
 }
 
@@ -26,3 +26,4 @@ for (const s of fv) {
 const app = readFileSync(new URL("../js/app.js", import.meta.url), "utf8");
 assert.match(app, /":focus-visible"/);
 assert.match(app, /no-fv/);
+assert.match(app, /classList\.(add|toggle)\("kbd"/);

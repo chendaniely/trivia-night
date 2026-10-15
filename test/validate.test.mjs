@@ -60,7 +60,7 @@ rounds:
 `;
 const r3 = parseBank(badYaml);
 assert.equal(r3.ok, false);
-assert.equal(r3.errors[0].where, "yaml");
+assert.equal(r3.errors[0].where, undefined); // the line number locates it (Task 25)
 assert.equal(r3.errors[0].line, 6);
 assert.ok(r3.errors[0].message.length > 0);
 
@@ -234,5 +234,32 @@ rounds:
 for (const er of parseBank(broken).errors) {
   assert.doesNotMatch(er.message, /question\.|round\.|mapping|non-empty/, er.message);
 }
+
+// YAML that doesn't parse (Task 25 council): the host sees the line, and
+// how to fix the likeliest mistake — a colon or # in unquoted text.
+const T = (body) => `title: "T"\nrounds:\n  - name: "R"\n    questions:\n${body}`;
+let pe = parseBank(T('      - q: "Q"\n        a: Star Wars: A New Hope\n')).errors[0];
+assert.equal(pe.line, 6);
+assert.equal(
+  pe.message,
+  `can't read this line: a: Star Wars: A New Hope — text with a colon (:) or a # needs quotes, like  a: "Star Wars: A New Hope"; check the quotes on the line above too`
+);
+pe = parseBank(T('      - q: "Q"\n        a: "x"\n        a: "y"\n')).errors[0];
+assert.equal(pe.line, 7);
+assert.equal(pe.message, '"a:" appears twice in the same question or round — keep one');
+pe = parseBank("").errors[0];
+assert.equal(pe.where, undefined);
+assert.equal(pe.message, "the file is empty — it should start with  title:  and  rounds:");
+pe = parseBank("   \n\n").errors[0];
+assert.equal(pe.message, "the file is empty — it should start with  title:  and  rounds:");
+// the top level is "the top of the file"; no message repeats its location
+pe = parseBank('titel: "T"\nrounds:\n  - name: "R"\n    questions:\n      - q: "Q"\n        a: "x"\n').errors[0];
+assert.equal(pe.where, "the top of the file");
+for (const text of [broken, 'title: "T"\nrounds:\n', 'title: "T"\n', "rounds: 3\n"]) {
+  for (const er of parseBank(text).errors) {
+    if (er.where) assert.ok(!er.message.startsWith(er.where.split(" ")[0] + ":"), `"${er.where}: ${er.message}" repeats its location`);
+  }
+}
+assert.equal(parseBank('title: "T"\nrounds:\n').errors[0].message, "must be a list of rounds, each starting with  - name:");
 
 console.log("validate: all assertions passed");

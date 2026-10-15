@@ -239,6 +239,20 @@ for (const [w, h] of SIZES) {
     }
     await page.context().close();
   }
+  // two or three teams with long names: shortened only when the row is full
+  for (const n of [2, 3]) {
+    const LONGER = ["Hermione's Library Card Society", "The Ministry of Silly Answers", "Quizzy McQuizface and Friends"];
+    const page = await open(w, h);
+    for (let i = 0; i < n; i++) {
+      if (i >= 2) await tap(page, "#add-team-btn");
+      await page.fill(`#team-${i + 1}`, LONGER[i]);
+    }
+    await tap(page, "#start-btn");
+    await settle(page);
+    const cut = await page.$$eval(".score-name", (e) => e.filter((x) => x.scrollWidth > x.clientWidth).length);
+    check(cut === 0, `${tag} ${n} long names: none shortened on the scoreboard (${cut} cut)`);
+    await page.context().close();
+  }
   // the finished board: Final scores, 6 long names
   {
     const page = await open(w, h);
@@ -250,7 +264,6 @@ for (const [w, h] of SIZES) {
     await tap(page, "#resume-btn");
     await settle(page);
     await fits(page, `${tag} 6 teams: Final scores`);
-    if (w === 960) await page.screenshot({ path: ".superpowers/sdd/2026-10-10-trivia-night/final-960.png" }).catch(() => {});
     await page.context().close();
   }
   // image + audio question, 6 teams
@@ -342,6 +355,14 @@ const SAME_SPOT = [
     await tap(p, "#screen-question button:text-is('Next')"); await settle(p);
     await reveal(p);
     return "#screen-question button:text-is('Next')";
+  }],
+  // A question's Back to board lands on the board's Undo (enabled once a
+  // question is banked): the guard must hold.
+  ["Back to board onto Undo", "guard", null, "jeopardy", async (p) => {
+    await tap(p, `.board-cell.clickable[data-ri="0"][data-qi="0"]`); await settle(p);
+    await tap(p, "#screen-question button:text-is('Done')"); await settle(p);
+    await tap(p, `.board-cell.clickable[data-ri="1"][data-qi="0"]`); await settle(p);
+    return "#screen-question button:text-is('Back to board')";
   }],
   // The tally card's Back to board lands where the last Next was: the
   // guard must hold (a quick second click would leave the tally early).
