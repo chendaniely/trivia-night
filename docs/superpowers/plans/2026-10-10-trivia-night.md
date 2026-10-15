@@ -1949,9 +1949,11 @@ new screen). Keyboard shortcuts stay parked. Inline execution
 > to board onto Undo (guard), 2–3 long names uncut, no screenshot;
 > README: make fit, the six-team contract, quoting, round names, the
 > deploy rule. Rulings in the ledger.
-- [ ] **Step 5: Release `v1.0.0`** after Steps 2–4 merge and deploy
-  (merged and deployed 2026-10-15 with Task 26 as PR #3; the release
-  waits for the partner's go-ahead). Push
+- [x] **Step 5: Release `v1.0.0`** after Steps 2–4 merge and deploy
+  (merged and deployed 2026-10-15 with Task 26 as PR #3). Released
+  2026-10-15 on the partner's go-ahead ("yeah tag it"): annotated tag
+  `v1.0.0` at `150e6a8` (the PR #3 merge, as v0.2.0 tagged PR #1's),
+  GitHub release "v1.0.0 — ready for the night", marked latest. Push
   at least a day before the night; after the deploy, wait 10 minutes and
   Shift-reload on the Mac and the TV.
 
