@@ -48,6 +48,7 @@ or hurt. This folder is meant as raw material for a blog post.
 | [5. Did the plugins and skills help?](05-plugins-and-skills.md) | What loaded, what changed behaviour, good/bad, recommendations |
 | [6. Is it viable? Claude's take](06-verdict.md) | Where Qwen 3.8 27B on a Spark works and where it doesn't; a hybrid workflow |
 | [7. Gallery](07-gallery.md) | The app at 14 milestones, what Qwen "saw", before/after |
+| [8. UX audit](08-ux-audit.md) | After the merge: 19 UX problems both passes missed, why, and a tracker for the fixes |
 | [Appendix A — the partner's prompts](appendix-a-prompts.md) | Every prompt, in order |
 | [Appendix B — numbers](appendix-b-numbers.md) | Commits, lines, tests, sessions, tokens |
 | [research/](research/) | The raw research notes the chapters are built from |
@@ -67,6 +68,10 @@ or hurt. This folder is meant as raw material for a blog post.
 ## Reading notes
 
 - Times are US Pacific (the machine's clock).
+- Releases mark the stages: [`v0.1.0`](https://github.com/chendaniely/trivia-night/releases/tag/v0.1.0)
+  is Qwen's final build (`f603230`), [`v0.2.0`](https://github.com/chendaniely/trivia-night/releases/tag/v0.2.0)
+  is the app after the Claude pass (`e9ccb0b`). Both were tagged after the
+  fact, on Oct 14. `v1.0.0` will follow the UX fixes in chapter 8.
 - Qwen's commits carry `Co-Authored-By: Qwen 3.8 27B`; Claude's carry the
   specific Claude model that wrote them. That attribution is what makes
   the per-model numbers possible — the partner set it up on day one.

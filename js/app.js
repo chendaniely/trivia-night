@@ -2,8 +2,9 @@
 import { parseBank } from "./validate.js";
 import { createScoring, restoreScoring } from "./scoring.js";
 import { renderBoard, focusBoard, setCellClick, setColumnClick } from "./board.js";
-import { startQuestion, startColumn, resetFlow, leaveQuestion } from "./question.js";
+import { startQuestion, startColumn, resetFlow, leaveQuestion, leaveTally } from "./question.js";
 import { randomTeamName } from "./teams.js";
+import { askConfirm, cancelConfirm, dropConfirm } from "./confirm.js";
 import {
   loadFromDirHandle,
   loadFromFileList,
@@ -31,18 +32,37 @@ export const state = {
   scoring: null,
 };
 
-const SCREENS = ["setup", "board", "question", "tally", "error", "about"];
+const SCREENS = ["setup", "board", "question", "tally", "error", "about", "confirm"];
+
+// Older TV browsers (before Safari 15.4) don't know ":focus-visible";
+// .no-fv switches on the plain :focus look instead (Task 25, U19).
+try {
+  document.querySelector(":focus-visible");
+} catch {
+  document.documentElement.classList.add("no-fv");
+}
+// .kbd while the keyboard or remote is in use (the .no-fv rings show only
+// then); a pointer press clears it.
+document.addEventListener("keydown", () => document.documentElement.classList.add("kbd"), true);
+document.addEventListener("pointerdown", () => document.documentElement.classList.remove("kbd"), true);
 
 export function showScreen(id) {
+  // Leaving the confirm screen any other way (a folder load, an error)
+  // forgets the question, so a late Esc can't bring back an old screen.
+  if (id !== "confirm") dropConfirm();
   document.getElementById("boot")?.classList.add("hidden");
   for (const s of SCREENS) {
-    document.getElementById(`screen-${s}`).classList.toggle("hidden", s !== id);
+    // ?.: a stale cached index.html (mid-deploy) may lack a newer screen
+    document.getElementById(`screen-${s}`)?.classList.toggle("hidden", s !== id);
   }
   lockInput();
 }
 
-function visibleScreen() {
-  return SCREENS.find((s) => !document.getElementById(`screen-${s}`).classList.contains("hidden"));
+export function visibleScreen() {
+  return SCREENS.find((s) => {
+    const el = document.getElementById(`screen-${s}`);
+    return el && !el.classList.contains("hidden");
+  });
 }
 
 // Input lock (Task 18): for a moment after the screen changes under the
@@ -51,18 +71,76 @@ function visibleScreen() {
 // Next, a board cell -> a team button). Team mark taps never lock.
 const INPUT_LOCK_MS = 350;
 let inputLockedUntil = 0;
+// Same-spot guard (Task 25, U2): a slower second click — "did that
+// work?" — gets past the lock and lands on whatever the new screen put
+// under the pointer (Done, the next Reveal, a board cell). So a screen
+// change caused by a pointer click also guards that spot: pointer clicks
+// within GUARD_PX of it are ignored until the pointer moves away or
+// GUARD_MS pass. Keyboard / remote clicks (detail 0) are never guarded.
+const GUARD_PX = 8;
+const GUARD_MS = 2500;
+let pointerDown = null; // { t } of the last trusted pointerdown
+let clickPt = null; // { x, y } while a trusted pointer click is being handled
+let guard = null; // { x, y, until }
+const near = (e, p) => Math.hypot(e.clientX - p.x, e.clientY - p.y) <= GUARD_PX;
+const guarded = (e, now) => guard !== null && now < guard.until && near(e, guard);
+// A pointer click follows a real pointerdown: a TV browser may turn the
+// remote's OK into a click with detail 1, and that is not a pointer.
+const fromPointer = (e, now) => e.detail > 0 && pointerDown !== null && now - pointerDown.t < 1500;
 export function lockInput() {
   inputLockedUntil = performance.now() + INPUT_LOCK_MS;
+  // Called while a pointer click is being handled (that click changed the
+  // screen): guard its spot.
+  if (clickPt) guard = { x: clickPt.x, y: clickPt.y, until: performance.now() + GUARD_MS };
 }
+document.addEventListener(
+  "pointerdown",
+  (e) => {
+    if (!e.isTrusted) return;
+    pointerDown = { t: performance.now() };
+    // A press anywhere else ends the guard — touch has no pointermove
+    // between taps.
+    if (guard && !near(e, guard)) guard = null;
+  },
+  true
+);
+// A held-back click must not move focus either: mousedown focuses the
+// button under the pointer, and Enter would then press it (Done, Next).
+document.addEventListener(
+  "mousedown",
+  (e) => {
+    const now = performance.now();
+    if (e.isTrusted && (now < inputLockedUntil || guarded(e, now))) e.preventDefault();
+  },
+  true
+);
 document.addEventListener(
   "click",
   (e) => {
     // Only real clicks: the programmatic click that opens the hidden
     // folder input must always get through.
-    if (e.isTrusted && performance.now() < inputLockedUntil) {
+    if (!e.isTrusted) return;
+    const now = performance.now();
+    const pointer = fromPointer(e, now);
+    if (now < inputLockedUntil || (pointer && guarded(e, now))) {
       e.preventDefault();
       e.stopImmediatePropagation();
+      return;
     }
+    if (pointer) {
+      // Marks the click's own dispatch, for lockInput; gone right after it.
+      clickPt = { x: e.clientX, y: e.clientY };
+      setTimeout(() => {
+        clickPt = null;
+      }, 0);
+    }
+  },
+  true
+);
+document.addEventListener(
+  "pointermove",
+  (e) => {
+    if (guard && !near(e, guard)) guard = null;
   },
   true
 );
@@ -114,12 +192,25 @@ function gameInProgress() {
 }
 
 const ERROR_CAP = 12; // keeps Try again / Back to setup on screen on a TV
+const SHIPPED = "the shipped questions.yaml";
 
-export function renderError(errors) {
+// source: which file has the problem, for the host (Task 25, U16) —
+// "the shipped questions.yaml" or 'the folder "night"'.
+export function renderError(errors, source = "the question file") {
+  const src = document.getElementById("error-source"); // absent in a stale cached index.html
+  if (src) src.textContent = `In ${source}:`;
   const list = document.getElementById("error-list");
   const items = errors.slice(0, ERROR_CAP).map((e) => {
     const li = document.createElement("li");
-    li.textContent = e.line ? `line ${e.line}: ${e.message}` : `${e.where}: ${e.message}`;
+    const label = e.line ? `line ${e.line}` : e.where;
+    if (label) {
+      // e.g. "line 6: …" or 'round 2 "Movies", question 3: …'; a whole-file
+      // problem has no location and reads on its own.
+      const where = document.createElement("strong");
+      where.textContent = label;
+      li.append(where, ": ");
+    }
+    li.append(e.message);
     return li;
   });
   if (errors.length > ERROR_CAP) {
@@ -140,12 +231,12 @@ async function loadBank() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     text = await res.text();
   } catch (err) {
-    renderError([{ where: "fetch", message: `questions.yaml could not be loaded (${err.message})` }]);
+    renderError([{ message: `it could not be loaded (${err.message}) — try again, or reload the page` }], SHIPPED);
     return;
   }
   const result = parseBank(text);
   if (!result.ok) {
-    renderError(result.errors);
+    renderError(result.errors, SHIPPED);
     return;
   }
   shippedKey = bankKeyOf(text);
@@ -204,6 +295,17 @@ function allNamed() {
   return setupInputs().every((el) => el.value.trim() !== "");
 }
 
+// Start is off while a team has no name, and the subtitle says why
+// (Task 25, U12) — in its own line, so nothing moves.
+const SUBTITLE = "Name your teams and pick a mode.";
+function updateStart() {
+  const ok = allNamed();
+  document.getElementById("start-btn").disabled = !ok;
+  const sub = document.querySelector("#screen-setup .subtitle");
+  sub.textContent = ok ? SUBTITLE : "Every team needs a name.";
+  sub.classList.toggle("warn", !ok);
+}
+
 function selectedMode() {
   return document.querySelector('input[name="mode"]:checked').value;
 }
@@ -252,6 +354,7 @@ function renderSetup(rows) {
       rm.textContent = "Remove";
       rm.disabled = rows.length <= 2; // 2 teams is the playable minimum
       rm.addEventListener("click", () => {
+        lockInput(); // a double-click must not remove the next team too
         renderSetup(setupRows().filter((_, j) => j !== i));
       });
       row.append(input, rm);
@@ -263,7 +366,7 @@ function renderSetup(rows) {
   renderSaveNote();
   // Mid-game, setup can always be left without changing anything.
   document.getElementById("setup-back-btn").classList.toggle("hidden", state.scoring === null);
-  document.getElementById("start-btn").disabled = !allNamed();
+  updateStart();
 }
 
 // The saved-game offer (Task 18): one summary line + the primary Resume
@@ -317,7 +420,7 @@ function enterGame() {
 document
   .getElementById("team-inputs")
   .addEventListener("input", () => {
-    document.getElementById("start-btn").disabled = !allNamed();
+    updateStart();
   });
 
 document.getElementById("start-btn").addEventListener("click", () => {
@@ -330,13 +433,29 @@ document.getElementById("start-btn").addEventListener("click", () => {
     state.scoring !== null &&
     rows.length === state.scoring.teams.length &&
     rows.every((r, i) => r.team === i);
-  if (resumable && !confirm("Discard the saved game in progress and start a new one?")) return;
-  if (
-    !sameTeams &&
-    gameInProgress() &&
-    !confirm("The team list changed, so this starts a fresh game — all scores reset. Continue?")
-  )
-    return;
+  const start = () => startGame(names, sameTeams);
+  const askTeams = () =>
+    !sameTeams && gameInProgress()
+      ? askConfirm({
+          title: "Start a fresh game?",
+          text: "The team list changed, so this starts a fresh game and resets every score.",
+          ok: "Start fresh",
+          onOk: start,
+        })
+      : start();
+  if (resumable) {
+    askConfirm({
+      title: "Discard the saved game?",
+      text: "Starting replaces the saved game in progress. To carry on with it instead, press Cancel, then Resume game.",
+      ok: "Discard and start",
+      onOk: askTeams,
+    });
+  } else {
+    askTeams();
+  }
+});
+
+function startGame(names, sameTeams) {
   state.teamNames = names;
   state.mode = selectedMode();
   if (sameTeams) {
@@ -347,7 +466,7 @@ document.getElementById("start-btn").addEventListener("click", () => {
     state.scoring = createScoring(names);
   }
   enterGame();
-});
+}
 
 document.getElementById("resume-btn").addEventListener("click", () => {
   if (!resumable) return;
@@ -381,7 +500,18 @@ window.addEventListener("beforeunload", (e) => {
 });
 
 let backGuarded = false; // is the current history entry our pushed one?
-function armBackGuard() {
+// Also armed by the confirm screen (confirm.js), so Back cancels it even
+// before a game is running.
+// A confirm cancelled before any game is running gives its history entry
+// back (confirm.js), so the next Back behaves as before it opened.
+export function disarmBackGuard() {
+  if (backGuarded && state.scoring === null) {
+    backGuarded = false;
+    history.back();
+  }
+}
+
+export function armBackGuard() {
   if (backGuarded) return;
   try {
     history.pushState({ triviaNight: "guard" }, "");
@@ -393,15 +523,18 @@ function armBackGuard() {
 
 window.addEventListener("popstate", () => {
   backGuarded = false;
+  if (visibleScreen() === "confirm") {
+    cancelConfirm(); // Back on the confirm screen means Cancel, game or not
+    if (state.scoring !== null) armBackGuard();
+    return;
+  }
   if (state.scoring === null) return; // no game running: Back works normally
   armBackGuard();
   const on = visibleScreen();
   if (on === "question") {
     leaveQuestion();
   } else if (on === "tally") {
-    renderBoard();
-    showScreen("board");
-    focusBoard();
+    leaveTally(); // as the tally's own Back to board: badges and focus
   } else if (on === "setup") {
     showRunningGame();
   }
@@ -443,12 +576,12 @@ async function pickFolder() {
     handle = await window.showDirectoryPicker();
   } catch (err) {
     if (err && err.name === "AbortError") return; // host cancelled
-    renderError([{ where: "folder", message: "could not open the folder (" + err.message + ")" }]);
+    renderError([{ message: "it could not be opened (" + err.message + ") — try again" }], "the folder");
     return;
   }
   const result = await loadFromDirHandle(handle);
   if (!result.ok) {
-    renderError(result.errors);
+    renderError(result.errors, `the folder "${handle.name}"`);
     return;
   }
   startNewBank(result.bank, result.urls, bankKeyOf(result.text));
@@ -464,15 +597,22 @@ document.getElementById("load-folder-btn").addEventListener("click", () => {
   // cancelled or failed load means the next Load folder asks again.
   const consented = loadConsented;
   loadConsented = false;
-  if (
-    !consented &&
-    gameInProgress() &&
-    !confirm("Load a different board? This ends the game in progress.")
-  )
+  if (!consented && gameInProgress()) {
+    // OK's own click opens the picker (askConfirm runs onOk inside it).
+    askConfirm({
+      title: "Load a different board?",
+      text: "This ends the game in progress. Its saved game is kept: load this board again to resume it.",
+      ok: "Load folder",
+      onOk: openFolderPicker,
+    });
     return;
-  // The picker needs the click's activation, which lapses ~5 s after the
-  // click: a slow read of the confirm would leave the picker refusing to
-  // open (silently, for the fallback input). Ask for one more click.
+  }
+  openFolderPicker();
+});
+
+function openFolderPicker() {
+  // The picker needs a click's activation, which lapses ~5 s after the
+  // click. If it has lapsed, ask for one more click.
   if (navigator.userActivation && !navigator.userActivation.isActive) {
     loadConsented = true;
     setFolderMsg("Click Load folder again to pick the folder.");
@@ -486,29 +626,46 @@ document.getElementById("load-folder-btn").addEventListener("click", () => {
     setLoader(() => folderInput.click());
     folderInput.click();
   }
-});
+}
 folderInput.addEventListener("change", async () => {
   if (!folderInput.files.length) return;
+  const name = (folderInput.files[0].webkitRelativePath || "").split("/")[0];
   const result = await loadFromFileList(folderInput.files);
   folderInput.value = ""; // allow re-picking the same folder
   if (!result.ok) {
-    renderError(result.errors);
+    renderError(result.errors, name ? `the folder "${name}"` : "the folder");
     return;
   }
   startNewBank(result.bank, result.urls, bankKeyOf(result.text));
   setFolderMsg("");
 });
 
-document.getElementById("create-new-btn").addEventListener("click", async () => {
+document.getElementById("create-new-btn").addEventListener("click", () => {
   if (!window.showDirectoryPicker) {
     setFolderMsg(
       "Create new needs Chrome or Edge (File System Access API) — open the app there on your computer."
     );
     return;
   }
-  // Picker FIRST: it needs the click's user activation (expires in ~5 s,
-  // so a slow prompt() before it would break it) and readwrite asks for
-  // write access in the same single prompt.
+  // The name comes first, on the confirm screen (Task 25, U7: no prompt()).
+  // Its OK click then opens the picker straight away, while the click's
+  // user activation is fresh (the reason Task 16 put the picker first).
+  askConfirm({
+    title: "Create a new game folder",
+    text: "Name the new folder, then choose where it goes: a folder inside Documents, not Documents itself. Chrome asks to allow editing: allow it.",
+    input: "my-trivia-night",
+    ok: "Choose where…",
+    onOk: createIn,
+  });
+});
+
+async function createIn(rawName) {
+  const name = rawName.trim();
+  if (!name) {
+    setFolderMsg("The new folder needs a name — click Create new again.");
+    return;
+  }
+  // readwrite asks for write access in the same single prompt.
   let parent;
   try {
     parent = await window.showDirectoryPicker({ mode: "readwrite", startIn: "documents" });
@@ -517,8 +674,6 @@ document.getElementById("create-new-btn").addEventListener("click", async () => 
     setFolderMsg("Could not pick the parent folder: " + err.message);
     return;
   }
-  const name = ((prompt("New game folder name", "my-trivia-night")) || "").trim();
-  if (!name) return;
   try {
     await createNew(parent, name);
     setFolderMsg(`Created ${name}/ with a starter questions.yaml — load it with Load folder.`);
@@ -531,6 +686,6 @@ document.getElementById("create-new-btn").addEventListener("click", async () => 
         : "Could not create the folder: " + err.message
     );
   }
-});
+}
 
 loadBank();

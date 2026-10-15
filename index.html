@@ -10,11 +10,11 @@
 </head>
 <body>
   <main id="root">
-    <p id="boot">Loading… If this message stays, this browser is too old for the app — mirror the Mac's screen instead.</p>
+    <p id="boot">Loading… If this message stays, reload the page (Shift-reload). If it still stays, this browser is too old for the app — mirror the Mac's screen instead.</p>
     <input type="file" id="folder-input" webkitdirectory tabindex="-1">
     <section id="screen-setup" class="screen hidden">
       <h1>Trivia Night</h1>
-      <p class="subtitle">Name your teams and pick a mode.</p>
+      <p class="subtitle" id="setup-subtitle" aria-live="polite">Name your teams and pick a mode.</p>
       <div id="resume-offer" class="hidden">
         <p id="resume-summary"></p>
         <button id="resume-btn">Resume game</button>
@@ -22,12 +22,14 @@
       <p id="save-note" class="hidden"></p>
       <div id="team-inputs"></div>
       <div id="mode-pick" role="radiogroup" aria-label="Game mode">
-        <label><input type="radio" name="mode" value="jeopardy" checked> Jeopardy</label>
-        <label><input type="radio" name="mode" value="trivia"> Trivia</label>
+        <label><input type="radio" name="mode" value="jeopardy" checked> Jeopardy
+          <span class="mode-desc">any cell; wrong answers lose points</span></label>
+        <label><input type="radio" name="mode" value="trivia"> Trivia
+          <span class="mode-desc">a category, top to bottom</span></label>
       </div>
       <div class="start-row">
         <button id="setup-back-btn" class="btn-quiet hidden">Back to board</button>
-        <button id="start-btn" disabled>Start</button>
+        <button id="start-btn" aria-describedby="setup-subtitle" disabled>Start</button>
       </div>
       <div class="folder-btns">
         <button id="load-folder-btn" class="btn-quiet">Load folder</button>
@@ -50,14 +52,25 @@
         <li>
           <strong>Jeopardy:</strong> click a point cell to open the question.
           Click a team to mark them green (correct) or red (wrong) — click a
-          marked team again to change or clear it. Reveal shows the answer;
-          Done banks the points.
+          marked team again to change or clear it; the line under the teams
+          shows what Done will bank. Reveal shows the answer; Done banks the
+          points.
         </li>
         <li>
           <strong>Trivia:</strong> click a category name to start that round —
           the point cells are not clickable. Mark a team green when they
-          answer; click again to clear. Reveal shows the answer; Next moves
-          on.
+          answer; click again to clear; the line under the teams shows what
+          Next will bank. Reveal shows the answer; Next moves on. The tally
+          at the end shows each team's points from the category and their
+          new total.
+        </li>
+        <li>
+          <strong>Clips and the finish:</strong> each question's top line shows
+          its category and points; one with a clip has a big Play clip button
+          there (OK on a remote plays it). After Done, +/− badges on the
+          scoreboard show who just gained or lost. When the last question is
+          played, the scoreboard becomes Final scores — ranked, with the
+          winner or a tie named.
         </li>
         <li>
           <strong>On the TV:</strong> easiest is to mirror the Mac's screen
@@ -73,7 +86,9 @@
         </li>
         <li>
           <strong>Oops?</strong> "Back to board" (or browser Back) drops that
-          question's marks and keeps the cell and scores. The game saves as
+          question's marks and keeps the cell and scores. "Undo last
+          question" under the board takes back the last banked question
+          (one only; it asks first) and reopens it. The game saves as
           you play: after a reload, press Resume game (folder board: Load
           folder first, same folder). Reloaded? Press Resume game, not Start.
         </li>
@@ -88,10 +103,11 @@
           file — <code>questions.yaml</code>. Load folder plays your own
           folder (<code>questions.yaml</code> + <code>audio/</code> +
           <code>images/</code>) and asks first mid-game; Create new
-          scaffolds one (Chrome or Edge): pick or make a folder inside
-          Documents, not Documents itself, and allow editing when Chrome
-          asks. Team names carry over. Problems are listed by round and
-          question, with typo hints; "Back to setup" keeps your game.
+          scaffolds one (Chrome or Edge): name it, then pick a folder
+          inside Documents (not Documents itself) and allow editing when
+          Chrome asks. Team names carry over. Problems name the file and the
+          round, question or line, and say what to type (text with a colon
+          needs quotes); "Back to setup" keeps your game.
         </li>
       </ul>
       <p>
@@ -104,12 +120,22 @@
     <section id="screen-board" class="screen hidden"></section>
     <section id="screen-question" class="screen hidden"></section>
     <section id="screen-tally" class="screen hidden"></section>
+    <section id="screen-confirm" class="screen hidden" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+      <h1 id="confirm-title"></h1>
+      <p id="confirm-text"></p>
+      <input id="confirm-input" class="hidden" autocomplete="off" aria-labelledby="confirm-text">
+      <div class="confirm-actions">
+        <button id="confirm-cancel" class="btn-quiet">Cancel</button>
+        <button id="confirm-ok"></button>
+      </div>
+    </section>
     <section id="screen-error" class="screen hidden">
       <h1>Question file problem</h1>
       <div class="error-actions">
         <button id="retry-btn">Try again</button>
         <button id="error-back-btn" class="btn-quiet hidden">Back to setup</button>
       </div>
+      <p id="error-source"></p>
       <ul id="error-list"></ul>
     </section>
   </main>

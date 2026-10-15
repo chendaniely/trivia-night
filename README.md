@@ -17,7 +17,12 @@ make serve PORT=8090   # any other port
 make serve-lan    # reachable from the TV's own browser (see below)
 make test         # unit tests
 make smoke        # end-to-end check in Chrome (needs `make serve` running in another terminal)
+make fit          # every screen fits every TV size (needs `make serve`; ~15 min)
 ```
+
+Screens are checked to fit without scrolling from 960×540 to 1920×1080
+with up to six teams; more teams, or very long round names (over about
+30 characters), may scroll on a small TV.
 
 Run these from the repo folder. You need [uv](https://docs.astral.sh/uv/)
 (`brew install uv`) and [node](https://nodejs.org/) (`brew install node`);
@@ -50,12 +55,14 @@ are all different).
 - Open the live URL.
 - Check the font looks like the Mac's (Atkinson Hyperlegible, not a
   fallback).
-- Press **Reset game** and confirm the browser's OK/Cancel dialog appears
-  and OK works. Some TV browsers suppress dialogs; if so, mirror the Mac
-  instead.
+- Press **Reset game**, then **Cancel**, with the remote: the app asks on
+  its own screen, and Cancel keeps the game.
 - Audio: `.m4a`/`.mp3` play best on TV browsers; `.wav` works.
+- Nothing is cut off at the top or bottom edge (the scores, the buttons
+  under the board). If it is, set the TV's picture size to Screen Fit /
+  Just Scan, or turn off overscan in the Mac's Displays settings.
 
-The app needs a reasonably recent browser (about Chrome 86 / Safari 14).
+The app needs a reasonably recent browser (about Chrome 86 / Safari 14.1).
 On an older one you'll see a "Loading…" note that never goes away: mirror
 the Mac instead.
 
@@ -78,6 +85,10 @@ A week before, on the Mac and TV you'll actually use:
 - Do the Create new, then Load folder check in Chrome (below).
 - Run `make serve` once on the event Mac (the first `uv run` may fetch a
   Python).
+- Push any last change to the app at least a day before, never on the
+  night: the live site takes about 10 minutes to update, and a browser
+  that loads half old, half new files may not start. After a change,
+  wait 10 minutes, then Shift-reload on the Mac and the TV.
 
 ## On the night, if...
 
@@ -94,9 +105,10 @@ A week before, on the Mac and TV you'll actually use:
 - **A picture is missing:** the question still works; describe it or
   show it from a phone.
 - **Wrong team marked:** before **Done**, click the team again to change
-  or clear it (or **Back to board** drops the marks). After Done the
-  points are banked and the cell is closed; there is no undo, so adjust
-  by announcing it.
+  or clear it (or **Back to board** drops the marks); the line under the
+  teams shows what Done will bank. After Done, **Undo last question**
+  under the board takes that question's points back and reopens it (it
+  asks first). It goes back one question only.
 - **Some private windows can't save:** setup says "Saving is off". Use a
   normal window.
 
@@ -106,16 +118,26 @@ A week before, on the Mac and TV you'll actually use:
    just hit **Start** or edit, add, or remove teams (2 or more).
 2. Pick a mode:
    - **Jeopardy** — click a point cell, mark teams green (correct) or
-     red (wrong), **Reveal** the answer, **Done** to bank points.
+     red (wrong), **Reveal** the answer, **Done** to bank points. The
+     line under the teams shows what Done will bank.
    - **Trivia** — click a category name to start the round (the point
      cells aren't clickable), mark a team green when they answer,
-     **Reveal** to show the answer, **Next** to move on.
+     **Reveal** to show the answer, **Next** to move on. The line under
+     the teams shows what Next will bank. At the end of the category, a
+     tally shows each team's points from it and their new total.
+   The top of each question shows its category and what it's worth. A
+   question with a clip has a big **▶ Play clip** button at the top right
+   (on a remote, OK plays it). After **Done**, small +/− badges on the
+   scoreboard show who just gained or lost points. When the last
+   question is played, the scoreboard turns into **Final scores**:
+   ranked, with the winner (or a tie) named.
    No mouse needed: a TV remote's D-pad (or Tab / Shift-Tab) moves
    between cells, categories and buttons, and OK (Enter / Space) presses
    them.
 3. **Back to board** is on every question screen if you mistap (the
    browser's Back button does the same). It drops that question's marks
-   and keeps the cell and everyone's scores.
+   and keeps the cell and everyone's scores. Banked the wrong result?
+   **Undo last question** under the board takes the last question back.
 4. **Setup** mid-game: rename teams or switch modes and **Start** carries
    on with the same game; adding or removing a team starts a fresh game
    (it asks first). Changed your mind? **Back to board** on the setup
@@ -149,10 +171,16 @@ rounds:
 
 Unknown keys are reported (typo guard): a misspelled `image:` or `Audio:`
 is flagged with a "did you mean" hint instead of being silently ignored.
+Each problem says what to add or change, like `has no answer — add a
+line like a: "the answer"`, and the error screen names the file or
+folder it is in.
 Problems are located the way you'd look for them, e.g. `round 2 "Movies",
 question 3`; YAML syntax errors give a line number.
 
-- One round per column; top row is easy, bottom row is hard.
+- One round per column; top row is easy, bottom row is hard. Keep round
+  names under about 30 characters.
+- Put text with a colon or a `#` in quotes: `a: "Star Wars: A New Hope"`.
+  Without them the file won't read, and the error screen says which line.
 - Write media paths as real filenames, not URL-encoded:
   `audio/My Song.m4a`, not `audio/My%20Song.m4a`.
 - Optional per question: `points:` (positive integer), `audio:` (a
@@ -171,11 +199,12 @@ simpler folder picker): a folder with `questions.yaml`, `audio/`, and
 
 **Create new** scaffolds one for you (Chrome or Edge only):
 
-1. Pick (or make) a parent folder inside Documents. Chrome refuses
-   Documents, Desktop, Downloads and your home folder themselves.
-2. Chrome asks to allow editing: allow it.
-3. Type a name for the new game folder. It never overwrites an existing
+1. Type a name for the new game folder. It never overwrites an existing
    one.
+2. Click **Choose where…** and pick (or make) a parent folder inside
+   Documents. Chrome refuses Documents, Desktop, Downloads and your home
+   folder themselves.
+3. Chrome asks to allow editing: allow it.
 4. Then use **Load folder** on it.
 
 Loading another board mid-game asks first; it keeps the team names you
@@ -190,4 +219,5 @@ returns to your game untouched.
 - `audio/demo/`, `images/demo/` — self-generated demo media
 - `test/` — unit tests (`make test`)
 - `tools/local-server.py` — the local dev server (`make` runs it)
+- `tools/smoke.mjs`, `tools/fit.mjs` — the Chrome checks (`make smoke`, `make fit`)
 - `fonts/` — the self-hosted face (Atkinson Hyperlegible Next)

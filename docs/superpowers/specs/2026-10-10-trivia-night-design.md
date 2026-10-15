@@ -153,7 +153,13 @@ styles of play (see modes below).
 - Visual theme (partner's signature colors, 2026-10-11): dark blue-black
   background with NYC flag orange #F26522 as primary action / score accent
   and NYC blue #236192 as surfaces / secondary buttons; green and red stay
-  reserved for correct / wrong team marks.
+  reserved for correct / wrong team marks. UI pass (Task 26, partner's
+  pick 2026-10-15): the board is lit — unplayed cells in NYC blue, a
+  shade lighter each row down, played cells dropping into the background,
+  category names on an orange rule (in trivia the headers are lit
+  instead: what's lit is what you press); on Final scores the winner is
+  filled orange; a blue-white-orange NYC flag stripe under the setup and
+  Final scores titles is the app's one signature mark.
 - Teams: 2 or more, no cap (Task 7.9; partner said 2–3, headcount was
   uncertain, so the app adds/removes teams freely).
 - Points: default tier values 100/200/300/400/500 by position, overridable
