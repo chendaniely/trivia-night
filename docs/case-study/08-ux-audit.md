@@ -4,8 +4,11 @@
 merge and before any UX change, and checked by a two-seat council. As
 fixes land, the **Status** column in the tracker and the
 [Fix log](#fix-log) are updated. Status as of Oct 15: all three
-batches fixed and through their councils and a final whole-branch review,
-on the branch, not merged yet. The app as the audit found it is release
+batches and the UI pass are merged into `main` as
+[PR #3](https://github.com/chendaniely/trivia-night/pull/3) (merge
+commit `150e6a8`) and live. The deploy gate passed (unit tests 8/8, the
+question file 6 rounds / 29 questions), and `make smoke` passed against
+the live site (134 checks). The app as the audit found it is release
 `v0.2.0`; the release after these fixes will be `v1.0.0`.*
 
 ## The request

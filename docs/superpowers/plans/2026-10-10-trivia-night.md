@@ -1949,7 +1949,9 @@ new screen). Keyboard shortcuts stay parked. Inline execution
 > to board onto Undo (guard), 2–3 long names uncut, no screenshot;
 > README: make fit, the six-team contract, quoting, round names, the
 > deploy rule. Rulings in the ledger.
-- [ ] **Step 5: Release `v1.0.0`** after Steps 2–4 merge and deploy. Push
+- [ ] **Step 5: Release `v1.0.0`** after Steps 2–4 merge and deploy
+  (merged and deployed 2026-10-15 with Task 26 as PR #3; the release
+  waits for the partner's go-ahead). Push
   at least a day before the night; after the deploy, wait 10 minutes and
   Shift-reload on the Mac and the TV.
 
@@ -2007,10 +2009,14 @@ theme note, chapter 8's closing note.
 > checklist; smoke checks the winner's name, the stripe's three colours,
 > played cells, a stale index.html playing a question, and an
 > all-negative final (mutants now fail); docs corrected.
-- [ ] **Step 3: Ship.** Council, then push, open the PR and merge into
+- [x] **Step 3: Ship.** Council, then push, open the PR and merge into
   `main` (merge commit, as PRs #1 and #2); watch the gated deploy; run
   `make smoke` against the live URL. Release `v1.0.0` after (Task 25
-  Step 5), when the partner says so.
+  Step 5), when the partner says so. Done 2026-10-15: PR #3 merged
+  (`150e6a8`, branch pushed as `chendaniely/ux-audit-chapter-fact`);
+  deploy run 38717972985 green (unit tests 8/8, "6 rounds, 29
+  questions"); Pages built; `make smoke
+  URL=https://chendaniely.github.io/trivia-night/` → SMOKE OK (134).
 
 Guardrails: Task 25's (fit at four sizes, same-spot, focus, colour roles:
 orange = action, scores, answer, the winner; blue = surfaces and what you
