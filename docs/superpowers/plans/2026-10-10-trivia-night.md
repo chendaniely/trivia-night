@@ -1976,14 +1976,14 @@ scoreboard) was not recommended and is not built.
 **Files:** `styles.css` (+ `tools/smoke.mjs` checks), the spec's visual
 theme note, chapter 8's closing note.
 
-- [ ] **Step 1: A — the lit board.** Jeopardy: unplayed cells in NYC blue
+- [x] **Step 1: A — the lit board.** Jeopardy: unplayed cells in NYC blue
   `#236192`, a little lighter each row down (the difficulty ramp);
   played cells drop into the background (no fill, a faint outline, faint
   numbers); category names unboxed over a 4-unit orange rule. Trivia:
   the live headers are lit (as today) and the cells stay dark — what's
   lit is what you press. Hover/focus on a cell stays the orange fill.
   No size changes beyond the header's rule (fit unchanged).
-- [ ] **Step 2: C — the finish.** On Final scores the leader's pill is
+- [x] **Step 2: C — the finish.** On Final scores the leader's pill is
   filled orange with dark text; the title is a little larger with a NYC
   tricolor stripe (blue, white, orange) under it; the setup title's
   orange bar becomes the same stripe.

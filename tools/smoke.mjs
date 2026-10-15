@@ -65,6 +65,13 @@ try {
     return { disabled: rm.disabled, sameFill: st(rm).backgroundColor === st(add).backgroundColor, opacity: Number(st(rm).opacity) };
   });
   check(look.disabled && look.sameFill && look.opacity < 0.6, "a disabled Remove is the quiet button, faded");
+  // The setup title carries the NYC tricolor stripe (Task 26).
+  check(
+    /linear-gradient\(90deg, rgb\(35, 97, 146\).*rgb\(245, 249, 252\).*rgb\(242, 101, 34\)/.test(
+      await page.$eval("#screen-setup h1", (e) => getComputedStyle(e, "::after").backgroundImage)
+    ),
+    "the setup title has the blue-white-orange stripe"
+  );
   // Each mode says what it is (U13).
   check(
     (await page.textContent("#mode-pick")).replace(/\s+/g, " ").includes("Jeopardy any cell; wrong answers lose points") &&
@@ -124,6 +131,17 @@ try {
   const played = await scores();
   check((await screen()) === "board" && played.join() !== before.join(), "Done banks points on the board");
   check((await page.$$(".board-cell.used")).length === 1, "the played cell is closed");
+  // The lit board (Task 26): unplayed cells in NYC blue, lighter each row
+  // down; a played cell drops into the background; category names sit on
+  // an orange rule, unboxed.
+  const lit = await page.evaluate(() => {
+    const bg = (s) => getComputedStyle(document.querySelector(s)).backgroundColor;
+    const h = getComputedStyle(document.querySelector(".board-header"));
+    return { top: bg(".board-cell.clickable.tier-0"), bottom: bg(".board-cell.clickable.tier-4"), used: bg(".board-cell.used"), head: [h.backgroundColor, h.borderBottomColor] };
+  });
+  check(lit.top === "rgb(31, 87, 132)" && lit.bottom === "rgb(43, 115, 170)", `unplayed cells are lit blue, lighter down the board (${lit.top} → ${lit.bottom})`);
+  check(lit.used === "rgba(0, 0, 0, 0)", `a played cell drops into the background (${lit.used})`);
+  check(lit.head[0] === "rgba(0, 0, 0, 0)" && lit.head[1] === "rgb(242, 101, 34)", `category names sit on an orange rule (${lit.head})`);
   // Score badges (Task 25, U5): what just changed, on the score pills, and
   // gone at the next board.
   const badges = () => page.$$eval("#screen-board .score-badge", (e) => e.map((x) => x.textContent));
@@ -167,6 +185,11 @@ try {
   const hdr = await page.$eval('.board-header.clickable[data-ri="0"]', (e) => getComputedStyle(e).backgroundColor);
   check(hdr === "rgb(35, 97, 146)", `live trivia headers look like buttons (${hdr})`);
   check((await page.textContent(".board-hint")) === "Trivia: click a category to play it.", "the trivia hint is short");
+  // In trivia what's lit is what you press: the headers, not the cells.
+  check(
+    (await page.$eval(".board-grid.trivia .board-cell:not(.used):not(.board-gap)", (e) => getComputedStyle(e).backgroundColor)) === "rgba(0, 0, 0, 0)",
+    "trivia cells stay dark (the headers are lit)"
+  );
   await click('.board-header.clickable[data-ri="0"]');
   await settle();
   let n = 0;
@@ -501,6 +524,14 @@ try {
     check(order.join() === ranked.join(), `the final scores are ranked (${order.join(", ")})`);
     const top = Math.max(...teams.map((t) => t[1]));
     check((await fin.$$("#screen-board .score-team.leader")).length === teams.filter((t) => t[1] === top).length, "the leader(s) stand out");
+    // The finish (Task 26): the winner filled orange, dark text; the title
+    // has the tricolor stripe.
+    const win = await fin.$eval("#screen-board .score-team.leader", (e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e.querySelector(".score-points")).color]);
+    check(win[0] === "rgb(242, 101, 34)" && win[1] === "rgb(10, 22, 32)", `the winner is filled orange (${win})`);
+    check(
+      /linear-gradient/.test(await fin.$eval("#screen-board .final-title", (e) => getComputedStyle(e, "::after").backgroundImage)),
+      "the Final scores title has the tricolor stripe"
+    );
     check((await fin.evaluate(() => document.activeElement.id)) === "setup-btn", "focus is on Setup when the game is over");
     await fin.keyboard.press("Enter");
     await fin.waitForTimeout(450);

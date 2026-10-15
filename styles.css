@@ -74,9 +74,11 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
    sizes at 1080p. Secondary buttons share one row (council Task 9). */
 #screen-setup { max-width: calc(1920 * var(--u)); padding: calc(24 * var(--u)) calc(40 * var(--u)); }
 #screen-setup h1 { text-align: center; font-size: calc(72 * var(--u)); margin-bottom: calc(12 * var(--u)); }
+/* The NYC tricolor (blue, white, orange) — the app's one signature mark,
+   under the setup title and the Final scores title (Task 26). */
 #screen-setup h1::after {
-  content: ""; display: block; width: calc(120 * var(--u)); height: calc(6 * var(--u));
-  margin: calc(12 * var(--u)) auto 0; background: var(--orange); border-radius: 3px;
+  content: ""; display: block; width: calc(150 * var(--u)); height: calc(6 * var(--u));
+  margin: calc(12 * var(--u)) auto 0; background: linear-gradient(90deg, var(--blue) 0 33.33%, var(--text) 33.33% 66.66%, var(--orange) 66.66% 100%); border-radius: 3px;
 }
 #screen-setup .subtitle.warn { color: var(--text); font-weight: 700; } /* orange is for actions, scores and the answer */
 #screen-setup .subtitle { text-align: center; font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); margin: calc(4 * var(--u)) 0 0; }
@@ -180,7 +182,6 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
    score never does (Task 25: 4-digit scores and long names wrapped to a
    third row at 960x540). */
 .scoreboard .score-team { max-width: calc((100% - (var(--per-row, 3) - 1) * 28 * var(--u)) / var(--per-row, 3)); min-width: 0; }
-.scoreboard .score-team.leader .score-points.neg { color: var(--text); } /* a winner below zero still reads on orange */
 .score-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scoreboard .score-points { flex: none; }
 .score-badge {
@@ -195,13 +196,19 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
    names the winner or the tie. */
 .final-title {
   text-align: center; margin: 0 0 calc(10 * var(--u)); line-height: 1.2;
-  font-size: max(20px, calc(40 * var(--u))); font-weight: 800;
+  font-size: max(20px, calc(46 * var(--u))); font-weight: 800;
+}
+.final-title::after {
+  content: ""; display: block; width: calc(150 * var(--u)); height: calc(6 * var(--u));
+  margin: calc(8 * var(--u)) auto 0; background: linear-gradient(90deg, var(--blue) 0 33.33%, var(--text) 33.33% 66.66%, var(--orange) 66.66% 100%); border-radius: 3px;
 }
 /* Larger with the screen, but the same floors as in play: at 960x540 six
    long names already take two rows. */
 .scoreboard.final .score-team { font-size: max(20px, calc(36 * var(--u))); }
 .scoreboard.final .score-points { font-size: max(28px, calc(52 * var(--u))); }
-.scoreboard .score-team.leader { border-color: var(--orange); box-shadow: inset 0 0 0 2px var(--orange); }
+/* The winner (or the tied leaders) filled orange, dark text (Task 26). */
+.scoreboard .score-team.leader { background: var(--orange); border-color: var(--orange); color: #0a1620; }
+.scoreboard .score-team.leader .score-points { color: #0a1620; }
 /* A played-out grid matters least: smaller numbers make room for the
    title and the ranked scores (six long names at 960x540). */
 .board-grid.final .board-cell { font-size: max(24px, calc(48 * var(--u))); }
@@ -214,11 +221,14 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
    the longest shipped word, fits its column (6 rounds) at every target
    size; balance keeps two-line names even. break-word is the last resort
    for one absurdly long word. */
+/* The lit board (Task 26): category names unboxed, on an orange rule;
+   what's lit is what you press — the cells in Jeopardy, the headers in
+   trivia. */
 .board-header {
   font-size: max(20px, calc(44 * var(--u))); font-weight: 700; line-height: 1.15; text-align: center;
   display: grid; place-items: center; text-wrap: balance;
   padding: calc(12 * var(--u)) calc(10 * var(--u)); color: var(--text);
-  background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
+  background: transparent; border: 0; border-bottom: max(3px, calc(4 * var(--u))) solid var(--orange); border-radius: 0;
   overflow-wrap: break-word; min-width: 0;
 }
 /* Clickable headers and cells are <button>s (Task 21): the global button
@@ -230,31 +240,35 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .board-header.clickable:hover { background: var(--blue); border-color: var(--blue); }
 .board-header.clickable:focus-visible { background: var(--blue); border-color: var(--blue); }
 .no-fv.kbd .board-header.clickable:focus { outline: 3px solid var(--text); outline-offset: 2px; } /* a ring, not a fill: focus is set by code after every question */
-/* Row position IS difficulty: subtle 5-step ramp easy (top) to hard (bottom). */
-.board-cell.tier-0 { background: #111f2a; }
-.board-cell.tier-1 { background: #13242f; }
-.board-cell.tier-2 { background: #162a38; }
-.board-cell.tier-3 { background: #1a3242; }
-.board-cell.tier-4 { background: #1f3b4e; }
+/* Row position IS difficulty: NYC blue, a shade lighter each row down
+   (easy at the top, hard at the bottom; Task 26). White on the lightest
+   is 4.8:1, on numbers 32 px and up. */
+.board-cell.tier-0 { background: #1f5784; }
+.board-cell.tier-1 { background: #215c8b; }
+.board-cell.tier-2 { background: #236192; }
+.board-cell.tier-3 { background: #276a9e; }
+.board-cell.tier-4 { background: #2b73aa; }
 .board-cell {
   font-size: max(32px, calc(64 * var(--u))); line-height: 1.1;
   font-weight: 800; font-variant-numeric: tabular-nums;
   display: grid; place-items: center; text-align: center;
   padding: calc(6 * var(--u)) 8px; color: var(--text); /* explicit: buttons default to dark text */
-  background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
+  background: var(--blue); border: 1px solid transparent; border-radius: 10px;
 }
 .clickable { cursor: pointer; }
 .board-cell.clickable:hover { background: var(--orange); border-color: var(--orange); color: #0a1620; }
 .board-cell.clickable:focus-visible { background: var(--orange); border-color: var(--orange); color: #0a1620; }
 .no-fv.kbd .board-cell.clickable:focus { outline: 3px solid var(--text); outline-offset: 2px; } /* a ring, not the fill */
-.board-cell.used { color: var(--muted); background: transparent; border: 2px dashed var(--edge); }
+/* A played cell drops into the background: no fill, a faint outline, a
+   faint number (2.4:1 — it's done). */
+.board-cell.used { color: #3a5872; background: transparent; border: 2px solid #17293a; }
 .board-gap { visibility: hidden; }
 /* Trivia: the header is the click target; cells are inert (Task 7.8).
    Task 25, U14: live headers are filled like buttons; played cells fade
    further than unplayed ones, so the two read apart. */
-.board-grid.trivia .board-cell { opacity: 0.6; }
-.board-grid.trivia .board-cell.used { opacity: 0.45; } /* 2.7:1 — faint, still legible */
-.board-grid.trivia .board-header.clickable { background: var(--blue); border-color: var(--blue); }
+.board-grid.trivia .board-cell { background: transparent; border-color: #1d3346; color: var(--muted); }
+.board-grid.trivia .board-cell.used { color: #3d5c77; border-style: dashed; } /* 2.6:1 — faint, still legible */
+.board-grid.trivia .board-header.clickable { background: var(--blue); border-color: var(--blue); border-radius: 10px; }
 .board-grid.trivia .board-header.clickable:hover { background: #2c76b0; border-color: #2c76b0; }
 .board-grid.trivia .board-header.clickable:focus-visible { background: #2c76b0; border-color: #2c76b0; }
 .no-fv.kbd .board-grid.trivia .board-header.clickable:focus { outline: 3px solid var(--text); outline-offset: 2px; }
@@ -265,7 +279,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   font-size: max(13px, calc(22 * var(--u))); font-weight: 800; line-height: 1.2;
   background: var(--panel); color: var(--text); border: 1px solid var(--edge);
 }
-.board-header.dim { opacity: 0.45; }
+.board-header.dim { opacity: 0.45; border-bottom-color: var(--edge); }
 .board-hint { color: var(--muted); font-size: max(18px, calc(26 * var(--u))); line-height: 1.3; margin: 0 0 calc(20 * var(--u)); text-align: center; } /* room for the "N left" pills */
 /* Question screens (Task 25 layout, on Tasks 20/21): one viewport tall, a
    grid of rows — the header, the clip, then the question + answer in the

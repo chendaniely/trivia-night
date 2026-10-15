@@ -623,9 +623,28 @@ it.
 |---|---|---|
 | U12 | While a team has no name, the setup subtitle says "Every team needs a name." in bold (orange stays for actions and scores), in the same line, announced to screen readers. | `make smoke` (text, weight and colour) |
 | U13 | Each mode has a short description inline: "any cell; wrong answers lose points", "a category, top to bottom". No extra height. | `make smoke`; setup with four long names and Resume still fits 960×540 |
-| U14 | Live trivia headers are filled like buttons (a lighter fill when focused); a partly played column has a "3 left" pill on its corner (no height); played cells fade further than unplayed ones (2.7:1); the hint is shorter ("Trivia: click a category to play it."). | `make smoke` (the pill is visible); `make fit`: a partly played trivia board with six teams |
+| U14 | Live trivia headers are filled like buttons (a lighter fill when focused); a partly played column has a "3 left" pill on its corner (no height); played cells fade further than unplayed ones (2.6:1 after the UI pass); the hint is shorter ("Trivia: click a category to play it."). | `make smoke` (the pill is visible); `make fit`: a partly played trivia board with six teams |
 | U15 | The end of a column is a title card: "Music — round over", then a card per team with its points from the round and its new total. | `make smoke`; `make fit`: the tally with six long names at four sizes |
 | U16 | Errors say what to add: `has no answer — add a line like a: "the answer"`; YAML that doesn't parse shows the line and says text with a colon or # needs quotes; a duplicated key is named; an empty file says so; the screen names the file or folder; the text is in the normal colour with red bullets. | `test/validate.test.mjs` (exact wording; no schema words; no message repeats its location); `make smoke` (the shipped file, and a folder through the picker) |
 | U17 | Scores below zero read "−500" with a true minus sign: muted on the board (a winner below zero stays readable on orange), and with the true minus on the tally and the saved-game line. | `test/display.test.mjs`; `make smoke` (text and colour) |
 | U19 | Every `:focus-visible` rule stands alone (an old browser drops only that rule, not the hover beside it), with a `.no-fv.kbd … :focus` ring: `app.js` sets `.no-fv` where `:focus-visible` is unknown, and `.kbd` while the keyboard or remote is in use — no ring after a mouse click, which the room would read as "next question picked". | `test/css.test.mjs`; `make smoke` on a page where `:focus-visible` throws and its rules are deleted: a ring with the keyboard, none after a click |
 | also | Score pills take at most half (two teams) or a third of the row, and a long name shortens — six long names with 4-digit scores stay on two rows at 960×540, two or three keep their full names. Tally and confirm screens centre by auto margins, so a crowded one scrolls from its top. Browser Back from a tally shows the badges too. A stale cached `index.html` can't stop the app booting mid-deploy, and the boot note says to reload first. | `make fit` (2 and 3 long names uncut; 6 with big scores on two rows); `make smoke` |
+
+## After the fixes: a UI pass
+
+With the audit closed, the partner asked for an opinion on the look:
+"i have no real compalints right now, but i'm looking for your opinion".
+Claude mocked up three proposals as CSS over the live app and
+recommended two: **light up the board** (unplayed cells in NYC blue,
+played cells dropping away, category names on an orange rule, the
+trivia headers lit instead of the cells) and **a real finish** (the
+winner filled orange, and a blue-white-orange NYC flag stripe under the
+setup and Final scores titles). It advised against the third, a
+boxless scoreboard: on the TV its rules read like empty input fields,
+and at 960×540 it needs height the board doesn't have. The partner
+chose both recommendations (Task 26). No size changed, so the fit
+checks hold.
+
+| Before | After |
+|---|---|
+| ![The board before the UI pass](assets/ux-audit/ui-pass-board-before.png) | ![The board after the UI pass](assets/ux-audit/ui-pass-board-after.png) |
