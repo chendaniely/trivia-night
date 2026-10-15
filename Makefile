@@ -15,4 +15,8 @@ test:
 smoke:
 	node tools/smoke.mjs $(URL)
 
-.PHONY: serve serve-lan test smoke
+# Every screen fits every TV size, and a second click on the same spot is ignored
+fit:
+	node tools/fit.mjs $(URL)
+
+.PHONY: serve serve-lan test smoke fit

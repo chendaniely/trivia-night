@@ -41,7 +41,8 @@ assert.equal(r.urls.length, 2);
 // no questions.yaml in the root -> the folder error, not a crash
 const r2 = await loadFromFileList([mk("tv/other/readme.txt", "x")]);
 assert.equal(r2.ok, false);
-assert.equal(r2.errors[0].where, "folder");
+assert.equal(r2.errors[0].where, undefined); // the error screen names the folder (Task 25)
+assert.equal(r2.errors[0].message, "there is no questions.yaml at its top level"); // host wording (Task 25, U16)
 
 // createNew: in-memory fake of the FileSystemDirectoryHandle API
 function notFound(n) {

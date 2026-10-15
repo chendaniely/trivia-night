@@ -92,9 +92,9 @@ export async function loadFromDirHandle(handle) {
     // permission mid-read) is reported, not silently swallowed.
     const message =
       err && err.name === "NotFoundError"
-        ? "no questions.yaml in the folder root"
-        : `could not read questions.yaml (${err.message})`;
-    return { ok: false, errors: [{ where: "folder", message }] };
+        ? "there is no questions.yaml at its top level"
+        : `its questions.yaml could not be read (${err.message})`;
+    return { ok: false, errors: [{ message }] }; // the error screen names the folder
   }
   const result = parseBank(text);
   if (!result.ok) return result;
@@ -112,7 +112,7 @@ export async function loadFromFileList(files) {
     return parts.length === 2 && parts[1] === "questions.yaml";
   });
   if (!yaml) {
-    return { ok: false, errors: [{ where: "folder", message: "no questions.yaml in the folder root" }] };
+    return { ok: false, errors: [{ message: "there is no questions.yaml at its top level" }] };
   }
   const text = await yaml.text();
   const result = parseBank(text);

@@ -1203,6 +1203,12 @@ YAML syntax errors keep their real line numbers (unchanged).
 
 ### Task 16: Create new — picker first, never overwrite
 
+> Superseded order (Task 25, U7, 2026-10-14): `prompt()` is gone. The name
+> is typed first on the app's confirm screen, and its OK click (or Enter
+> in the name field) opens the readwrite picker straight away, so the
+> activation is always fresh. Never-overwrite is unchanged. Verified with
+> a stubbed picker in `make smoke` (activation live at the call).
+
 Chrome 155 runs 2026-10-14 (real FSA handles from OPFS behind a stubbed
 picker; the real picker for the gesture check):
 1. `prompt()` runs BEFORE `showDirectoryPicker()`. If the host takes
@@ -1681,7 +1687,7 @@ tie up loose ends — this is the list:
    (inside Documents, not Documents itself) → allow editing → Load folder
    on the result. The picker is stubbed in every automated test.
 5. **Open the live URL on the friend's TV** (TV browser, if that route is
-   used): font, Reset game dialog, audio.
+   used): font, Reset game's confirm screen with the remote, audio.
 6. **Two trackpad swipe-backs on the board stay in the app** (real device;
    Chrome's history intervention can't be scripted).
 7. **Run `make serve` once on the event Mac before the night** (the first
@@ -1737,3 +1743,275 @@ the installed plugins/skills helped. Mermaid diagrams welcome.
   mermaid parser in headless Chrome; every image link resolves; no
   credentials, LAN addresses or private conversations in the folder.
 - [x] **Step 4: Commit** — `docs(case-study): 🤖 …`.
+
+### Task 25: UX audit + fixes — partner request 2026-10-14
+
+Partner request (2026-10-14, after the merge): "first do a UX audit …
+keep track of some of the changes we are goign to be making (start a new
+chapter) that the qwen3.8 27b model may have missed." Findings, origins,
+fix specs and the tracker live in `docs/case-study/08-ux-audit.md`
+(U1–U19); that chapter's Status column and Fix log are updated with
+every fix commit. Releases (partner, same evening): `v0.1.0` = Qwen's
+final build (`f603230`), `v0.2.0` = after the Claude pass (`e9ccb0b`),
+`v1.0.0` = after this task.
+
+**Files:**
+- Create: `docs/case-study/08-ux-audit.md`,
+  `docs/case-study/research/ux-audit-measurements.md`,
+  `docs/case-study/assets/ux-audit/`; later `tools/fit.mjs` + `make fit`.
+- Later steps modify the app (`js/`, `styles.css`, `index.html`),
+  `tools/smoke.mjs`, plus `README.md` and the About screen whenever
+  host-visible behaviour changes.
+
+- [x] **Step 1: Audit** — real Chrome via Playwright: 15 screens × 4
+  sizes + keyboard, 6-team and phone runs (68 shots), computed type sizes,
+  WCAG contrast for 16 pairs, probes (pointer target after Reveal, empty
+  space under questions, a whole board played out, empty team name).
+  Skills: ui-ux-pro-max, taste-skill redesign (audit-first),
+  external-app-review. Chapter 8: 19 findings (2 🔴, 6 🟠, 11 🟡),
+  origins by `git blame`, why each was missed, batch plan, guardrails.
+
+> Council 2026-10-14 (Task 25 Step 1): backward (sonnet) — ~75 claims
+> re-derived; corrected: contrast "passes everywhere" (trivia board
+> 3.96/2.70), README dialog warning post-dates the confirms (`ac11dd5`
+> 3 h after `cf26ed4`), spec paraphrased in quotes, probe list, shot
+> count; one false alarm (said the audit ran on Sonnet; it ran on Opus).
+> Forward (opus) — same-spot hazard is wider than Reveal (image Reveal →
+> Done, opening a cell → Done at 720p, trivia Next → Next/Reveal, Done →
+> board): U2 raised to 🔴, same-spot click guard first; undo needs an
+> explicit `{cell, round, deltas}` record in scoring (round log has no
+> question id; zero-mark Done / trivia pass log nothing), save stays
+> `v: 1` with an optional field; confirm as a 7th screen (no `<dialog>`
+> / `inert` at the Chrome 86 / Safari 14 floor; Back = Cancel; picker
+> called synchronously from OK); worst-case fit slack only 33–129 px at
+> 960×540/720p (audit used Wings, not the longest Oscar 300) → commit
+> `make fit`, one `--qf` retune; U5 contradicted the ≤240 ms guardrail;
+> new U18 (focus BODY at game end) and U19 (`:focus-visible` drops whole
+> rules before Safari 15.4). Controller re-ran 4 transitions in Chrome:
+> 3 reproduced (image Reveal → Done at 720p + 1080p, cell 2:2 → Done at
+> 720p); trivia q1 → q2 not reproduced (reviewer's cases were q2/q3);
+> focus BODY at game end reproduced. All folded into chapter 8.
+
+Partner go-ahead 2026-10-14 ("yeah let's make the UX audi[t] fixes"),
+including U6 as the board's own scoreboard turning into Final scores (no
+new screen). Keyboard shortcuts stay parked. Inline execution
+(executing-plans) with TDD; a council (backward + forward) per Step.
+
+- [x] **Step 2: Batch 1 — scores you can trust**
+  - 2a `tools/fit.mjs` + `make fit` (needs `make serve`): fit at 960×540,
+    1280×720, 1440×900, 1920×1080 for setup (4 teams + Resume), board (4
+    and 6 long names), worst questions Oscar 300 / Music 400 / Words 500
+    marked + revealed in both modes, an image question; plus a
+    transition probe: after each screen-changing pointer click, a second
+    click at the same coordinates changes nothing. RED first (U2), then
+    the same-spot guard in `app.js`: `lockInput()` right after a trusted
+    pointer click arms a guard at that point; trusted pointer clicks
+    within 8 px are swallowed until the pointer moves >8 px away or
+    2.5 s pass; keyboard clicks (`detail === 0`) are never guarded; team
+    marks never arm it (they never lock).
+  - 2b U11 disabled style (own colours at 0.4 opacity) — needed by 2d.
+  - 2c U7 confirm screen: `#screen-confirm` as a 7th SCREENS entry,
+    `askConfirm({ title, text, ok, input?, onOk, onCancel })` with
+    callbacks (OK's click runs `onOk` synchronously — the folder picker
+    keeps its user activation). Focus on Cancel; Cancel/Back/Esc cancel
+    and return focus to the opener; Enter presses only the focused
+    button. Replaces all four `confirm()`s; Create new asks for the
+    folder name on this screen, then OK ("Choose where…") opens the
+    picker. `make smoke` clicks the screen and fails on any native
+    dialog but beforeunload. README TV checklist + plan deferred item 5
+    reworded.
+  - 2d U1 Undo last question: `deltasFor(marks, pts)` and
+    `scoring.bank(cell, round, deltas)` / `undoLast()` with a one-level
+    `last` record (cleared by reset and new games; in `snapshot()`; save
+    stays `v: 1`, a bad `last` is dropped, old saves resume). Board
+    button "Undo last question" between Setup and Reset, disabled (not
+    removed) when there is nothing to undo; asks first, naming the
+    question and the points it takes back; focus returns to the reopened
+    cell (jeopardy) or its header (trivia).
+  - 2e U3 bank preview: a one-line, fixed-height line under the team
+    buttons ("Done: +500 A · −500 B" / "Done: no one scores"; trivia
+    "Next: …"), ellipsis if too long, from `deltasFor`.
+  - README + About: Undo, the confirm screen, the preview.
+
+> Council 2026-10-15 (Task 25 Step 2, `9c417d1`): backward (sonnet) — 2a–2e
+> as specified, no regressions; Important: chapter 8 / plan boxes not
+> updated; half the same-spot checks guarded nothing (a mutant with the
+> guard off still passed them); Back on a confirm left the app when no
+> game was running; smoke never drove discard / team-list / Load folder /
+> Create new / trivia Undo / Undo after Resume; `make fit` 89/90 without a
+> waiver. Forward (opus) — Important: a held-back click still moved focus
+> (mousedown) onto the button under the pointer, so Enter could bank; on
+> touch the guard was never cleared by a tap elsewhere (Done dead for
+> 2.5 s); a confirm left pending by a folder load let Esc bring back the
+> old board and crash on Done; Minor: guard armed by a 100 ms window (slow
+> TV), double-click Remove removed two teams, `detail > 0` alone treats a
+> remote's synthetic click as a pointer, a confirm asked from a confirm
+> could wedge. Fix commit: pointerdown-gated pointer clicks, mousedown
+> held back too, a press elsewhere ends the guard, arming inside the
+> click's dispatch, `dropConfirm()` on any other screen, Esc only on the
+> confirm screen, `from` kept for a nested confirm, Back cancels with no
+> game (guard armed by the confirm), Remove locks; smoke grew to cover
+> every confirm path, Undo after Resume, trivia Undo and the four fixes
+> (each RED on the old code, GREEN after). Moved to Step 3 (they depend on
+> its layout): the same-spot checks split into "guard" and "still" cases
+> and mutation-tested; Oscar 400 into the worst cases; overlap asserts in
+> `make fit`; the 6-team preview clipping; mark suffix width; Play/Pause
+> double-click. Waiver: the 6-team image question at 960×540 scrolls
+> until Step 3a's layout (fixed there). Ruling: Enter in Create new's
+> name field means OK (a text field, not a button).
+- [x] **Step 3: Batch 2 — what the room sees**
+  - 3a question layout: header "Round · 500" / "Round · question 2 of 5
+    · 200" on one line (round name ellipsised, points never); the answer
+    rendered from the start with `visibility: hidden` and an inline
+    "Answer:" label, animating only on the reveal itself; Reveal becomes
+    a same-size non-interactive "Answer shown" slot; controls order
+    Reveal · Done/Next · Back to board (DOM order); question + answer
+    centred in a flexible row, team buttons + preview + controls pinned
+    at the bottom; one `--qf` retune against `make fit`.
+  - 3b U8: a fixed-width "▶ Play clip / ❚❚ Pause / ↺ Replay" button in
+    the audio block (cached with the clip; first focus on audio
+    questions; removed with focus to the first team if the clip fails;
+    `play()` rejection caught).
+  - 3c U5: "+500 / −500" badges on changed score pills after Done, and
+    the column's points after a trivia tally; absolutely positioned,
+    ≤240 ms fade, shown without motion under reduced motion, gone on
+    the next board render.
+  - 3d U6 + U18: when no playable cell remains, the scoreboard becomes
+    "Final scores": ranked, leader(s) highlighted, ties named, sized to
+    fit 6 teams at 960×540; focus goes to Setup.
+> Council 2026-10-15 (Task 25 Step 3, `3b40a7f`): backward (sonnet) — 3a–3d
+> and the carried items as specified, no regressions; Important: chapter /
+> plan not updated; three claims survived a mutant (mark slot, clip
+> double-click, trivia tally badges) and "badges gone" was only checked
+> after a reload; Minor: About lacked the stakes header and badges, badge
+> over the digits at 960, all-team ties listed every name, image
+> questions are top-aligned (now stated). Forward (opus) — Important: a
+> long question with a clip scrolled at every size (the clip had a row of
+> its own; 1080p newly so after the --qf retune) and `make fit` had no
+> clip + long text case; Minor: a clip failing after OK put focus on team
+> 0 (the next OK marked it), a slow clip said Pause while silent, the
+> hidden answer relied only on styles.css (a stale cache could show it),
+> Setup from the final board left focus nowhere, the preview fallback
+> never re-measured, Safari 14.0 has no flex gap (floor restated as
+> 14.1). Fix commit: the clip moves to the header line, "Loading…" until
+> playing, focus to the "no clip" note, inline visibility on the hidden
+> answer, Setup focuses Back to board, the preview re-measures on resize
+> and fonts, trivia badges show the run's own gains, "everyone ties" /
+> "no one scored", the badge sits higher; smoke + fit cover each (RED
+> before, GREEN after); README/About/chapter/plan updated.
+- [x] **Step 4: Batch 3 — polish**: U12 (the subtitle turns into "Every
+  team needs a name." while Start is disabled), U13 (one-line mode
+  descriptions), U14 (live trivia headers styled as buttons with "N
+  left"; a shorter hint kept — the partner asked for the obviousness,
+  2026-10-12), U15 (tally title card with column and total points,
+  sized in `--u`), U16 (plain error wording + which file/folder; text
+  not all red), U17 (true minus, muted negative scores), U19 (`:focus`
+  fallbacks behind a `no-fv` class set when `:focus-visible` is
+  unsupported). README + About.
+  As built (council constraints on 0c2a540's forward review): mode
+  descriptions inline (no extra setup height); "N left" a corner pill
+  (no header height); the `.no-fv` fallback on cells and headers is a
+  ring, not the fill (focus is set by code after every question); the
+  tally card and a partly played trivia board join `make fit`.
+
+> Council 2026-10-15 (Task 25 Step 4, `290a5dc`): backward (sonnet) — items
+> as specified, no regressions; Important: "rounds: rounds:" in an error;
+> the U19 checks could not fail (Chrome's own button:focus-visible gave
+> the ring); several style checks read only text (pill hidden, warn,
+> neg, tally colours, the picker folder name, three messages); played
+> trivia cells at 2.10:1 (worse than the audit's 2.70:1). Forward (opus)
+> — Important: raw js-yaml wording for parse errors (a colon in an
+> unquoted answer says "bad indentation of a mapping entry"); the
+> one-third pill cap cut 2–3 long names with room to spare; a stale
+> cached file after a deploy stops the boot and the boot note blames the
+> browser; Minor: a crowded tally/confirm cut its top off, the "N left"
+> pill touching the hint, no focus fill on trivia headers, the .no-fv
+> ring after mouse play, error-screen leftovers, a negative winner's
+> grey score, the orange warning, 11 px mode descriptions, long round
+> names, CI only on main. Final whole-branch review (opus,
+> 5fdedc8..290a5dc): ready with fixes — Important: the "marking moves
+> no button" check is flaky (hover transition); Minor: Back to board
+> lands on Undo (no fit case), "root:" label, `make fit` not in the
+> README, IME Enter in the name field, a cancelled no-game confirm left
+> a history entry, fit writes a screenshot into agent scratch, 8 teams
+> scroll a long question at 720p (contract unstated), mid-deploy boot,
+> no badges on browser Back from a tally. One fix commit: plain parse
+> errors with the line and a quoting hint, no repeated locations; pills
+> per row (half for two teams); `.no-fv.kbd` rings (keyboard only) and a
+> trivia header focus fill; tally/confirm centred by auto margins; hint
+> spacing; trivia played cells 0.45; header aria-labels; the warning in
+> bold text with aria-live; mode descriptions ≥ 14 px; "everyone ends on
+> 0"; Back from a tally = its own button; IME-safe Enter; a cancelled
+> no-game confirm gives its history entry back; boot note says reload
+> first and missing confirm/error elements can't stop the boot; smoke
+> waits out the hover transition, a real old-browser check, colour
+> checks, the picker folder name, Back-from-tally badges; fit adds Back
+> to board onto Undo (guard), 2–3 long names uncut, no screenshot;
+> README: make fit, the six-team contract, quoting, round names, the
+> deploy rule. Rulings in the ledger.
+- [ ] **Step 5: Release `v1.0.0`** after Steps 2–4 merge and deploy. Push
+  at least a day before the night; after the deploy, wait 10 minutes and
+  Shift-reload on the Mac and the TV.
+
+Guardrails for every step (Tasks 18, 20, 21, the final review and the
+Step 1 council): `make fit` at 960×540–1920×1080 incl. Oscar 300 / Music 400 /
+Words 500, 4 and 6 long names, all marked, revealed, both modes, an image
+question; focus never on Done/Next and restored after re-render;
+held-Enter swallowed, click lock kept, same-spot guard added; saved games
+resume (format stays `v: 1`, new fields optional, unit-tested); nothing
+newer than ~Chrome 86 / Safari 14; motion ≤240 ms with no information
+lost under reduced motion; no timers or buzzers; `make test` + `make
+smoke` + `make fit` pass; README + About in the same task when
+host-visible behaviour changes.
+
+### Task 26: UI pass — a lit board and a real finish — partner request 2026-10-15
+
+Partner request (2026-10-15, after the UX fixes): "do a UI pass to see if
+there's anything to make things look better (i have no real compalints
+right now, but i'm looking for your opinion)". Mock-ups of three
+proposals on a private comparison page; the partner chose: "A C both look
+good. let's go for it. push the PR and merge into main". B (a boxless
+scoreboard) was not recommended and is not built.
+
+**Files:** `styles.css` (+ `tools/smoke.mjs` checks), the spec's visual
+theme note, chapter 8's closing note.
+
+- [x] **Step 1: A — the lit board.** Jeopardy: unplayed cells in NYC blue
+  (`#1f5784` at the top to `#2b73aa` at the bottom, `#236192` in the
+  middle: the difficulty ramp);
+  played cells drop into the background (no fill, a faint outline, faint
+  numbers); category names unboxed over a 4-unit orange rule. Trivia:
+  the live headers are lit (as today) and the cells stay dark — what's
+  lit is what you press. Hover/focus on a cell stays the orange fill.
+  Sizes: the header rule is 1–2 px taller than the old border, and (Step
+  2) the Final scores title grows; `make fit` stays green.
+- [x] **Step 2: C — the finish.** On Final scores the leader's pill is
+  filled orange with dark text; the title is a little larger with a NYC
+  tricolor stripe (blue, white, orange) under it; the setup title's
+  orange bar becomes the same stripe.
+> Council 2026-10-15 (Task 26, `d445e78`): backward (sonnet) — as specified
+> in both modes; Important: the docs said no size changed (the Final
+> scores title grew a few px, fit still green); three mutants passed the
+> new smoke checks (the winner's name colour, the title stripe's colours,
+> played cells receding); Minor: a stale CSS comment, the ramp's wording,
+> U17's "muted" for a negative leader. Forward (opus) — safe to merge;
+> Important: a cached pre-confirm index.html with the new scripts opened
+> an empty question screen (showScreen threw on the missing screen); on a
+> two-team final the winner's badge covered the new stripe; Minor: badges
+> blend into the orange winner pill (and for red-green colour blindness),
+> the old-browser ring is thin among lit cells, TV overscan can clip the
+> badges and the bottom buttons. Fix commit: null-safe screen switching
+> (a stale page plays, its confirms fall back to the browser's dialog),
+> room under the Final title for the badges, a dark ring round badges, a
+> thicker old-browser ring on cells, an overscan line in the README's TV
+> checklist; smoke checks the winner's name, the stripe's three colours,
+> played cells, a stale index.html playing a question, and an
+> all-negative final (mutants now fail); docs corrected.
+- [ ] **Step 3: Ship.** Council, then push, open the PR and merge into
+  `main` (merge commit, as PRs #1 and #2); watch the gated deploy; run
+  `make smoke` against the live URL. Release `v1.0.0` after (Task 25
+  Step 5), when the partner says so.
+
+Guardrails: Task 25's (fit at four sizes, same-spot, focus, colour roles:
+orange = action, scores, answer, the winner; blue = surfaces and what you
+press; green/red = marks and badges).
