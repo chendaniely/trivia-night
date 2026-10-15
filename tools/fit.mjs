@@ -7,6 +7,7 @@
 // the screen, a second click at the same coordinates changes nothing.
 // Serves nothing itself; exits non-zero on any failure.
 import { chromium } from "playwright";
+import { finishedSave } from "./finished-save.mjs";
 
 const URL_ = process.argv[2] || "http://127.0.0.1:8080/";
 const SIZES = [[960, 540], [1280, 720], [1440, 900], [1920, 1080]];
@@ -18,8 +19,9 @@ const NAMES = [
   "Trivia Newton-John",
   "Quiz Khalifa and Friends",
 ];
-// Worst shipped questions by length: Oscar 300, Music 400, Words 500.
-const WORST = [[0, 2], [3, 3], [5, 4]];
+// Worst shipped questions: the longest questions (Oscar 300, Music 400,
+// Words 500) and the longest answer (Oscar 400).
+const WORST = [[0, 2], [3, 3], [5, 4], [0, 3]];
 const MEDIA_BANK = `title: "Fit check"
 rounds:
   - name: "Pictures and other very long category names"
@@ -95,6 +97,26 @@ async function fits(page, what) {
     return { overY: se.scrollHeight - innerHeight, overX: se.scrollWidth - innerWidth, bottom, h: innerHeight };
   });
   check(r.overY <= 0 && r.overX <= 0 && r.bottom <= r.h, `${what} fits (scroll y=${r.overY} x=${r.overX}, last button bottom ${Math.round(r.bottom)}/${r.h})`);
+  // Question screens: the question + answer never run into the team
+  // buttons, and no text is cut off (the round name's ellipsis aside).
+  const q = await page.evaluate(() => {
+    const scr = document.getElementById("screen-question");
+    if (scr.classList.contains("hidden")) return null;
+    const qa = scr.querySelector(".qa").getBoundingClientRect();
+    const tb = scr.querySelector(".team-btns").getBoundingClientRect();
+    // Wider than its box: a word running out of the column, or the
+    // preview line (overflow hidden) losing text. Height is not checked:
+    // line-height rounding leaves a pixel or two, and running into the
+    // team buttons is the gap check above.
+    const cut = [...scr.querySelectorAll(".question-text, .answer-text, .bank-preview")]
+      .filter((e) => e.scrollWidth > e.clientWidth + 1)
+      .map((e) => e.className);
+    return { gap: Math.round(tb.top - qa.bottom), cut };
+  });
+  if (q) {
+    check(q.gap >= 0, `${what}: the question and answer stay clear of the team buttons (gap ${q.gap})`);
+    check(q.cut.length === 0, `${what}: no text cut off (${q.cut.join(", ")})`);
+  }
   if (process.env.FIT_VERBOSE) console.log(`  slack ${String(Math.round(r.h - r.bottom)).padStart(4)} px  ${what}`);
 }
 
@@ -130,7 +152,9 @@ for (const [w, h] of SIZES) {
       await tap(page, `.board-cell.clickable[data-ri="${ri}"][data-qi="${qi}"]`);
       await settle(page);
       await markAll(page);
+      const before = await targets(page);
       await reveal(page);
+      check(before === (await targets(page)), `${tag} ${n} teams: jeopardy ${ri}:${qi} — Reveal moves no button (Task 25, U2)`);
       await fits(page, `${tag} ${n} teams: jeopardy ${ri}:${qi} marked + revealed`);
       await tap(page, "#screen-question button:text-is('Back to board')");
       await settle(page);
@@ -144,7 +168,8 @@ for (const [w, h] of SIZES) {
     for (const [ri, qi] of WORST) {
       await tap(page, `.board-header.clickable[data-ri="${ri}"]`);
       await settle(page);
-      for (let k = 0; k < qi; k++) {
+      // Next until this question is up (earlier passes may have used some)
+      while (!(await page.textContent("#screen-question .q-head")).includes(`question ${qi + 1} of`)) {
         await tap(page, "#screen-question button:text-is('Next')");
         await settle(page);
       }
@@ -161,6 +186,20 @@ for (const [w, h] of SIZES) {
     await settle(page);
     // Setup is the host's screen: Task 20's contract is 4 teams + Resume.
     if (n === 4) await fits(page, `${tag} ${n} teams: setup with Resume`);
+    await page.context().close();
+  }
+  // the finished board: Final scores, 6 long names
+  {
+    const page = await open(w, h);
+    const { key, json } = await finishedSave(URL_, NAMES.map((n, i) => [n, 1000 - 100 * i]));
+    await page.evaluate(([k, v]) => localStorage.setItem(k, v), [key, json]);
+    await page.reload();
+    await page.waitForSelector("#resume-btn:not(.hidden)");
+    await settle(page);
+    await tap(page, "#resume-btn");
+    await settle(page);
+    await fits(page, `${tag} 6 teams: Final scores`);
+    if (w === 960) await page.screenshot({ path: ".superpowers/sdd/2026-10-10-trivia-night/final-960.png" }).catch(() => {});
     await page.context().close();
   }
   // image + audio question, 6 teams
@@ -193,12 +232,27 @@ const stateOf = (page) =>
     });
   });
 
-async function sameSpot(page, selector, what) {
+// The pointer's target after the first click: the live (enabled) button
+// under it now, if any.
+const liveUnder = (page, x, y) =>
+  page.evaluate(([x, y]) => {
+    const b = document.elementFromPoint(x, y)?.closest("button");
+    return b && !b.disabled ? b.textContent.trim() : null;
+  }, [x, y]);
+
+// kind "guard": the transition really puts a live button under the
+// pointer (checked), and a second click there must change nothing.
+// kind "still": the screen keeps no live button under the pointer.
+async function sameSpot(page, selector, what, kind = "guard") {
   const box = await page.locator(selector).first().boundingBox();
   const x = box.x + box.width / 2;
   const y = box.y + box.height / 2;
   await page.mouse.click(x, y);
   await page.waitForTimeout(600); // past the 350 ms lock: a second, separate click
+  const live = await liveUnder(page, x, y);
+  if (process.argv.includes("--list")) console.log(`  under the pointer: ${live ?? "-"}  (${what})`);
+  if (kind === "guard") check(live !== null, `same spot: ${what} — a live button lands under the pointer (precondition)`);
+  else check(live === null, `same spot: ${what} — nothing live is left under the pointer`);
   const before = await stateOf(page);
   await page.mouse.click(x, y);
   await page.waitForTimeout(450);
@@ -206,46 +260,50 @@ async function sameSpot(page, selector, what) {
   check(before === after, `same spot: ${what} — a second click changed nothing`);
 }
 
+// [what, kind, bank, mode, arrange]. Since the Task 25 layout (controls
+// pinned at the bottom, Reveal kept as a disabled "Answer shown") most
+// transitions leave nothing live under the pointer ("still"); trivia's Next
+// lands on the next question's Next ("guard": the guard must hold).
 const SAME_SPOT = [
-  ["opening a cell", null, "jeopardy", async (p) => `.board-cell.clickable[data-ri="2"][data-qi="2"]`],
-  ["Reveal on Oscar 100", null, "jeopardy", async (p) => {
+  ["opening a cell", "still", null, "jeopardy", async (p) => `.board-cell.clickable[data-ri="2"][data-qi="2"]`],
+  ["Reveal on Oscar 100", "still", null, "jeopardy", async (p) => {
     await tap(p, `.board-cell.clickable[data-ri="0"][data-qi="0"]`); await settle(p);
     return "#screen-question button:text-is('Reveal answer')";
   }],
-  ["Reveal on Words 200", null, "jeopardy", async (p) => {
+  ["Reveal on Words 200", "still", null, "jeopardy", async (p) => {
     await tap(p, `.board-cell.clickable[data-ri="5"][data-qi="1"]`); await settle(p);
     return "#screen-question button:text-is('Reveal answer')";
   }],
-  ["Done back to the board", null, "jeopardy", async (p) => {
+  ["Done back to the board", "still", null, "jeopardy", async (p) => {
     await tap(p, `.board-cell.clickable[data-ri="1"][data-qi="0"]`); await settle(p);
     return "#screen-question button:text-is('Done')";
   }],
-  ["Reveal on an image question", MEDIA_BANK, "jeopardy", async (p) => {
+  ["Reveal on an image question", "still", MEDIA_BANK, "jeopardy", async (p) => {
     await tap(p, `.board-cell.clickable[data-ri="0"][data-qi="0"]`); await settle(p);
     return "#screen-question button:text-is('Reveal answer')";
   }],
-  ["trivia Next", null, "trivia", async (p) => {
+  ["trivia Next", "guard", null, "trivia", async (p) => {
     await tap(p, `.board-header.clickable[data-ri="5"]`); await settle(p);
     return "#screen-question button:text-is('Next')";
   }],
-  ["trivia Reveal then Next", null, "trivia", async (p) => {
+  ["trivia Reveal then Next", "guard", null, "trivia", async (p) => {
     await tap(p, `.board-header.clickable[data-ri="5"]`); await settle(p);
     await tap(p, "#screen-question button:text-is('Next')"); await settle(p);
     await reveal(p);
     return "#screen-question button:text-is('Next')";
   }],
-  ["the tally's Back to board", null, "trivia", async (p) => {
+  ["the tally's Back to board", "still", null, "trivia", async (p) => {
     await tap(p, `.board-header.clickable[data-ri="3"]`); await settle(p);
     for (let k = 0; k < 4; k++) { await tap(p, "#screen-question button:text-is('Next')"); await settle(p); }
     return "#screen-tally button";
   }],
 ];
-for (const [w, h] of [[1280, 720], [1920, 1080]]) {
-  for (const [what, bank, mode, arrange] of SAME_SPOT) {
+for (const [w, h] of [[960, 540], [1280, 720], [1920, 1080]]) {
+  for (const [what, kind, bank, mode, arrange] of SAME_SPOT) {
     const page = await open(w, h, bank);
     await start(page, 4, mode);
     const target = await arrange(page);
-    await sameSpot(page, target, `${w}x${h} ${what}`);
+    await sameSpot(page, target, `${w}x${h} ${what}`, kind);
     await page.context().close();
   }
 }

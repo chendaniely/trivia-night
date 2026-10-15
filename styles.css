@@ -154,6 +154,32 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   padding: calc(10 * var(--u)) calc(28 * var(--u)); font-size: max(20px, calc(30 * var(--u)));
 }
 .score-points { font-weight: 800; font-size: 40px; color: var(--orange); font-variant-numeric: tabular-nums; }
+/* Score badges (Task 25, U5): what the last question changed, over the
+   pill's top-right corner (absolutely placed: they move nothing). Green
+   and red as for the marks; the sign carries it too. */
+.scoreboard .score-team { position: relative; }
+.score-badge {
+  position: absolute; top: -0.6em; right: -0.5em; padding: 0.05em 0.45em; border-radius: 999px;
+  font-size: max(16px, calc(26 * var(--u))); font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums;
+  animation: badge-in 240ms ease;
+}
+.score-badge.up { background: var(--good); color: #06130a; }
+.score-badge.down { background: var(--bad); color: #160505; }
+/* Final scores (Task 25, U6): no new screen — the board's scoreboard,
+   ranked and larger, the leader(s) outlined in orange, under a title that
+   names the winner or the tie. */
+.final-title {
+  text-align: center; margin: 0 0 calc(10 * var(--u)); line-height: 1.2;
+  font-size: max(20px, calc(40 * var(--u))); font-weight: 800;
+}
+/* Larger with the screen, but the same floors as in play: at 960x540 six
+   long names already take two rows. */
+.scoreboard.final .score-team { font-size: max(20px, calc(36 * var(--u))); }
+.scoreboard.final .score-points { font-size: max(28px, calc(52 * var(--u))); }
+.scoreboard .score-team.leader { border-color: var(--orange); box-shadow: inset 0 0 0 2px var(--orange); }
+/* A played-out grid matters least: smaller numbers make room for the
+   title and the ranked scores (six long names at 960x540). */
+.board-grid.final .board-cell { font-size: max(24px, calc(48 * var(--u))); }
 .scoreboard .score-points { font-size: max(28px, calc(44 * var(--u))); }
 .board-grid {
   display: grid; gap: calc(12 * var(--u)); flex: 1 1 0;
@@ -198,27 +224,61 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .board-grid.trivia .board-cell { opacity: 0.45; }
 .board-header.dim { opacity: 0.45; }
 .board-hint { color: var(--muted); font-size: max(18px, calc(26 * var(--u))); line-height: 1.3; margin: 0 0 calc(14 * var(--u)); text-align: center; }
-/* Question screens: the worst case (longest shipped q + revealed answer +
-   long team names, council Task 13) must fit one screen. Task 20 fix 1:
-   sized in --u with px floors (question 32, answer 28, buttons 20), so
-   it fits a 960x540 TV viewport too; unchanged at 1080p. Text-only
-   questions override the question/answer size with --qf (fix 2, below). */
-#screen-question { padding: calc(24 * var(--u)) calc(40 * var(--u)); }
-.question-wrap { display: grid; gap: calc(20 * var(--u)); justify-items: start; }
-.question-wrap h2 { font-size: max(20px, calc(32 * var(--u))); font-weight: 700; color: var(--muted); margin: 0; }
+/* Question screens (Task 25 layout, on Tasks 20/21): one viewport tall, a
+   grid of rows — the header, the clip, then the question + answer in the
+   flexible row, then the host's band pinned at the bottom: team buttons,
+   the bank preview, the controls. The answer is laid out (hidden) before
+   Reveal, and Reveal becomes a same-size disabled "Answer shown", so
+   revealing moves nothing (U2). Rows have explicit places and margins,
+   not row-gap, so an absent clip leaves no gap. The flexible row never
+   shrinks below its content: text too long to fit makes the page scroll
+   rather than cover the buttons. `make fit` checks the worst case (the
+   longest shipped questions, revealed, 4-6 long team names, all marked)
+   from 960x540 to 1920x1080. */
+#screen-question { max-width: 1760px; height: 100vh; height: 100dvh; padding: calc(24 * var(--u)) calc(40 * var(--u)); }
+#screen-question .question-wrap {
+  height: 100%; display: grid; justify-items: start; row-gap: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(min-content, 1fr) auto auto auto;
+}
+#screen-question .question-wrap > * { grid-column: 1 / -1; margin: 0; max-width: 100%; }
+#screen-question .q-head { grid-row: 1; }
+#screen-question .audio-block { grid-row: 2; margin-top: calc(14 * var(--u)); }
+#screen-question .qa { grid-row: 3; align-self: center; margin: calc(18 * var(--u)) 0; }
+#screen-question .team-btns { grid-row: 4; }
+#screen-question .bank-preview { grid-row: 5; margin-top: calc(10 * var(--u)); }
+#screen-question .controls { grid-row: 6; margin-top: calc(14 * var(--u)); }
+/* The header (U4): round, then " · question 2 of 5 · 200" — one line; the
+   round name gives way (ellipsis), the points never do. */
+.q-head {
+  display: flex; align-items: baseline; white-space: nowrap; line-height: 1.2;
+  font-size: max(22px, calc(40 * var(--u))); font-weight: 700;
+}
+.q-round { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.q-meta { flex: none; color: var(--muted); }
+.q-pts { color: var(--orange); font-weight: 800; font-variant-numeric: tabular-nums; }
+.qa { display: grid; gap: calc(16 * var(--u)); }
 .question-text { font-size: max(32px, calc(52 * var(--u))); line-height: 1.3; margin: 0; white-space: pre-line; max-width: 1080px; }
 .answer-text {
   font-size: max(28px, calc(42 * var(--u))); line-height: 1.25; font-weight: 800; color: var(--orange);
-  margin: 0; max-width: 1080px; animation: reveal-in 240ms ease;
+  margin: 0; max-width: 1080px;
 }
+.answer-text.pending { visibility: hidden; }
+.answer-text.reveal-now { animation: reveal-in 240ms ease; }
+.answer-label { color: var(--muted); font-weight: 700; font-size: 0.6em; }
 .team-btns, .controls { display: flex; gap: calc(24 * var(--u)); flex-wrap: wrap; }
 .controls button { font-size: max(20px, calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u)); }
+/* Reveal and "Answer shown" are one box: each label's width is reserved
+   by the other, in an invisible zero-height line (not in the text). */
+.ctl-reveal::after { content: "Answer shown"; display: block; height: 0; overflow: hidden; visibility: hidden; }
+.ctl-reveal:disabled::after { content: "Reveal answer"; }
 /* .team-btns holds only the team mark buttons (blue fill); the controls
-   row (Back/Reveal/Done/Next) keeps its own .btn-* classes. */
+   row (Reveal/Done/Next/Back) keeps its own .btn-* classes. */
 .team-btns button {
   font-size: max(20px, calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u));
   background: var(--blue); color: #fff; border-radius: 14px;
 }
+.team-btns .mark { display: inline-block; width: 1em; margin-left: 0.3em; text-align: left; }
 .team-btns button.marked-green { background: var(--good); color: #06130a; }
 .team-btns button.marked-red { background: var(--bad); color: #160505; }
 .btn-primary { background: var(--orange); color: #0a1620; }
@@ -229,61 +289,52 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   line-height: 1.3; height: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   max-width: 100%; font-variant-numeric: tabular-nums;
 }
-.audio-block { display: grid; gap: 8px; }
-.audio-block audio { width: calc(480 * var(--u)); height: max(32px, calc(48 * var(--u))); }
+.audio-block { display: flex; align-items: center; flex-wrap: wrap; gap: calc(20 * var(--u)); }
+.audio-block audio { width: calc(420 * var(--u)); height: max(32px, calc(48 * var(--u))); }
+/* The clip's own button (Task 25, U8): fixed width — the widest label is
+   held by an invisible zero-height line. */
+#screen-question .clip-btn { font-size: max(20px, calc(32 * var(--u))); padding: calc(12 * var(--u)) calc(32 * var(--u)); }
+.clip-btn::after { content: "\25B6  Play clip"; display: block; height: 0; overflow: hidden; visibility: hidden; }
 .no-clip { color: var(--muted); font-style: italic; margin: 0; font-size: max(18px, calc(28 * var(--u))); }
-.images-block { display: flex; gap: 16px; flex-wrap: wrap; }
 .no-image { color: var(--muted); font-style: italic; margin: 0; font-size: max(18px, calc(28 * var(--u))); }
-/* Image questions (Task 20): question + answer on the left (45%), the
-   image box on the right (55%) filling the height left by the category,
-   audio, team buttons and controls — nothing scrolls, and the picture is
-   as large as fits (contained, top-right, scaled up or down). The screen
-   is one viewport tall to make that height definite; text-only questions
-   use a centred column (below). Explicit rows + margins (no row-gap): an
-   absent audio or answer leaves no empty gap. Row 5 is the slack: text
-   too long to fit pushes the buttons down (the page scrolls) instead of
-   covering the answer. */
-#screen-question { max-width: 1760px; height: 100vh; height: 100dvh; }
-.question-wrap:not(.has-images) { max-width: 1200px; margin: 0 auto; }
 /* Text-only questions (Task 20 fix 2; audio allowed): the question is what
    the room reads, so --qf grows with the screen, as large as the worst
-   shipped question + revealed answer + 4 long team names still fits in
-   either mode from 960x540 to 1920x1080. Bounded by height and by width
-   (wider type means more lines). Lines stay ~48 characters (max-width in
-   em), so the column widens with the type; the answer keeps 0.8x. */
+   case still fits (see above). Bounded by height and by width (wider type
+   means more lines). Lines stay ~48 characters (max-width in em), so the
+   column widens with the type; the answer is 0.9x. */
 #screen-question .question-wrap:not(.has-images) {
-  --qf: clamp(32px, min(16px + 5.9vh, 4.6vw), 96px);
-  max-width: max(1200px, calc(21 * var(--qf)));
+  --qf: clamp(32px, min(16px + 7vh, 4.6vw), 96px); /* Task 25: 8.2% of the height at 720p and 1080p alike */
+  max-width: max(1200px, calc(21 * var(--qf))); margin: 0 auto;
 }
 #screen-question .question-wrap:not(.has-images) .question-text { font-size: var(--qf); max-width: 20.8em; }
-#screen-question .question-wrap:not(.has-images) .answer-text { font-size: calc(0.8 * var(--qf)); max-width: 26em; }
-.question-wrap.has-images {
-  height: 100%; row-gap: 0; column-gap: calc(40 * var(--u));
-  grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
-  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto auto;
-}
-/* Text-only questions (Task 21): ~165px of height spare under the large
-   question, so the mark buttons and controls grow from 20px to 27px at
-   1280x720 (40 --u), reading as part of the screen from the couch. Image
-   questions keep the compact size above. */
+#screen-question .question-wrap:not(.has-images) .answer-text { font-size: calc(0.9 * var(--qf)); max-width: 23em; }
+/* Text-only questions (Task 21): the mark buttons and controls grow to
+   40 --u (27px at 1280x720), reading as part of the screen from the
+   couch. Image questions keep the compact size above. */
 #screen-question .question-wrap:not(.has-images) .team-btns button,
 #screen-question .question-wrap:not(.has-images) .controls button {
   font-size: max(20px, calc(40 * var(--u))); padding: calc(16 * var(--u)) calc(36 * var(--u));
 }
-.has-images > * { grid-column: 1 / -1; margin-top: calc(20 * var(--u)); }
-.has-images > h2 { grid-row: 1; margin-top: 0; }
-.has-images > .audio-block { grid-row: 2; }
-.has-images > .question-text { grid-row: 3; grid-column: 1; }
-.has-images > .answer-text { grid-row: 4; grid-column: 1; }
-.has-images > .images-block { grid-row: 3 / 6; grid-column: 2; justify-self: stretch; min-height: 0; flex-wrap: nowrap; }
-.has-images > .team-btns { grid-row: 6; }
-.has-images > .bank-preview { grid-row: 7; margin-top: calc(10 * var(--u)); }
-.has-images > .controls { grid-row: 8; }
-/* A frame would show the letterbox, so the picture goes unframed here. */
-.has-images .images-block img {
-  flex: 1 1 0; min-width: 0; width: 100%; height: 100%; max-width: none; max-height: none;
-  object-fit: contain; object-position: right top; border: 0; border-radius: 0; background: none;
+/* Image questions (Task 20): question + answer on the left (45%), the
+   picture on the right (55%), as large as the flexible row allows
+   (contained, top-right). The pictures sit in an absolutely placed row,
+   so they never add height: only the text can grow the row. */
+#screen-question .question-wrap.has-images {
+  grid-template-columns: minmax(0, 9fr) minmax(0, 11fr); column-gap: calc(40 * var(--u));
 }
+#screen-question .has-images > .qa { grid-column: 1; align-self: start; }
+#screen-question .has-images > .images-block {
+  grid-row: 3; grid-column: 2; justify-self: stretch; align-self: stretch;
+  position: relative; margin: calc(18 * var(--u)) 0;
+}
+.images-fill { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: flex; gap: 16px; justify-content: flex-end; }
+/* A frame would show the letterbox, so the picture goes unframed here. */
+.images-fill img {
+  flex: 1 1 0; min-width: 0; width: 100%; height: 100%;
+  object-fit: contain; object-position: right top; border: 0;
+}
+.has-images .question-text { font-size: max(24px, calc(48 * var(--u))); }
+.has-images .answer-text { font-size: max(22px, calc(40 * var(--u))); }
 .tally-row {
   display: flex; align-items: baseline; gap: 16px;
   background: var(--panel); border: 1px solid var(--edge);
@@ -294,6 +345,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 @keyframes screen-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes reveal-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes badge-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .screen:not(.hidden) { animation: screen-in 200ms ease; }
 /* Full-height screens (Task 20) fade only: the 10px rise would push them
    past the viewport bottom and flash a scrollbar on the way in. */

@@ -7,6 +7,7 @@ import { chromium } from "playwright";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { finishedSave } from "./finished-save.mjs";
 
 const URL_ = process.argv[2] || "http://127.0.0.1:8080/";
 const failures = [];
@@ -46,7 +47,9 @@ const screen = () =>
     )
   );
 const scores = () =>
-  page.$$eval("#screen-board .score-team", (els) => els.map((e) => e.textContent.trim()));
+  page.$$eval("#screen-board .score-team", (els) =>
+    els.map((e) => `${e.firstChild.textContent}${e.querySelector(".score-points").textContent}`.trim())
+  ); // name + points, not the score badge
 const cell = (ri, qi) => `.board-cell.clickable[data-ri="${ri}"][data-qi="${qi}"]`;
 
 try {
@@ -73,6 +76,10 @@ try {
   await click(cell(0, 0));
   await settle();
   check((await screen()) === "question", "a cell opens its question");
+  // The header says what it's worth (Task 25, U4); the answer's space is
+  // there before Reveal, hidden (U2).
+  check((await page.textContent("#screen-question h2")).replace(/\s+/g, " ").trim() === "Movies: Oscar · 100", "the question header shows the round and its points");
+  check(!(await page.isVisible("#screen-question .answer-text")), "the answer is hidden before Reveal");
   // The bank preview (Task 25, U3) says what Done will do, in a line that
   // never changes height.
   const preview = () =>
@@ -83,7 +90,7 @@ try {
   await click("#screen-question .team-btns button >> nth=1");
   await click("#screen-question .team-btns button >> nth=1");
   const p1 = await preview();
-  check(p1.text === "Done: Hazy Bagpipes +100 · Misty Goblins \u2212100", `the preview names the points (${p1.text})`);
+  check(p1.text === "Done: +100 Hazy Bagpipes · \u2212100 Misty Goblins", `the preview names the points (${p1.text})`);
   check(p1.h === p0.h, "the preview keeps its height");
   await click("#screen-question button:text-is('Reveal answer')");
   await settle();
@@ -93,6 +100,10 @@ try {
   const played = await scores();
   check((await screen()) === "board" && played.join() !== before.join(), "Done banks points on the board");
   check((await page.$$(".board-cell.used")).length === 1, "the played cell is closed");
+  // Score badges (Task 25, U5): what just changed, on the score pills, and
+  // gone at the next board.
+  const badges = () => page.$$eval("#screen-board .score-badge", (e) => e.map((x) => x.textContent));
+  check((await badges()).join() === "+100,\u2212100", `badges show what Done changed (${await badges()})`);
 
   // Reload -> Resume
   await page.reload();
@@ -107,10 +118,10 @@ try {
   await page.goBack();
   await settle();
   check(page.url().startsWith(URL_) && (await screen()) === "setup", "Back on that confirm cancels and stays in the app");
-
   await click("#resume-btn");
   await settle();
   check((await scores()).join() === played.join(), "Resume restores the scores");
+  check((await badges()).length === 0, "badges are gone on the next board");
   check((await page.$$(".board-cell.used")).length === 1, "Resume restores the played cell");
 
   // Setup -> trivia; run a column to the tally
@@ -126,8 +137,7 @@ try {
   while ((await screen()) === "question" && n < 12) {
     if (n % 2 === 0) await click("#screen-question .team-btns button >> nth=0");
     if (n === 0)
-      check(/^Next: Hazy Bagpipes \+\d+$/.test(await page.textContent("#screen-question .bank-preview")), "the trivia preview says what Next banks");
-
+      check(/^Next: \+\d+ Hazy Bagpipes$/.test(await page.textContent("#screen-question .bank-preview")), "the trivia preview says what Next banks");
     await click("#screen-question button:text-is('Next')");
     await settle();
     n++;
@@ -236,6 +246,44 @@ try {
   await click("#confirm-ok");
   await settle();
   check((await scores()).join() === beforeQ.join() && (await page.$$(cell(1, 1))).length === 1, "Undo after Resume takes the points back");
+
+  // The clip's own big button (Task 25, U8): first focus on a clip
+  // question; OK plays, the label follows the clip; a missing clip
+  // removes it and focus moves to the first team.
+  const clips = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+  clips.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
+  await clips.route("**/questions.yaml", (r) =>
+    r.fulfill({
+      contentType: "text/yaml",
+      body: `title: "Clips"\nrounds:\n  - name: "Music"\n    questions:\n      - q: "Name this note."\n        a: "A4"\n        audio: "audio/demo/note-440.wav"\n      - q: "And this one?"\n        a: "Nothing"\n        audio: "audio/demo/missing.m4a"\n`,
+    })
+  );
+  await clips.goto(URL_);
+  await clips.waitForSelector("#screen-setup:not(.hidden)");
+  await clips.waitForTimeout(450);
+  await clips.mouse.move(1, 1);
+  await clips.click("#start-btn");
+  await clips.waitForTimeout(450);
+  await clips.keyboard.press("Enter"); // the focused first cell
+  await clips.waitForTimeout(450);
+  const clipBtn = "#screen-question .clip-btn";
+  check((await clips.evaluate(() => document.activeElement.classList.contains("clip-btn"))), "a clip question starts with focus on Play clip");
+  check((await clips.textContent(clipBtn)) === "\u25B6 Play clip", "the clip button says Play clip");
+  await clips.keyboard.press("Enter");
+  await clips.waitForTimeout(300);
+  check((await clips.textContent(clipBtn)) === "\u275A\u275A Pause", "OK plays the clip (the button says Pause)");
+  await clips.waitForTimeout(1500); // the demo clip is 1 s
+  check((await clips.textContent(clipBtn)) === "\u21BA Replay", "after the clip ends the button says Replay");
+  await clips.mouse.move(1, 1);
+  await clips.click("#screen-question button:text-is('Back to board')");
+  await clips.waitForTimeout(450);
+  await clips.mouse.move(1, 1);
+  await clips.click(".board-cell.clickable[data-ri='0'][data-qi='1']");
+  await clips.waitForTimeout(900);
+  check((await clips.$$(clipBtn)).length === 0 && (await clips.isVisible("#screen-question .no-clip")), "a missing clip shows a note, not the button");
+  check((await clips.evaluate(() => document.activeElement.dataset.focus)) === "team-0", "focus moves to the first team");
+  await clips.close();
+
   // The other confirms (Task 25, U7): a team-list change mid-game, Load
   // folder mid-game and Create new — the folder picker stubbed, so the
   // check is that OK (or Enter in the name field) opens it with the
@@ -284,6 +332,63 @@ try {
   picks = await cf.evaluate(() => window.__picks);
   check(picks.length === 2 && picks[1].active && picks[1].mode === "readwrite", "Enter in the name field opens the readwrite picker");
   await cf.close();
+
+  // The end of the game (Task 25, U6 + U18): when no cell is left, the
+  // scoreboard is the final standings — ranked, the winner (or a tie)
+  // named — and focus is on Setup, not lost.
+  const fin = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+  fin.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
+  for (const [teams, title] of [
+    [[["Bouncy Gophers", 900], ["Silky Marmots", 600], ["Feral Pickles", 900]], "Final scores · a tie between Bouncy Gophers and Feral Pickles"],
+    [[["Bouncy Gophers", 300], ["Silky Marmots", 600], ["Feral Pickles", -100]], "Final scores · Silky Marmots wins"],
+  ]) {
+    const { key, json } = await finishedSave(URL_, teams);
+    await fin.goto(URL_);
+    await fin.waitForSelector("#screen-setup:not(.hidden)");
+    await fin.evaluate(([k, v]) => localStorage.setItem(k, v), [key, json]);
+    await fin.reload();
+    await fin.waitForSelector("#resume-btn:not(.hidden)");
+    await fin.waitForTimeout(450);
+    await fin.mouse.move(1, 1);
+    await fin.click("#resume-btn");
+    await fin.waitForTimeout(450);
+    check((await fin.textContent("#screen-board .final-title")) === title, `the finished board says "${title}"`);
+    const order = await fin.$$eval("#screen-board .score-team", (e) => e.map((x) => x.firstChild.textContent.trim()));
+    const ranked = [...teams].sort((a, b) => b[1] - a[1]).map((t) => t[0]);
+    check(order.join() === ranked.join(), `the final scores are ranked (${order.join(", ")})`);
+    const top = Math.max(...teams.map((t) => t[1]));
+    check((await fin.$$("#screen-board .score-team.leader")).length === teams.filter((t) => t[1] === top).length, "the leader(s) stand out");
+    check((await fin.evaluate(() => document.activeElement.id)) === "setup-btn", "focus is on Setup when the game is over");
+  }
+  // Undo from the Final scores: the last question reopens and the normal
+  // board comes back.
+  {
+    const { key, json } = await finishedSave(URL_, [["Bouncy Gophers", 900], ["Silky Marmots", 600]], {
+      cell: "5:4", round: "Words", deltas: [{ teamIdx: 0, points: 500 }],
+    });
+    await fin.goto(URL_);
+    await fin.waitForSelector("#screen-setup:not(.hidden)");
+    await fin.evaluate(([k, v]) => localStorage.setItem(k, v), [key, json]);
+    await fin.reload();
+    await fin.waitForSelector("#resume-btn:not(.hidden)");
+    await fin.waitForTimeout(450);
+    await fin.mouse.move(1, 1);
+    await fin.click("#resume-btn");
+    await fin.waitForTimeout(450);
+    await fin.mouse.move(1, 1);
+    await fin.click("#undo-btn");
+    await fin.waitForTimeout(450);
+    await fin.mouse.move(1, 1);
+    await fin.click("#confirm-ok");
+    await fin.waitForTimeout(450);
+    check(
+      (await fin.$$("#screen-board .final-title")).length === 0 &&
+        (await fin.$$(".board-cell.clickable[data-ri='5'][data-qi='4']")).length === 1 &&
+        (await fin.$$eval("#screen-board .score-points", (e) => e.map((x) => x.textContent))).join() === "400,600",
+      "Undo from the Final scores reopens the last question"
+    );
+  }
+  await fin.close();
 
   // Council fixes (Task 25 Step 2). A touch tap elsewhere ends the
   // same-spot guard (touch has no pointermove); a held-back click doesn't

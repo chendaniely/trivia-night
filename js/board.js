@@ -15,21 +15,40 @@ export function pointsFor(round, qIdx) {
   return q.points !== undefined ? q.points : (qIdx + 1) * 100;
 }
 
-export function renderBoard() {
+// badges (Task 25, U5): [{ teamIdx, points }] just banked — shown as
+// "+500" / "−500" on those teams' score pills until the board is drawn
+// again. Drawn over the pill's corner, so they move nothing.
+export function renderBoard({ badges = [] } = {}) {
   const el = document.getElementById("screen-board");
   const { bank, used, scoring, mode } = state;
   const rows = Math.max(...bank.rounds.map((r) => r.questions.length));
+  // The game is over when no question is left (Task 25, U6): the board's
+  // scoreboard becomes the final standings — ranked, the winner or a tie
+  // named. Worked out on every render, so Undo, Resume and Reset just work.
+  const finished = bank.rounds.every((r, ri) => r.questions.every((_, qi) => used.has(`${ri}:${qi}`)));
+  const top = Math.max(...scoring.teams.map((t) => t.points));
+  const order = scoring.teams.map((t, idx) => ({ t, idx }));
+  if (finished) order.sort((a, b) => b.t.points - a.t.points); // stable: ties keep setup order
 
   const score = document.createElement("div");
   score.className = "scoreboard";
+  if (finished) score.classList.add("final");
   score.append(
-    ...scoring.teams.map((t) => {
+    ...order.map(({ t, idx }) => {
       const d = document.createElement("div");
       d.className = "score-team";
+      if (finished && t.points === top) d.classList.add("leader");
       const pts = document.createElement("span");
       pts.className = "score-points";
       pts.textContent = t.points;
       d.append(document.createTextNode(t.name + " "), pts);
+      const change = badges.filter((b) => b.teamIdx === idx).reduce((sum, b) => sum + b.points, 0);
+      if (change !== 0) {
+        const badge = document.createElement("span");
+        badge.className = "score-badge " + (change > 0 ? "up" : "down");
+        badge.textContent = signedPoints(change);
+        d.append(badge);
+      }
       return d;
     })
   );
@@ -37,6 +56,7 @@ export function renderBoard() {
   const grid = document.createElement("div");
   grid.className = "board-grid";
   if (mode === "trivia") grid.classList.add("trivia"); // dim inert cells (Task 7.8)
+  if (finished) grid.classList.add("final"); // played-out cells give the final scores room
   grid.style.gridTemplateColumns = `repeat(${bank.rounds.length}, 1fr)`;
 
   bank.rounds.forEach((round, ri) => {
@@ -143,13 +163,24 @@ export function renderBoard() {
   });
   actions.append(setupBtn, undoBtn, resetBtn);
 
+  let title = null;
+  if (finished) {
+    const leaders = scoring.teams.filter((t) => t.points === top).map((t) => t.name);
+    title = document.createElement("p");
+    title.className = "final-title";
+    title.textContent =
+      leaders.length === 1
+        ? `Final scores · ${leaders[0]} wins`
+        : `Final scores · a tie between ${leaders.slice(0, -1).join(", ")} and ${leaders[leaders.length - 1]}`;
+  }
+
   let hint = null;
-  if (mode === "trivia") {
+  if (mode === "trivia" && !finished) {
     hint = document.createElement("p");
     hint.className = "board-hint";
     hint.textContent = "Trivia: click a category name to start that round — the amounts are not clickable.";
   }
-  el.replaceChildren(score, ...(hint ? [hint] : []), grid, actions);
+  el.replaceChildren(...(title ? [title] : []), score, ...(hint ? [hint] : []), grid, actions);
 }
 
 // Put focus on the board's next clickable header/cell (Task 21), so a
@@ -161,7 +192,12 @@ export function renderBoard() {
 // no `from`: the first target.
 export function focusBoard(from) {
   const targets = [...document.querySelectorAll("#screen-board .clickable")];
-  if (!targets.length) return;
+  if (!targets.length) {
+    // Game over (Task 25, U18): focus on Setup — never lost, and never on
+    // Undo or Reset.
+    document.getElementById("setup-btn")?.focus();
+    return;
+  }
   const key = (t) => Number(t.dataset.ri) * 1000 + (t.dataset.qi === undefined ? -1 : Number(t.dataset.qi));
   const at = from ? from.ri * 1000 + (from.qi === undefined ? -1 : from.qi) : -Infinity;
   const pick = targets.sort((a, b) => key(a) - key(b)).find((t) => key(t) >= at) || targets[0];
