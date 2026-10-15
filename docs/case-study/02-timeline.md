@@ -28,6 +28,7 @@ gantt
     section Claude Code
     Council review + Chrome checks          :c0, 2026-10-14 08:20, 2026-10-14 08:44
     Tasks 14-23 + final review fixes        :c1, 2026-10-14 08:44, 2026-10-14 13:19
+    Merged (PR 1) + gated deploy            :milestone, c2, 2026-10-14 16:25, 0m
 ```
 
 ## Day 0 — Fri Oct 9, late: building the workshop

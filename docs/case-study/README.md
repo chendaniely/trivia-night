@@ -5,7 +5,9 @@ and driven through opencode, built this repo's trivia-night host app from
 an idea to a deployed site over Oct 10–14 2026 — 85 commits, every one
 attributed to the model. Then Claude Code (Claude Opus 5.5, with Sonnet
 5.5 and Haiku 5.5 subagents) reviewed the whole build, fixed what it found
-in ten tasks plus a final review, and wrote this folder.
+in ten tasks plus a final review, and wrote this folder. The fixes merged
+into `main` as [PR #1](https://github.com/chendaniely/trivia-night/pull/1)
+on Oct 14 and are live on Pages.
 
 **Why:** the partner is exploring whether local models on the Spark are
 viable for real work, and wanted a frontier model's critical, honest
@@ -55,11 +57,11 @@ or hurt. This folder is meant as raw material for a blog post.
 | | Qwen 3.8 27B (opencode, DGX Spark) | Claude Code pass |
 |---|---|---|
 | Calendar time | Oct 10 22:56 → Oct 14 08:18 (~4 days, with sleep) | Oct 14 08:44 → 13:19 for fixes (+ review before, write-up after) |
-| Commits | 85 | 42 (Opus 17 · Sonnet 23 · Haiku 2) |
+| Commits | 85 | 42 for the fixes (Opus 17 · Sonnet 23 · Haiku 2), + this write-up |
 | App code + tests + tools (excl. vendored js-yaml) | 1,698 lines written | +1,671 / −186 changed on top |
 | Tests | 4 files, 70 assertions | 5 files, 214 assertions + a Chrome smoke test |
 | Trivia answers wrong at the end | 7 of 29 | 0 of 29 (two independent checks) |
-| Partner prompts | 75 (incl. opencode setup) | 3 |
+| Partner prompts | 75 (incl. opencode setup) | 3 (+ follow-ups to merge and to rotate the password) |
 | Marginal cost | $0 (local) | paid frontier usage |
 
 ## Reading notes
@@ -72,4 +74,5 @@ or hurt. This folder is meant as raw material for a blog post.
   are linked to commits, plan records or measurements.
 - Private material was left out: the pasted chat with the host, people's
   names beyond what the spec already had, and any credential (one appears
-  in Qwen's session transcript; it was never copied here).
+  in Qwen's session transcript; it was never copied here, and the partner
+  has since rotated it).
