@@ -122,8 +122,20 @@ better world knowledge caught each one before the task closed.
 
 | | Qwen build | Claude pass |
 |---|---|---|
-| Commits | 85 | 42 (Opus 17 · Sonnet 23 · Haiku 2) |
+| Commits | 85 | 42 for the fixes (Opus 17 · Sonnet 23 · Haiku 2), plus this write-up (`435d135`, Opus) |
 | Wall time | ~4 days (with sleep) | review in the morning, fixes 08:44–13:19, then this write-up |
 | Test files / assertions | 4 / 70 | 5 / 214, plus a tracked Chrome smoke test |
 | Tested DOM behaviour | accessibility snapshots + computed styles | Chrome scripts per task; `make smoke` committed |
 | Bank answers wrong | 7 / 29 | 0 / 29 after two independent checks |
+
+## Outcome
+
+The branch merged into `main` as
+[PR #1](https://github.com/chendaniely/trivia-night/pull/1) (merge commit
+`e9ccb0b`, Oct 14 16:25) with a merge commit, so every per-step commit
+survives. The deploy that the merge triggered ran the new gate (unit tests
+5/5, bank validation 6 rounds / 29 questions) and published to Pages;
+`make smoke` then passed against the live URL, held-Enter check included.
+What is left needs real hardware: the TV font, the 30-second real-picker
+check, the friend's TV, two trackpad swipe-backs, and `make serve` once on
+the event Mac (plan, Deferred items 3–7).

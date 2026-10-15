@@ -1,9 +1,11 @@
 # Appendix B — numbers
 
-All from `git log` on branch `claude/council-fixes` and the opencode
-session database. Model = the commit's `Co-Authored-By` trailer. Line
-counts exclude the vendored `js/yaml.js` (3,602 lines), `package-lock.json`
-and binary files.
+All from `git log` on branch `claude/council-fixes` (merged into `main` as
+PR #1, merge commit `e9ccb0b`) and the opencode session database. Model =
+the commit's `Co-Authored-By` trailer. Line counts exclude the vendored
+`js/yaml.js` (3,602 lines), `package-lock.json` and binary files. "Claude
+pass" means the 42 fix commits; this case study (`435d135`, Opus) and the
+merge commit come on top.
 
 ## Commits
 
@@ -42,6 +44,8 @@ pie showData
 | Rest of Qwen's build | Oct 11 10:16 → Oct 14 08:18 |
 | Claude review (council + Chrome checks) | Oct 14 ~08:20 → 08:44 |
 | Claude fixes (Tasks 14–23 + final wave) | Oct 14 08:44 → 13:19 |
+| Case study committed (`435d135`) | Oct 14 13:30 |
+| Merged (PR #1) + gated deploy + live smoke test | Oct 14 16:25 |
 
 ## Code size at the end of each phase
 
