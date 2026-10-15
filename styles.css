@@ -56,7 +56,9 @@ button {
 button:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
 button:active:not(:disabled) { filter: brightness(0.94); transform: translateY(1px); }
 button:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
-button:disabled { background: var(--edge); color: var(--muted); cursor: not-allowed; }
+/* Disabled (Task 25, U11): the button's own look, faded — a filled grey
+   read as a different, active button next to the quiet ones. */
+button:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-secondary { background: var(--blue); color: #fff; }
 .btn-quiet { background: var(--panel); color: var(--muted); border: 1px solid var(--edge); }
 .btn-quiet:hover:not(:disabled) { color: var(--text); border-color: var(--muted); filter: none; }
@@ -115,6 +117,21 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
   display: block; margin: calc(20 * var(--u)) auto 0; position: sticky; bottom: calc(16 * var(--u));
   font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u));
 }
+/* Confirm screen (Task 25, U7): centred on its own screen, so its buttons
+   never sit where Reset, Undo or Done were (the same-spot guard). */
+#screen-confirm {
+  max-width: calc(1500 * var(--u)); height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  text-align: center; padding: calc(40 * var(--u));
+}
+#screen-confirm h1 { font-size: max(32px, calc(64 * var(--u))); margin: 0 0 calc(20 * var(--u)); }
+#confirm-text { font-size: max(20px, calc(34 * var(--u))); line-height: 1.35; color: var(--muted); max-width: 32em; margin: 0; }
+#screen-confirm #confirm-input {
+  font-size: max(20px, calc(34 * var(--u))); padding: calc(14 * var(--u)) calc(18 * var(--u));
+  width: calc(640 * var(--u)); max-width: 100%; margin-top: calc(28 * var(--u)); text-align: center;
+}
+.confirm-actions { display: flex; gap: calc(32 * var(--u)); margin-top: calc(40 * var(--u)); }
+.confirm-actions button { font-size: max(20px, calc(34 * var(--u))); padding: calc(16 * var(--u)) calc(44 * var(--u)); }
 .error-actions { display: flex; gap: 16px; margin: 16px 0 20px; }
 #error-list { font-size: 28px; color: var(--bad); padding-left: 24px; }
 /* An unbroken 80-char key wraps instead of running off the screen (Task 20). */
@@ -205,6 +222,13 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .team-btns button.marked-green { background: var(--good); color: #06130a; }
 .team-btns button.marked-red { background: var(--bad); color: #160505; }
 .btn-primary { background: var(--orange); color: #0a1620; }
+/* Bank preview (Task 25, U3): one line, fixed height, ellipsis — never
+   taller, so the controls below it never move while marking. */
+.bank-preview {
+  margin: 0; color: var(--muted); font-size: max(16px, calc(26 * var(--u)));
+  line-height: 1.3; height: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%; font-variant-numeric: tabular-nums;
+}
 .audio-block { display: grid; gap: 8px; }
 .audio-block audio { width: calc(480 * var(--u)); height: max(32px, calc(48 * var(--u))); }
 .no-clip { color: var(--muted); font-style: italic; margin: 0; font-size: max(18px, calc(28 * var(--u))); }
@@ -236,7 +260,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .question-wrap.has-images {
   height: 100%; row-gap: 0; column-gap: calc(40 * var(--u));
   grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
-  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto auto;
 }
 /* Text-only questions (Task 21): ~165px of height spare under the large
    question, so the mark buttons and controls grow from 20px to 27px at
@@ -253,7 +277,8 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .has-images > .answer-text { grid-row: 4; grid-column: 1; }
 .has-images > .images-block { grid-row: 3 / 6; grid-column: 2; justify-self: stretch; min-height: 0; flex-wrap: nowrap; }
 .has-images > .team-btns { grid-row: 6; }
-.has-images > .controls { grid-row: 7; }
+.has-images > .bank-preview { grid-row: 7; margin-top: calc(10 * var(--u)); }
+.has-images > .controls { grid-row: 8; }
 /* A frame would show the letterbox, so the picture goes unframed here. */
 .has-images .images-block img {
   flex: 1 1 0; min-width: 0; width: 100%; height: 100%; max-width: none; max-height: none;
@@ -272,7 +297,7 @@ button:disabled { background: var(--edge); color: var(--muted); cursor: not-allo
 .screen:not(.hidden) { animation: screen-in 200ms ease; }
 /* Full-height screens (Task 20) fade only: the 10px rise would push them
    past the viewport bottom and flash a scrollbar on the way in. */
-#screen-board:not(.hidden), #screen-question:not(.hidden) { animation-name: fade-in; }
+#screen-board:not(.hidden), #screen-question:not(.hidden), #screen-confirm:not(.hidden) { animation-name: fade-in; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   /* The boot note's animation is a delay-reveal, not motion: keep it. */

@@ -50,8 +50,9 @@
         <li>
           <strong>Jeopardy:</strong> click a point cell to open the question.
           Click a team to mark them green (correct) or red (wrong) — click a
-          marked team again to change or clear it. Reveal shows the answer;
-          Done banks the points.
+          marked team again to change or clear it; the line under the teams
+          shows what Done will bank. Reveal shows the answer; Done banks the
+          points.
         </li>
         <li>
           <strong>Trivia:</strong> click a category name to start that round —
@@ -73,7 +74,9 @@
         </li>
         <li>
           <strong>Oops?</strong> "Back to board" (or browser Back) drops that
-          question's marks and keeps the cell and scores. The game saves as
+          question's marks and keeps the cell and scores. "Undo last
+          question" under the board takes back the last banked question
+          (one only) and reopens it. The game saves as
           you play: after a reload, press Resume game (folder board: Load
           folder first, same folder). Reloaded? Press Resume game, not Start.
         </li>
@@ -88,9 +91,9 @@
           file — <code>questions.yaml</code>. Load folder plays your own
           folder (<code>questions.yaml</code> + <code>audio/</code> +
           <code>images/</code>) and asks first mid-game; Create new
-          scaffolds one (Chrome or Edge): pick or make a folder inside
-          Documents, not Documents itself, and allow editing when Chrome
-          asks. Team names carry over. Problems are listed by round and
+          scaffolds one (Chrome or Edge): name it, then pick a folder
+          inside Documents (not Documents itself) and allow editing when
+          Chrome asks. Team names carry over. Problems are listed by round and
           question, with typo hints; "Back to setup" keeps your game.
         </li>
       </ul>
@@ -104,6 +107,15 @@
     <section id="screen-board" class="screen hidden"></section>
     <section id="screen-question" class="screen hidden"></section>
     <section id="screen-tally" class="screen hidden"></section>
+    <section id="screen-confirm" class="screen hidden" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+      <h1 id="confirm-title"></h1>
+      <p id="confirm-text"></p>
+      <input id="confirm-input" class="hidden" autocomplete="off" aria-labelledby="confirm-text">
+      <div class="confirm-actions">
+        <button id="confirm-cancel" class="btn-quiet">Cancel</button>
+        <button id="confirm-ok"></button>
+      </div>
+    </section>
     <section id="screen-error" class="screen hidden">
       <h1>Question file problem</h1>
       <div class="error-actions">

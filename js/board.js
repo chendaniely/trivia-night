@@ -1,6 +1,8 @@
 // Board grid + scoreboard + setup return + reset game. No state of its own:
 // reads app.js state. Clicks route through the callbacks wired by app.js.
 import { state, showScreen, saveGame } from "./app.js";
+import { askConfirm } from "./confirm.js";
+import { signedPoints } from "./scoring.js";
 
 let onCellClick = () => {};
 let onColumnClick = () => {};
@@ -95,15 +97,51 @@ export function renderBoard() {
   resetBtn.id = "reset-btn";
   resetBtn.className = "btn-quiet";
   resetBtn.textContent = "Reset game";
-  resetBtn.addEventListener("click", () => {
-    if (!confirm("Reset all scores and clear the board? This can't be undone.")) return;
-    scoring.reset();
-    used.clear();
-    saveGame();
-    renderBoard();
-    focusBoard();
+  resetBtn.addEventListener("click", () =>
+    askConfirm({
+      title: "Reset the game?",
+      text: "This clears every score and every played cell. It can't be undone.",
+      ok: "Reset game",
+      onOk: () => {
+        state.scoring.reset();
+        state.used.clear();
+        saveGame();
+        renderBoard();
+        focusBoard();
+      },
+    })
+  );
+  // Undo last question (Task 25, U1): one level, asks first. It stays in
+  // its place, disabled, when there is nothing to undo — so Reset never
+  // slides under the pointer.
+  const undoBtn = document.createElement("button");
+  undoBtn.id = "undo-btn";
+  undoBtn.className = "btn-quiet";
+  undoBtn.textContent = "Undo last question";
+  undoBtn.disabled = !scoring.last;
+  undoBtn.addEventListener("click", () => {
+    const rec = state.scoring.last;
+    if (!rec) return;
+    const [ri, qi] = rec.cell.split(":").map(Number);
+    const round = state.bank.rounds[ri];
+    const what = rec.deltas.length
+      ? "Undoes " + rec.deltas.map((d) => `${state.scoring.teams[d.teamIdx].name} ${signedPoints(d.points)}`).join(" · ") + "."
+      : "Nobody scored on it.";
+    askConfirm({
+      title: `Undo ${round.name} · ${pointsFor(round, qi)}?`,
+      text: `${what} The question opens again.`,
+      ok: "Undo",
+      onOk: () => {
+        const back = state.scoring.undoLast();
+        if (!back) return;
+        state.used.delete(back.cell);
+        saveGame();
+        renderBoard();
+        focusBoard(state.mode === "trivia" ? { ri } : { ri, qi });
+      },
+    });
   });
-  actions.append(setupBtn, resetBtn);
+  actions.append(setupBtn, undoBtn, resetBtn);
 
   let hint = null;
   if (mode === "trivia") {

@@ -10,6 +10,9 @@
 //
 // Save shape: { v: 1, bankKey, title, mode, scoring: Scoring.snapshot(),
 //               used: ["roundIdx:qIdx", ...], savedAt (ISO time) }
+// scoring.last (Task 25, Undo) is optional and still v: 1: a save written
+// before it loads with nothing to undo, and a malformed one is dropped
+// without losing the game.
 export const SAVE_PREFIX = "trivia-night:game:";
 export const MAX_SLOTS = 10;
 const PROBE_KEY = "trivia-night:probe";
@@ -67,6 +70,18 @@ export function parseSave(json) {
     e && Number.isInteger(e.teamIdx) && e.teamIdx >= 0 && e.teamIdx < teams.length && isNum(e.points);
   if (!log.every((r) => Array.isArray(r) && typeof r[0] === "string" && Array.isArray(r[1]) && r[1].every(goodEntry))) return null;
   if (!Array.isArray(s.used) || !s.used.every((k) => typeof k === "string" && /^\d+:\d+$/.test(k))) return null;
+  const last = s.scoring.last;
+  if (
+    last !== undefined &&
+    !(
+      last && typeof last === "object" &&
+      typeof last.cell === "string" && s.used.includes(last.cell) &&
+      typeof last.round === "string" &&
+      Array.isArray(last.deltas) && last.deltas.every(goodEntry)
+    )
+  ) {
+    delete s.scoring.last;
+  }
   return s;
 }
 

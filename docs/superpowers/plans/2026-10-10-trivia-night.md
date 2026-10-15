@@ -1681,7 +1681,7 @@ tie up loose ends — this is the list:
    (inside Documents, not Documents itself) → allow editing → Load folder
    on the result. The picker is stubbed in every automated test.
 5. **Open the live URL on the friend's TV** (TV browser, if that route is
-   used): font, Reset game dialog, audio.
+   used): font, Reset game's confirm screen with the remote, audio.
 6. **Two trackpad swipe-backs on the board stay in the app** (real device;
    Chrome's history intervention can't be scripted).
 7. **Run `make serve` once on the event Mac before the night** (the first

@@ -11,6 +11,7 @@
 // a missing clip swaps the player for a "no clip" note (Review Focus 3).
 import { state, showScreen, lockInput, saveGame } from "./app.js";
 import { renderBoard, focusBoard, pointsFor } from "./board.js";
+import { deltasFor, signedPoints } from "./scoring.js";
 
 // Folder-mode media are already blob: URLs; a shipped-bank path is
 // percent-encoded per segment so "#", "?" and spaces in filenames load.
@@ -124,6 +125,19 @@ function teamButtons(markMap, onMark) {
   return btns;
 }
 
+// The bank preview (Task 25, U3): what Done / Next will bank, on one line
+// of fixed height under the team buttons — it updates as marks change, and
+// a line that grew would move the controls under the pointer.
+function bankPreview(verb, markMap, points) {
+  const deltas = deltasFor(markMap, points);
+  const p = document.createElement("p");
+  p.className = "bank-preview";
+  p.textContent = deltas.length
+    ? `${verb}: ` + deltas.map((d) => `${state.teamNames[d.teamIdx]} ${signedPoints(d.points)}`).join(" · ")
+    : `${verb}: no one scores`;
+  return p;
+}
+
 export function resetFlow() {
   endMedia(); // also drops nodes pointing at a revoked blob: URL
   current = null;
@@ -166,10 +180,8 @@ function done() {
   endMedia();
   const { ri, qi } = current;
   const round = state.bank.rounds[ri];
-  const pts = pointsFor(round, qi);
-  for (const [idx, m] of marks) {
-    state.scoring.give(idx, m === "green" ? pts : -pts, round.name);
-  }
+  // One banked result, so Undo last question can take it back (Task 25).
+  state.scoring.bank(`${ri}:${qi}`, round.name, deltasFor(marks, pointsFor(round, qi)));
   state.used.set(`${ri}:${qi}`, true);
   saveGame();
   current = null;
@@ -217,7 +229,7 @@ function renderQuestion(focusKey) {
     ans.textContent = question.a.trim();
     wrap.append(ans);
   }
-  wrap.append(teamButtons(marks, (idx) => cycleMark(idx)));
+  wrap.append(teamButtons(marks, (idx) => cycleMark(idx)), bankPreview("Done", marks, pointsFor(round, qi)));
 
   const controls = document.createElement("div");
   controls.className = "controls";
@@ -286,8 +298,7 @@ function nextQuestion() {
   endMedia(); // advance or tally: the finished question's clip stops
   const { ri, qi } = col;
   const round = state.bank.rounds[ri];
-  const pts = pointsFor(round, qi);
-  for (const idx of colMarks.keys()) state.scoring.give(idx, pts, round.name);
+  state.scoring.bank(`${ri}:${qi}`, round.name, deltasFor(colMarks, pointsFor(round, qi)));
   state.used.set(`${ri}:${qi}`, true);
   saveGame(); // mid-column refresh keeps the awarded questions (Task 18)
   colMarks = new Map();
@@ -351,7 +362,7 @@ function renderColumn(focusKey) {
     ans.textContent = question.a.trim();
     wrap.append(ans);
   }
-  wrap.append(teamButtons(colMarks, (idx) => cycleColMark(idx)));
+  wrap.append(teamButtons(colMarks, (idx) => cycleColMark(idx)), bankPreview("Next", colMarks, pointsFor(round, qi)));
 
   const controls = document.createElement("div");
   controls.className = "controls";

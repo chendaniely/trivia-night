@@ -4,6 +4,7 @@ import { createScoring, restoreScoring } from "./scoring.js";
 import { renderBoard, focusBoard, setCellClick, setColumnClick } from "./board.js";
 import { startQuestion, startColumn, resetFlow, leaveQuestion } from "./question.js";
 import { randomTeamName } from "./teams.js";
+import { askConfirm, cancelConfirm } from "./confirm.js";
 import {
   loadFromDirHandle,
   loadFromFileList,
@@ -31,7 +32,7 @@ export const state = {
   scoring: null,
 };
 
-const SCREENS = ["setup", "board", "question", "tally", "error", "about"];
+const SCREENS = ["setup", "board", "question", "tally", "error", "about", "confirm"];
 
 export function showScreen(id) {
   document.getElementById("boot")?.classList.add("hidden");
@@ -41,7 +42,7 @@ export function showScreen(id) {
   lockInput();
 }
 
-function visibleScreen() {
+export function visibleScreen() {
   return SCREENS.find((s) => !document.getElementById(`screen-${s}`).classList.contains("hidden"));
 }
 
@@ -51,18 +52,46 @@ function visibleScreen() {
 // Next, a board cell -> a team button). Team mark taps never lock.
 const INPUT_LOCK_MS = 350;
 let inputLockedUntil = 0;
+// Same-spot guard (Task 25, U2): a slower second click — "did that
+// work?" — gets past the lock and lands on whatever the new screen put
+// under the pointer (Done, the next Reveal, a board cell). So a screen
+// change caused by a pointer click also guards that spot: pointer clicks
+// within GUARD_PX of it are ignored until the pointer moves away or
+// GUARD_MS pass. Keyboard / remote clicks (detail 0) are never guarded.
+const GUARD_PX = 8;
+const GUARD_MS = 2500;
+let lastPointer = null; // { x, y, t } of the last trusted pointer click
+let guard = null; // { x, y, until }
+const near = (e, p) => Math.hypot(e.clientX - p.x, e.clientY - p.y) <= GUARD_PX;
 export function lockInput() {
-  inputLockedUntil = performance.now() + INPUT_LOCK_MS;
+  const now = performance.now();
+  inputLockedUntil = now + INPUT_LOCK_MS;
+  // Called from inside the click that changed the screen: guard its spot.
+  if (lastPointer && now - lastPointer.t < 100) {
+    guard = { x: lastPointer.x, y: lastPointer.y, until: now + GUARD_MS };
+  }
 }
 document.addEventListener(
   "click",
   (e) => {
     // Only real clicks: the programmatic click that opens the hidden
     // folder input must always get through.
-    if (e.isTrusted && performance.now() < inputLockedUntil) {
+    if (!e.isTrusted) return;
+    const now = performance.now();
+    const pointer = e.detail > 0;
+    if (now < inputLockedUntil || (pointer && guard && now < guard.until && near(e, guard))) {
       e.preventDefault();
       e.stopImmediatePropagation();
+      return;
     }
+    lastPointer = pointer ? { x: e.clientX, y: e.clientY, t: now } : null;
+  },
+  true
+);
+document.addEventListener(
+  "pointermove",
+  (e) => {
+    if (guard && !near(e, guard)) guard = null;
   },
   true
 );
@@ -330,13 +359,29 @@ document.getElementById("start-btn").addEventListener("click", () => {
     state.scoring !== null &&
     rows.length === state.scoring.teams.length &&
     rows.every((r, i) => r.team === i);
-  if (resumable && !confirm("Discard the saved game in progress and start a new one?")) return;
-  if (
-    !sameTeams &&
-    gameInProgress() &&
-    !confirm("The team list changed, so this starts a fresh game — all scores reset. Continue?")
-  )
-    return;
+  const start = () => startGame(names, sameTeams);
+  const askTeams = () =>
+    !sameTeams && gameInProgress()
+      ? askConfirm({
+          title: "Start a fresh game?",
+          text: "The team list changed, so this starts a fresh game and resets every score.",
+          ok: "Start fresh",
+          onOk: start,
+        })
+      : start();
+  if (resumable) {
+    askConfirm({
+      title: "Discard the saved game?",
+      text: "Starting replaces the saved game in progress. To carry on with it instead, press Cancel, then Resume game.",
+      ok: "Discard and start",
+      onOk: askTeams,
+    });
+  } else {
+    askTeams();
+  }
+});
+
+function startGame(names, sameTeams) {
   state.teamNames = names;
   state.mode = selectedMode();
   if (sameTeams) {
@@ -347,7 +392,7 @@ document.getElementById("start-btn").addEventListener("click", () => {
     state.scoring = createScoring(names);
   }
   enterGame();
-});
+}
 
 document.getElementById("resume-btn").addEventListener("click", () => {
   if (!resumable) return;
@@ -396,7 +441,9 @@ window.addEventListener("popstate", () => {
   if (state.scoring === null) return; // no game running: Back works normally
   armBackGuard();
   const on = visibleScreen();
-  if (on === "question") {
+  if (on === "confirm") {
+    cancelConfirm(); // Back on the confirm screen means Cancel
+  } else if (on === "question") {
     leaveQuestion();
   } else if (on === "tally") {
     renderBoard();
@@ -464,15 +511,22 @@ document.getElementById("load-folder-btn").addEventListener("click", () => {
   // cancelled or failed load means the next Load folder asks again.
   const consented = loadConsented;
   loadConsented = false;
-  if (
-    !consented &&
-    gameInProgress() &&
-    !confirm("Load a different board? This ends the game in progress.")
-  )
+  if (!consented && gameInProgress()) {
+    // OK's own click opens the picker (askConfirm runs onOk inside it).
+    askConfirm({
+      title: "Load a different board?",
+      text: "This ends the game in progress. Its saved game is kept: load this board again to resume it.",
+      ok: "Load folder",
+      onOk: openFolderPicker,
+    });
     return;
-  // The picker needs the click's activation, which lapses ~5 s after the
-  // click: a slow read of the confirm would leave the picker refusing to
-  // open (silently, for the fallback input). Ask for one more click.
+  }
+  openFolderPicker();
+});
+
+function openFolderPicker() {
+  // The picker needs a click's activation, which lapses ~5 s after the
+  // click. If it has lapsed, ask for one more click.
   if (navigator.userActivation && !navigator.userActivation.isActive) {
     loadConsented = true;
     setFolderMsg("Click Load folder again to pick the folder.");
@@ -486,7 +540,7 @@ document.getElementById("load-folder-btn").addEventListener("click", () => {
     setLoader(() => folderInput.click());
     folderInput.click();
   }
-});
+}
 folderInput.addEventListener("change", async () => {
   if (!folderInput.files.length) return;
   const result = await loadFromFileList(folderInput.files);
@@ -499,16 +553,32 @@ folderInput.addEventListener("change", async () => {
   setFolderMsg("");
 });
 
-document.getElementById("create-new-btn").addEventListener("click", async () => {
+document.getElementById("create-new-btn").addEventListener("click", () => {
   if (!window.showDirectoryPicker) {
     setFolderMsg(
       "Create new needs Chrome or Edge (File System Access API) — open the app there on your computer."
     );
     return;
   }
-  // Picker FIRST: it needs the click's user activation (expires in ~5 s,
-  // so a slow prompt() before it would break it) and readwrite asks for
-  // write access in the same single prompt.
+  // The name comes first, on the confirm screen (Task 25, U7: no prompt()).
+  // Its OK click then opens the picker straight away, while the click's
+  // user activation is fresh (the reason Task 16 put the picker first).
+  askConfirm({
+    title: "Create a new game folder",
+    text: "Name the new folder, then choose where it goes: a folder inside Documents, not Documents itself. Chrome asks to allow editing: allow it.",
+    input: "my-trivia-night",
+    ok: "Choose where…",
+    onOk: createIn,
+  });
+});
+
+async function createIn(rawName) {
+  const name = rawName.trim();
+  if (!name) {
+    setFolderMsg("The new folder needs a name — click Create new again.");
+    return;
+  }
+  // readwrite asks for write access in the same single prompt.
   let parent;
   try {
     parent = await window.showDirectoryPicker({ mode: "readwrite", startIn: "documents" });
@@ -517,8 +587,6 @@ document.getElementById("create-new-btn").addEventListener("click", async () => 
     setFolderMsg("Could not pick the parent folder: " + err.message);
     return;
   }
-  const name = ((prompt("New game folder name", "my-trivia-night")) || "").trim();
-  if (!name) return;
   try {
     await createNew(parent, name);
     setFolderMsg(`Created ${name}/ with a starter questions.yaml — load it with Load folder.`);
@@ -531,6 +599,6 @@ document.getElementById("create-new-btn").addEventListener("click", async () => 
         : "Could not create the folder: " + err.message
     );
   }
-});
+}
 
 loadBank();
