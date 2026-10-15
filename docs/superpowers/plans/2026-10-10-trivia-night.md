@@ -1786,23 +1786,79 @@ final build (`f603230`), `v0.2.0` = after the Claude pass (`e9ccb0b`),
 > 720p); trivia q1 → q2 not reproduced (reviewer's cases were q2/q3);
 > focus BODY at game end reproduced. All folded into chapter 8.
 
-- [ ] **Step 2: Batch 1 — scores you can trust**, in order: committed
-  `make fit` + transition probe and the same-spot click guard (U2 part
-  1); confirm screen (U7) with the `make smoke` + README rewrite; Undo
-  last question (U1) with a shared marks→deltas function and a persisted
-  `v: 1`-compatible record; Done preview in a fixed slot below the team
-  buttons (U3). U11's disabled style lands before U1's disabled Undo.
-- [ ] **Step 3: Batch 2 — what the room sees**: one question-layout task
-  (U2 part 2 reserved answer + non-focusable placeholder, U9, U10 inline
-  "Answer:", U4 one-line header) with a single `--qf` retune; Play clip
-  button (U8); score badges (U5); final standings (U6) + focus at game
-  end (U18) after the partner's call vs the spec's "no separate
-  final-scoreboard screen".
-- [ ] **Step 4: Batch 3 — polish** (U12–U17, U19).
+Partner go-ahead 2026-10-14 ("yeah let's make the UX audi[t] fixes"),
+including U6 as the board's own scoreboard turning into Final scores (no
+new screen). Keyboard shortcuts stay parked. Inline execution
+(executing-plans) with TDD; a council (backward + forward) per Step.
+
+- [ ] **Step 2: Batch 1 — scores you can trust**
+  - 2a `tools/fit.mjs` + `make fit` (needs `make serve`): fit at 960×540,
+    1280×720, 1440×900, 1920×1080 for setup (4 teams + Resume), board (4
+    and 6 long names), worst questions Oscar 300 / Music 400 / Words 500
+    marked + revealed in both modes, an image question; plus a
+    transition probe: after each screen-changing pointer click, a second
+    click at the same coordinates changes nothing. RED first (U2), then
+    the same-spot guard in `app.js`: `lockInput()` right after a trusted
+    pointer click arms a guard at that point; trusted pointer clicks
+    within 8 px are swallowed until the pointer moves >8 px away or
+    2.5 s pass; keyboard clicks (`detail === 0`) are never guarded; team
+    marks never arm it (they never lock).
+  - 2b U11 disabled style (own colours at 0.4 opacity) — needed by 2d.
+  - 2c U7 confirm screen: `#screen-confirm` as a 7th SCREENS entry,
+    `askConfirm({ title, text, ok, input?, onOk, onCancel })` with
+    callbacks (OK's click runs `onOk` synchronously — the folder picker
+    keeps its user activation). Focus on Cancel; Cancel/Back/Esc cancel
+    and return focus to the opener; Enter presses only the focused
+    button. Replaces all four `confirm()`s; Create new asks for the
+    folder name on this screen, then OK ("Choose where…") opens the
+    picker. `make smoke` clicks the screen and fails on any native
+    dialog but beforeunload. README TV checklist + plan deferred item 5
+    reworded.
+  - 2d U1 Undo last question: `deltasFor(marks, pts)` and
+    `scoring.bank(cell, round, deltas)` / `undoLast()` with a one-level
+    `last` record (cleared by reset and new games; in `snapshot()`; save
+    stays `v: 1`, a bad `last` is dropped, old saves resume). Board
+    button "Undo last question" between Setup and Reset, disabled (not
+    removed) when there is nothing to undo; asks first, naming the
+    question and the points it takes back; focus returns to the reopened
+    cell (jeopardy) or its header (trivia).
+  - 2e U3 bank preview: a one-line, fixed-height line under the team
+    buttons ("Done: +500 A · −500 B" / "Done: no one scores"; trivia
+    "Next: …"), ellipsis if too long, from `deltasFor`.
+  - README + About: Undo, the confirm screen, the preview.
+- [ ] **Step 3: Batch 2 — what the room sees**
+  - 3a question layout: header "Round · 500" / "Round · question 2 of 5
+    · 200" on one line (round name ellipsised, points never); the answer
+    rendered from the start with `visibility: hidden` and an inline
+    "Answer:" label, animating only on the reveal itself; Reveal becomes
+    a same-size non-interactive "Answer shown" slot; controls order
+    Reveal · Done/Next · Back to board (DOM order); question + answer
+    centred in a flexible row, team buttons + preview + controls pinned
+    at the bottom; one `--qf` retune against `make fit`.
+  - 3b U8: a fixed-width "▶ Play clip / ❚❚ Pause / ↺ Replay" button in
+    the audio block (cached with the clip; first focus on audio
+    questions; removed with focus to the first team if the clip fails;
+    `play()` rejection caught).
+  - 3c U5: "+500 / −500" badges on changed score pills after Done, and
+    the column's points after a trivia tally; absolutely positioned,
+    ≤240 ms fade, shown without motion under reduced motion, gone on
+    the next board render.
+  - 3d U6 + U18: when no playable cell remains, the scoreboard becomes
+    "Final scores": ranked, leader(s) highlighted, ties named, sized to
+    fit 6 teams at 960×540; focus goes to Setup.
+- [ ] **Step 4: Batch 3 — polish**: U12 (the subtitle turns into "Every
+  team needs a name." while Start is disabled), U13 (one-line mode
+  descriptions), U14 (live trivia headers styled as buttons with "N
+  left"; a shorter hint kept — the partner asked for the obviousness,
+  2026-10-12), U15 (tally title card with column and total points,
+  sized in `--u`), U16 (plain error wording + which file/folder; text
+  not all red), U17 (true minus, muted negative scores), U19 (`:focus`
+  fallbacks behind a `no-fv` class set when `:focus-visible` is
+  unsupported). README + About.
 - [ ] **Step 5: Release `v1.0.0`** after Steps 2–4 merge and deploy.
 
-Guardrails for every step (Tasks 18, 20, 21, the final review and this
-council): `make fit` at 960×540–1920×1080 incl. Oscar 300 / Music 400 /
+Guardrails for every step (Tasks 18, 20, 21, the final review and the
+Step 1 council): `make fit` at 960×540–1920×1080 incl. Oscar 300 / Music 400 /
 Words 500, 4 and 6 long names, all marked, revealed, both modes, an image
 question; focus never on Done/Next and restored after re-render;
 held-Enter swallowed, click lock kept, same-spot guard added; saved games
