@@ -34,6 +34,14 @@ export const state = {
 
 const SCREENS = ["setup", "board", "question", "tally", "error", "about", "confirm"];
 
+// Older TV browsers (before Safari 15.4) don't know ":focus-visible";
+// .no-fv switches on the plain :focus look instead (Task 25, U19).
+try {
+  document.querySelector(":focus-visible");
+} catch {
+  document.documentElement.classList.add("no-fv");
+}
+
 export function showScreen(id) {
   // Leaving the confirm screen any other way (a folder load, an error)
   // forgets the question, so a late Esc can't bring back an old screen.
@@ -176,12 +184,18 @@ function gameInProgress() {
 }
 
 const ERROR_CAP = 12; // keeps Try again / Back to setup on screen on a TV
+const SHIPPED = "the shipped questions.yaml";
 
-export function renderError(errors) {
+// source: which file has the problem, for the host (Task 25, U16) —
+// "the shipped questions.yaml" or 'the folder "night"'.
+export function renderError(errors, source) {
+  document.getElementById("error-source").textContent = `In ${source}:`;
   const list = document.getElementById("error-list");
   const items = errors.slice(0, ERROR_CAP).map((e) => {
     const li = document.createElement("li");
-    li.textContent = e.line ? `line ${e.line}: ${e.message}` : `${e.where}: ${e.message}`;
+    const where = document.createElement("strong");
+    where.textContent = e.line ? `line ${e.line}` : e.where;
+    li.append(where, `: ${e.message}`);
     return li;
   });
   if (errors.length > ERROR_CAP) {
@@ -202,12 +216,12 @@ async function loadBank() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     text = await res.text();
   } catch (err) {
-    renderError([{ where: "fetch", message: `questions.yaml could not be loaded (${err.message})` }]);
+    renderError([{ where: "loading", message: `it could not be loaded (${err.message}) — try again, or reload the page` }], SHIPPED);
     return;
   }
   const result = parseBank(text);
   if (!result.ok) {
-    renderError(result.errors);
+    renderError(result.errors, SHIPPED);
     return;
   }
   shippedKey = bankKeyOf(text);
@@ -264,6 +278,17 @@ function setupRows() {
 
 function allNamed() {
   return setupInputs().every((el) => el.value.trim() !== "");
+}
+
+// Start is off while a team has no name, and the subtitle says why
+// (Task 25, U12) — in its own line, so nothing moves.
+const SUBTITLE = "Name your teams and pick a mode.";
+function updateStart() {
+  const ok = allNamed();
+  document.getElementById("start-btn").disabled = !ok;
+  const sub = document.querySelector("#screen-setup .subtitle");
+  sub.textContent = ok ? SUBTITLE : "Every team needs a name.";
+  sub.classList.toggle("warn", !ok);
 }
 
 function selectedMode() {
@@ -326,7 +351,7 @@ function renderSetup(rows) {
   renderSaveNote();
   // Mid-game, setup can always be left without changing anything.
   document.getElementById("setup-back-btn").classList.toggle("hidden", state.scoring === null);
-  document.getElementById("start-btn").disabled = !allNamed();
+  updateStart();
 }
 
 // The saved-game offer (Task 18): one summary line + the primary Resume
@@ -380,7 +405,7 @@ function enterGame() {
 document
   .getElementById("team-inputs")
   .addEventListener("input", () => {
-    document.getElementById("start-btn").disabled = !allNamed();
+    updateStart();
   });
 
 document.getElementById("start-btn").addEventListener("click", () => {
@@ -529,12 +554,12 @@ async function pickFolder() {
     handle = await window.showDirectoryPicker();
   } catch (err) {
     if (err && err.name === "AbortError") return; // host cancelled
-    renderError([{ where: "folder", message: "could not open the folder (" + err.message + ")" }]);
+    renderError([{ where: "opening it", message: "it could not be opened (" + err.message + ") — try again" }], "the folder");
     return;
   }
   const result = await loadFromDirHandle(handle);
   if (!result.ok) {
-    renderError(result.errors);
+    renderError(result.errors, `the folder "${handle.name}"`);
     return;
   }
   startNewBank(result.bank, result.urls, bankKeyOf(result.text));
@@ -582,10 +607,11 @@ function openFolderPicker() {
 }
 folderInput.addEventListener("change", async () => {
   if (!folderInput.files.length) return;
+  const name = (folderInput.files[0].webkitRelativePath || "").split("/")[0];
   const result = await loadFromFileList(folderInput.files);
   folderInput.value = ""; // allow re-picking the same folder
   if (!result.ok) {
-    renderError(result.errors);
+    renderError(result.errors, name ? `the folder "${name}"` : "the folder");
     return;
   }
   startNewBank(result.bank, result.urls, bankKeyOf(result.text));

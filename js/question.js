@@ -11,7 +11,7 @@
 // a missing clip swaps the player for a "no clip" note (Review Focus 3).
 import { state, showScreen, lockInput, saveGame } from "./app.js";
 import { renderBoard, focusBoard, pointsFor } from "./board.js";
-import { deltasFor, signedPoints } from "./scoring.js";
+import { deltasFor, signedPoints, formatScore } from "./scoring.js";
 
 // Folder-mode media are already blob: URLs; a shipped-bank path is
 // percent-encoded per segment so "#", "?" and spaces in filenames load.
@@ -509,26 +509,37 @@ function renderColumn(focusKey) {
   restoreFocus(root, key);
 }
 
+// The end of a trivia column (Task 25, U15): a title card — the round,
+// then each team's points from it and their new total, sized for the TV.
 function renderTally(roundName) {
   const el = document.getElementById("screen-tally");
   const wrap = document.createElement("div");
-  wrap.className = "question-wrap";
+  wrap.className = "tally-wrap";
   const h = document.createElement("h2");
-  h.textContent = `Column tally: ${roundName}`;
+  h.className = "tally-title";
+  h.textContent = `${roundName} — round over`;
   const rows = document.createElement("div");
-  rows.className = "team-btns";
+  rows.className = "tally-cards";
   rows.append(
     ...state.scoring.teams.map((t, idx) => {
       const d = document.createElement("div");
-      d.className = "tally-row";
-      const pts = document.createElement("span");
-      pts.className = "score-points";
-      pts.textContent = state.scoring.roundTeamTotal(roundName, idx);
-      d.append(document.createTextNode(t.name + " "), pts);
+      d.className = "tally-card";
+      const name = document.createElement("span");
+      name.className = "tally-name";
+      name.textContent = t.name;
+      const got = state.scoring.roundTeamTotal(roundName, idx);
+      const round = document.createElement("span");
+      round.className = "tally-round" + (got > 0 ? " up" : "");
+      round.textContent = `${signedPoints(got)} this round`;
+      const total = document.createElement("span");
+      total.className = "tally-total";
+      total.textContent = `total ${formatScore(t.points)}`;
+      d.append(name, round, total);
       return d;
     })
   );
   const back = document.createElement("button");
+  back.className = "btn-primary";
   back.textContent = "Back to board";
   back.addEventListener("click", () => {
     // What this run through the column added, as badges (Task 25, U5) —

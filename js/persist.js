@@ -1,3 +1,5 @@
+import { formatScore } from "./scoring.js";
+
 // Saved games (Task 18): a refresh, a stray Back or a discarded tab must
 // not wipe the night. Pure — no DOM; the caller passes the Storage object
 // (or null). Every storage access is wrapped: private mode / blocked site
@@ -102,7 +104,7 @@ export function ageText(savedAt, now = new Date()) {
 }
 
 function teamsLine(save) {
-  return save.scoring.teams.map((t) => `${t.name} ${t.points}`).join(" · ");
+  return save.scoring.teams.map((t) => `${t.name} ${formatScore(t.points)}`).join(" · ");
 }
 
 export function saveSummary(save, now = new Date()) {

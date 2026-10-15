@@ -2,7 +2,7 @@
 // reads app.js state. Clicks route through the callbacks wired by app.js.
 import { state, showScreen, saveGame } from "./app.js";
 import { askConfirm } from "./confirm.js";
-import { signedPoints } from "./scoring.js";
+import { signedPoints, formatScore } from "./scoring.js";
 
 let onCellClick = () => {};
 let onColumnClick = () => {};
@@ -40,8 +40,13 @@ export function renderBoard({ badges = [] } = {}) {
       if (finished && t.points === top) d.classList.add("leader");
       const pts = document.createElement("span");
       pts.className = "score-points";
-      pts.textContent = t.points;
-      d.append(document.createTextNode(t.name + " "), pts);
+      pts.textContent = formatScore(t.points);
+      if (t.points < 0) pts.classList.add("neg"); // below zero: muted (U17)
+      const name = document.createElement("span");
+      name.className = "score-name";
+      name.textContent = t.name;
+      d.title = t.name; // the full name, when a long one is shortened
+      d.append(name, pts);
       const change = badges.filter((b) => b.teamIdx === idx).reduce((sum, b) => sum + b.points, 0);
       if (change !== 0) {
         const badge = document.createElement("span");
@@ -68,6 +73,14 @@ export function renderBoard({ badges = [] } = {}) {
     if (live) h.type = "button";
     h.className = "board-header";
     h.textContent = round.name;
+    // A partly played trivia column says how many are left (Task 25, U14).
+    const left = round.questions.filter((_, qi) => !used.has(`${ri}:${qi}`)).length;
+    if (live && left < round.questions.length) {
+      const l = document.createElement("span");
+      l.className = "col-left";
+      l.textContent = `${left} left`;
+      h.append(l);
+    }
     if (live) {
       h.classList.add("clickable");
       h.dataset.ri = ri;
@@ -187,7 +200,7 @@ export function renderBoard({ badges = [] } = {}) {
   if (mode === "trivia" && !finished) {
     hint = document.createElement("p");
     hint.className = "board-hint";
-    hint.textContent = "Trivia: click a category name to start that round — the amounts are not clickable.";
+    hint.textContent = "Trivia: click a category to play it."; // the headers look like buttons (U14)
   }
   el.replaceChildren(...(title ? [title] : []), score, ...(hint ? [hint] : []), grid, actions);
 }

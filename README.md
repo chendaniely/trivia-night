@@ -111,7 +111,8 @@ A week before, on the Mac and TV you'll actually use:
    - **Trivia** — click a category name to start the round (the point
      cells aren't clickable), mark a team green when they answer,
      **Reveal** to show the answer, **Next** to move on. The line under
-     the teams shows what Next will bank.
+     the teams shows what Next will bank. At the end of the category, a
+     tally shows each team's points from it and their new total.
    The top of each question shows its category and what it's worth. A
    question with a clip has a big **▶ Play clip** button at the top right
    (on a remote, OK plays it). After **Done**, small +/− badges on the
@@ -158,6 +159,9 @@ rounds:
 
 Unknown keys are reported (typo guard): a misspelled `image:` or `Audio:`
 is flagged with a "did you mean" hint instead of being silently ignored.
+Each problem says what to add or change, like `has no answer — add a
+line like a: "the answer"`, and the error screen names the file or
+folder it is in.
 Problems are located the way you'd look for them, e.g. `round 2 "Movies",
 question 3`; YAML syntax errors give a line number.
 

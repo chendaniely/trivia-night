@@ -190,6 +190,18 @@ for (const [w, h] of SIZES) {
       await settle(page);
     }
     await fits(page, `${tag} ${n} teams: trivia board`);
+    // a column played to its tally card (Task 25, U15)
+    await tap(page, `.board-header.clickable[data-ri="4"]`);
+    await settle(page);
+    while ((await screen(page)) === "question") {
+      await markAll(page);
+      await tap(page, "#screen-question button:text-is('Next')");
+      await settle(page);
+    }
+    await fits(page, `${tag} ${n} teams: column tally`);
+    await tap(page, "#screen-tally button");
+    await settle(page);
+    await fits(page, `${tag} ${n} teams: trivia board with a partly played column`);
     // a refresh -> setup with the Resume offer
     await page.reload();
     await page.waitForSelector("#screen-setup:not(.hidden)");
@@ -329,6 +341,13 @@ const SAME_SPOT = [
     await tap(p, `.board-header.clickable[data-ri="5"]`); await settle(p);
     await tap(p, "#screen-question button:text-is('Next')"); await settle(p);
     await reveal(p);
+    return "#screen-question button:text-is('Next')";
+  }],
+  // The tally card's Back to board lands where the last Next was: the
+  // guard must hold (a quick second click would leave the tally early).
+  ["the last Next into the tally", "guard", null, "trivia", async (p) => {
+    await tap(p, `.board-header.clickable[data-ri="3"]`); await settle(p);
+    for (let k = 0; k < 3; k++) { await tap(p, "#screen-question button:text-is('Next')"); await settle(p); }
     return "#screen-question button:text-is('Next')";
   }],
   ["the tally's Back to board", "still", null, "trivia", async (p) => {

@@ -43,12 +43,18 @@ function unknownKeyErrors(obj, allowed, where) {
     });
 }
 
+// Messages are written for the host editing the file (Task 25, U16): what
+// is wrong and the line that fixes it, never schema words.
+const FIELD = { q: ["question", "the question"], a: ["answer", "the answer"] };
+
 // A text field that isn't a string is usually YAML turning 1984 / true into a non-string.
 function textFieldError(q, field) {
   const v = q[field];
-  if (typeof v === "string") return v.trim() ? null : `question.${field} must be a non-empty string`;
-  if (v === undefined || v === null) return `question.${field} must be a non-empty string`;
-  return `question.${field} must be text — put quotes around it: ${field}: "${String(v)}"`;
+  const [noun, example] = FIELD[field];
+  const missing = `has no ${noun} — add a line like  ${field}: "${example}"`;
+  if (typeof v === "string") return v.trim() ? null : missing;
+  if (v === undefined || v === null) return missing;
+  return `the ${noun} must be text — put quotes around it: ${field}: "${String(v)}"`;
 }
 
 export function parseBank(text) {
@@ -61,19 +67,19 @@ export function parseBank(text) {
   }
 
   if (typeof data !== "object" || data === null || Array.isArray(data)) {
-    return { ok: false, errors: [{ where: "root", message: "top level must be a mapping with title and rounds" }] };
+    return { ok: false, errors: [{ where: "the file", message: "it should start with a  title:  line, then  rounds:" }] };
   }
 
   const errors = unknownKeyErrors(data, TOP_KEYS, "root");
   if (typeof data.title !== "string" || !data.title.trim()) {
-    errors.push({ where: "title", message: "title must be a non-empty string" });
+    errors.push({ where: "title", message: 'the file needs a title, like  title: "Trivia Night"' });
   }
   if (!Array.isArray(data.rounds)) {
-    errors.push({ where: "rounds", message: "rounds must be a list" });
+    errors.push({ where: "rounds", message: "rounds: must be a list of rounds, each starting with  - name:" });
     return { ok: false, errors };
   }
   if (data.rounds.length === 0) {
-    errors.push({ where: "rounds", message: "rounds must contain at least one round" });
+    errors.push({ where: "rounds", message: "there are no rounds yet — add one under  rounds:" });
     return { ok: false, errors };
   }
 
@@ -83,29 +89,29 @@ export function parseBank(text) {
     const label = typeof round?.name === "string" && round.name.trim() ? ` "${round.name}"` : "";
     const where = `round ${ri + 1}${label}`;
     if (typeof round !== "object" || round === null || Array.isArray(round)) {
-      errors.push({ where, message: "round must be a mapping" });
+      errors.push({ where, message: "each round needs a  name:  and its  questions:" });
       continue;
     }
     errors.push(...unknownKeyErrors(round, ROUND_KEYS, where));
     if (typeof round.name !== "string" || !round.name.trim()) {
-      errors.push({ where, message: "round.name must be a non-empty string" });
+      errors.push({ where, message: 'has no name — add a line like  name: "Movies"' });
     } else if (seenNames.has(round.name)) {
-      errors.push({ where, message: `duplicate round name "${round.name}"` });
+      errors.push({ where, message: `duplicate round name "${round.name}" — every round needs its own name` });
     } else {
       seenNames.add(round.name);
     }
     if (!Array.isArray(round.questions)) {
-      errors.push({ where, message: "round.questions must be a list" });
+      errors.push({ where, message: "questions: must be a list, each question starting with  - q:" });
       continue;
     }
     if (round.questions.length === 0) {
-      errors.push({ where, message: "round.questions must contain at least one question" });
+      errors.push({ where, message: "has no questions yet — add one under  questions:" });
     }
     for (let qi = 0; qi < round.questions.length; qi++) {
       const q = round.questions[qi];
       const qwhere = `${where}, question ${qi + 1}`;
       if (typeof q !== "object" || q === null || Array.isArray(q)) {
-        errors.push({ where: qwhere, message: "question must be a mapping" });
+        errors.push({ where: qwhere, message: "each question needs its own  q:  and  a:  lines" });
         continue;
       }
       errors.push(...unknownKeyErrors(q, QUESTION_KEYS, qwhere));
@@ -114,10 +120,10 @@ export function parseBank(text) {
         if (message) errors.push({ where: qwhere, message });
       }
       if (q.points !== undefined && (!Number.isInteger(q.points) || q.points <= 0)) {
-        errors.push({ where: qwhere, message: "question.points must be a positive integer" });
+        errors.push({ where: qwhere, message: "points: must be a whole number above 0, like  points: 300" });
       }
       if (q.audio !== undefined && (typeof q.audio !== "string" || !q.audio.trim())) {
-        errors.push({ where: qwhere, message: "question.audio must be a non-empty string" });
+        errors.push({ where: qwhere, message: 'audio: must be a file name, like  audio: "audio/clip.m4a"' });
       }
       if (q.images !== undefined) {
         const imgsOk =
@@ -125,7 +131,7 @@ export function parseBank(text) {
           q.images.length > 0 &&
           q.images.every((s) => typeof s === "string" && s.trim());
         if (!imgsOk) {
-          errors.push({ where: qwhere, message: "question.images must be a list of non-empty strings" });
+          errors.push({ where: qwhere, message: 'images: must be a list of file names, like  images: ["images/photo.jpg"]' });
         }
       }
     }

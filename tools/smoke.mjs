@@ -48,7 +48,7 @@ const screen = () =>
   );
 const scores = () =>
   page.$$eval("#screen-board .score-team", (els) =>
-    els.map((e) => `${e.firstChild.textContent}${e.querySelector(".score-points").textContent}`.trim())
+    els.map((e) => `${e.firstChild.textContent.trim()} ${e.querySelector(".score-points").textContent}`)
   ); // name + points, not the score badge
 const cell = (ri, qi) => `.board-cell.clickable[data-ri="${ri}"][data-qi="${qi}"]`;
 
@@ -65,11 +65,35 @@ try {
     return { disabled: rm.disabled, sameFill: st(rm).backgroundColor === st(add).backgroundColor, opacity: Number(st(rm).opacity) };
   });
   check(look.disabled && look.sameFill && look.opacity < 0.6, "a disabled Remove is the quiet button, faded");
+  // Each mode says what it is (U13).
+  check(
+    (await page.textContent("#mode-pick")).replace(/\s+/g, " ").includes("Jeopardy any cell; wrong answers lose points") &&
+      (await page.textContent("#mode-pick")).replace(/\s+/g, " ").includes("Trivia a category, top to bottom"),
+    "setup explains the two modes"
+  );
+  // Start off for an empty name, and the subtitle says why (U12).
+  await page.fill("#team-2", "");
+  check(
+    (await page.isDisabled("#start-btn")) && (await page.textContent("#screen-setup .subtitle")) === "Every team needs a name.",
+    "an empty name: Start is off and the subtitle says why"
+  );
   await page.fill("#team-1", "Hazy Bagpipes");
   await page.fill("#team-2", "Misty Goblins");
   await click("#start-btn");
   await settle();
   check((await screen()) === "board", "Start opens the board");
+  // Older browsers without :focus-visible (U19): with .no-fv on, a
+  // focused cell gets the focus fill from plain :focus.
+  const fvFill = await page.evaluate(() => {
+    document.documentElement.classList.add("no-fv");
+    const c = document.querySelector(".board-cell.clickable");
+    c.focus();
+    const bg = getComputedStyle(c).outlineWidth;
+    document.documentElement.classList.remove("no-fv");
+    c.blur();
+    return bg;
+  });
+  check(fvFill === "3px", `without :focus-visible, a focused cell still gets its ring (${fvFill})`);
   const before = await scores();
 
   // Jeopardy: team 1 right, team 2 wrong, Reveal, Done
@@ -86,10 +110,12 @@ try {
     page.$eval("#screen-question .bank-preview", (e) => ({ text: e.textContent, h: e.getBoundingClientRect().height }));
   const p0 = await preview();
   // Marking moves nothing (Task 25 council): the ✓ / ✕ slot is reserved.
-  const targetsNow = () =>
+  // (the pointer leaves first: a hovered button lifts by 1 px)
+  const targetsNow = async () => (await page.mouse.move(1, 1)) ??
     page.$$eval("#screen-question .team-btns button, #screen-question .controls", (els) =>
       els.map((e) => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width].map(Math.round).join(); }).join("|")
     );
+  await page.evaluate(() => document.fonts.ready); // measure in the real font
   const t0 = await targetsNow();
   check(p0.text === "Done: no one scores", `the preview starts at "no one scores" (${p0.text})`);
   await click("#screen-question .team-btns button >> nth=0");
@@ -116,6 +142,9 @@ try {
   await click("#screen-question button:text-is('Back to board')");
   await settle();
   check((await badges()).length === 0, "badges are gone when the board is drawn again");
+  // A score below zero reads "−100" (a true minus) in a muted colour (U17).
+  const neg = await page.$eval("#screen-board .score-team:nth-child(2) .score-points", (e) => ({ t: e.textContent, neg: e.classList.contains("neg") }));
+  check(neg.t === "\u2212100" && neg.neg, `a negative score reads ${neg.t}, muted`);
 
   // Reload -> Resume
   await page.reload();
@@ -143,6 +172,10 @@ try {
   await click("#start-btn");
   await settle();
   check((await screen()) === "board", "switching to trivia returns to the board");
+  // Trivia (U14): live headers look like buttons; the hint is short.
+  const hdr = await page.$eval('.board-header.clickable[data-ri="0"]', (e) => getComputedStyle(e).backgroundColor);
+  check(hdr === "rgb(35, 97, 146)", `live trivia headers look like buttons (${hdr})`);
+  check((await page.textContent(".board-hint")) === "Trivia: click a category to play it.", "the trivia hint is short");
   await click('.board-header.clickable[data-ri="0"]');
   await settle();
   let n = 0;
@@ -155,6 +188,21 @@ try {
     n++;
   }
   check((await screen()) === "tally" && n > 0, `a trivia column ends on the tally (${n} questions)`);
+  // The tally is a title card: the round, each team's points from it and
+  // their new total (U15).
+  const tally = await page.evaluate(() => ({
+    title: document.querySelector("#screen-tally .tally-title")?.textContent,
+    cards: [...document.querySelectorAll("#screen-tally .tally-card")].map((c) => [
+      c.querySelector(".tally-name").textContent,
+      c.querySelector(".tally-round").textContent,
+      c.querySelector(".tally-total").textContent,
+    ]),
+  }));
+  check(tally.title === "Movies: Oscar — round over", `the tally names the round (${tally.title})`);
+  check(
+    tally.cards.length === 2 && tally.cards[0][0] === "Hazy Bagpipes" && /^[+\u2212]?\d+ this round$/.test(tally.cards[0][1]) && /^total [\u2212]?\d+$/.test(tally.cards[0][2]),
+    `each team shows its round points and total (${JSON.stringify(tally.cards)})`
+  );
   await click("#screen-tally button");
   await settle();
   check((await screen()) === "board", "the tally returns to the board");
@@ -169,6 +217,7 @@ try {
       (await page.evaluate(() => document.activeElement.dataset.ri)) === "0",
     "trivia Undo reopens the column, focus on its header"
   );
+  check((await page.textContent('.board-header.clickable[data-ri="0"] .col-left')) === "1 left", "a partly played column says how many are left");
 
   // Reset game asks on the app's confirm screen: Cancel, Esc and Back keep
   // the game; OK resets it.
@@ -282,15 +331,16 @@ try {
   const clipBtn = "#screen-question .clip-btn";
   check((await clips.evaluate(() => document.activeElement.classList.contains("clip-btn"))), "a clip question starts with focus on Play clip");
   check((await clips.textContent(clipBtn)) === "\u25B6 Play clip", "the clip button says Play clip");
+  // Wait for the label rather than a fixed time: it says "Loading…" until
+  // the clip really plays.
+  const label = (text) =>
+    clips.waitForFunction((t) => document.querySelector("#screen-question .clip-btn")?.textContent === t, text, { timeout: 4000 }).then(() => true, () => false);
   await clips.keyboard.press("Enter");
-  await clips.waitForTimeout(300);
-  check((await clips.textContent(clipBtn)) === "\u275A\u275A Pause", "OK plays the clip (the button says Pause)");
-  await clips.waitForTimeout(1500); // the demo clip is 1 s
-  check((await clips.textContent(clipBtn)) === "\u21BA Replay", "after the clip ends the button says Replay");
+  check(await label("\u275A\u275A Pause"), "OK plays the clip (the button says Pause)");
+  check(await label("\u21BA Replay"), "after the clip ends the button says Replay"); // the demo clip is 1 s
   await clips.mouse.move(1, 1);
   await clips.dblclick(clipBtn);
-  await clips.waitForTimeout(300);
-  check((await clips.textContent(clipBtn)) === "\u275A\u275A Pause", "a double-click on the clip button is one press");
+  check(await label("\u275A\u275A Pause"), "a double-click on the clip button is one press");
   await clips.mouse.move(1, 1);
   await clips.click("#screen-question button:text-is('Back to board')");
   await clips.waitForTimeout(450);
@@ -349,6 +399,19 @@ try {
   picks = await cf.evaluate(() => window.__picks);
   check(picks.length === 2 && picks[1].active && picks[1].mode === "readwrite", "Enter in the name field opens the readwrite picker");
   await cf.close();
+
+  // A broken question file (Task 25, U16): plain wording, the file named,
+  // the text in the normal colour (the bullets carry the red).
+  const er = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+  await er.route("**/questions.yaml", (r) =>
+    r.fulfill({ contentType: "text/yaml", body: 'title: "T"\nrounds:\n  - name: "R"\n    questions:\n      - q: "ok"\n        a: "ok"\n      - q: "no answer here"\n' })
+  );
+  await er.goto(URL_);
+  await er.waitForSelector("#screen-error:not(.hidden)");
+  check((await er.textContent("#error-source")) === "In the shipped questions.yaml:", "the error screen names the file");
+  const li = await er.$eval("#error-list li", (e) => ({ text: e.textContent.replace(/\s+/g, " "), red: getComputedStyle(e).color === "rgb(248, 81, 73)" }));
+  check(li.text === 'round 1 "R", question 2: has no answer — add a line like a: "the answer"' && !li.red, `the error reads plainly, not all red (${li.text})`);
+  await er.close();
 
   // The end of the game (Task 25, U6 + U18): when no cell is left, the
   // scoreboard is the final standings — ranked, the winner (or a tie)

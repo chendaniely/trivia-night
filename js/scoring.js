@@ -33,6 +33,12 @@ export function deltasFor(marks, points) {
     .map(([teamIdx, mark]) => ({ teamIdx, points: mark === "red" ? -points : points }));
 }
 
+// A score as the room reads it: "500", "0", "−500" (a true minus, U+2212,
+// not a hyphen — Task 25, U17).
+export function formatScore(n) {
+  return n < 0 ? `\u2212${-n}` : String(n);
+}
+
 // Points with a sign for display: "+500", "−500" (a true minus), "0".
 export function signedPoints(n) {
   return n > 0 ? `+${n}` : n < 0 ? `\u2212${-n}` : "0";

@@ -1908,6 +1908,11 @@ new screen). Keyboard shortcuts stay parked. Inline execution
   not all red), U17 (true minus, muted negative scores), U19 (`:focus`
   fallbacks behind a `no-fv` class set when `:focus-visible` is
   unsupported). README + About.
+  As built (council constraints on 0c2a540's forward review): mode
+  descriptions inline (no extra setup height); "N left" a corner pill
+  (no header height); the `.no-fv` fallback on cells and headers is a
+  ring, not the fill (focus is set by code after every question); the
+  tally card and a partly played trivia board join `make fit`.
 - [ ] **Step 5: Release `v1.0.0`** after Steps 2–4 merge and deploy.
 
 Guardrails for every step (Tasks 18, 20, 21, the final review and the

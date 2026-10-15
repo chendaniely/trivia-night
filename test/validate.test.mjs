@@ -45,7 +45,7 @@ rounds:
 const r2 = parseBank(noA);
 assert.equal(r2.ok, false);
 assert.equal(r2.errors[0].where, 'round 1 "R", question 2');
-assert.match(r2.errors[0].message, /a\b/);
+assert.match(r2.errors[0].message, /^has no answer — add a line like {2}a: "the answer"$/); // host wording (Task 25, U16)
 
 // mid-file YAML error: line 6 is `        a: bad: line`
 // (EOF-truncated errors mark EOF, so the fixture stays mid-file)
@@ -94,7 +94,7 @@ rounds:
 const r6 = parseBank(noQ);
 assert.equal(r6.ok, false);
 assert.equal(r6.errors[0].where, 'round 1 "R", question 1');
-assert.match(r6.errors[0].message, /q\b/);
+assert.match(r6.errors[0].message, /^has no question — add a line like {2}q: "the question"$/);
 
 // duplicate round names -> error (Task 6 tallies key by name)
 const dupNames = `title: "T"
@@ -203,11 +203,11 @@ assert.match(e[0].message, /did you mean "title"/);
 // non-string q / a: tell the host to quote
 e = bad(wrap("      - q: \"Q3\"\n        a: 1984\n"));
 assert.equal(e[0].where, 'round 1 "Movies", question 3');
-assert.match(e[0].message, /must be text — put quotes around it: a: "1984"/);
+assert.match(e[0].message, /^the answer must be text — put quotes around it: a: "1984"$/);
 e = bad(wrap("      - q: \"Q3\"\n        a: true\n"));
 assert.match(e[0].message, /a: "true"/);
 e = bad(wrap("      - q: 42\n        a: \"x\"\n"));
-assert.match(e[0].message, /question\.q must be text — put quotes around it: q: "42"/);
+assert.match(e[0].message, /^the question must be text — put quotes around it: q: "42"$/);
 
 // round without a usable name
 e = bad(`title: "T"
@@ -215,5 +215,24 @@ rounds:
   - questions: []
 `);
 assert.ok(e.some((x) => x.where === "round 1"));
+
+// No schema words reach the host (Task 25, U16): every message from a
+// broken file avoids "question.a", "round.name", "mapping", "non-empty".
+const broken = `title: ""
+rounds:
+  - name: ""
+    questions:
+      - a: "x"
+        points: -1
+        audio: ""
+        images: []
+      - "just text"
+  - name: "R"
+    questions: []
+  - "just text"
+`;
+for (const er of parseBank(broken).errors) {
+  assert.doesNotMatch(er.message, /question\.|round\.|mapping|non-empty/, er.message);
+}
 
 console.log("validate: all assertions passed");

@@ -22,8 +22,10 @@
       <p id="save-note" class="hidden"></p>
       <div id="team-inputs"></div>
       <div id="mode-pick" role="radiogroup" aria-label="Game mode">
-        <label><input type="radio" name="mode" value="jeopardy" checked> Jeopardy</label>
-        <label><input type="radio" name="mode" value="trivia"> Trivia</label>
+        <label><input type="radio" name="mode" value="jeopardy" checked> Jeopardy
+          <span class="mode-desc">any cell; wrong answers lose points</span></label>
+        <label><input type="radio" name="mode" value="trivia"> Trivia
+          <span class="mode-desc">a category, top to bottom</span></label>
       </div>
       <div class="start-row">
         <button id="setup-back-btn" class="btn-quiet hidden">Back to board</button>
@@ -58,7 +60,8 @@
           <strong>Trivia:</strong> click a category name to start that round —
           the point cells are not clickable. Mark a team green when they
           answer; click again to clear; the line under the teams shows what
-          Next will bank. Reveal shows the answer; Next moves on.
+          Next will bank. Reveal shows the answer; Next moves on. The tally
+          at the end shows each team's points from the category.
         </li>
         <li>
           <strong>Clips and the finish:</strong> each question's top line shows
@@ -126,6 +129,7 @@
     </section>
     <section id="screen-error" class="screen hidden">
       <h1>Question file problem</h1>
+      <p id="error-source"></p>
       <div class="error-actions">
         <button id="retry-btn">Try again</button>
         <button id="error-back-btn" class="btn-quiet hidden">Back to setup</button>

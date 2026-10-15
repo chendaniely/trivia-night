@@ -55,7 +55,11 @@ button {
 }
 button:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
 button:active:not(:disabled) { filter: brightness(0.94); transform: translateY(1px); }
+/* :focus-visible rules stand alone, each with a `.no-fv … :focus` twin
+   (Task 25, U19): before Safari 15.4 the selector is unknown and would
+   take its whole rule down — app.js sets .no-fv there. */
 button:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+.no-fv button:focus { outline: 3px solid var(--text); outline-offset: 2px; }
 /* Disabled (Task 25, U11): the button's own look, faded — a filled grey
    read as a different, active button next to the quiet ones. */
 button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -74,6 +78,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   content: ""; display: block; width: calc(120 * var(--u)); height: calc(6 * var(--u));
   margin: calc(12 * var(--u)) auto 0; background: var(--orange); border-radius: 3px;
 }
+#screen-setup .subtitle.warn { color: var(--orange); font-weight: 700; }
 #screen-setup .subtitle { text-align: center; font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); margin: calc(4 * var(--u)) 0 0; }
 #screen-setup button { font-size: max(calc(20 * var(--k)), calc(30 * var(--u))); padding: calc(14 * var(--u)) calc(32 * var(--u)); }
 #team-inputs { display: grid; gap: calc(16 * var(--u)); margin: calc(24 * var(--u)) 0; justify-items: center; }
@@ -85,6 +90,10 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 #screen-setup .team-remove { font-size: max(calc(18 * var(--k)), calc(26 * var(--u))); padding: calc(10 * var(--u)) calc(24 * var(--u)); }
 #add-team-btn { margin-top: calc(6 * var(--u)); }
 #mode-pick { display: flex; gap: calc(48 * var(--u)); margin: calc(20 * var(--u)) 0; font-size: max(calc(20 * var(--k)), calc(32 * var(--u))); justify-content: center; }
+/* Each mode says what it is, on its own line of the row — no extra height
+   (Task 25, U13: setup at 960x540 has none to spare). */
+#mode-pick label { white-space: nowrap; }
+#mode-pick .mode-desc { color: var(--muted); font-size: max(calc(15 * var(--k)), calc(22 * var(--u))); margin-left: 0.3em; }
 #mode-pick input[type="radio"] { width: max(calc(20 * var(--k)), calc(30 * var(--u))); height: max(calc(20 * var(--k)), calc(30 * var(--u))); }
 #screen-setup .start-row { display: flex; gap: calc(20 * var(--u)); justify-content: center; }
 /* Saved-game offer (Task 18): summary + Resume on one line at the top of
@@ -112,6 +121,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 #screen-about ul { padding-left: calc(24 * var(--u)); columns: 2; column-gap: calc(48 * var(--u)); }
 #screen-about a { color: var(--orange); }
 #screen-about a:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+.no-fv #screen-about a:focus { outline: 3px solid var(--text); outline-offset: 2px; }
 #screen-about code { font-size: 0.85em; background: var(--panel); border: 1px solid var(--edge); border-radius: 6px; padding: 2px 8px; }
 #about-back-btn {
   display: block; margin: calc(20 * var(--u)) auto 0; position: sticky; bottom: calc(16 * var(--u));
@@ -133,7 +143,10 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .confirm-actions { display: flex; gap: calc(32 * var(--u)); margin-top: calc(40 * var(--u)); }
 .confirm-actions button { font-size: max(20px, calc(34 * var(--u))); padding: calc(16 * var(--u)) calc(44 * var(--u)); }
 .error-actions { display: flex; gap: 16px; margin: 16px 0 20px; }
-#error-list { font-size: 28px; color: var(--bad); padding-left: 24px; }
+#error-source { color: var(--muted); font-size: 26px; margin: 0 0 8px; }
+/* The bullets carry the red; the text stays readable (Task 25, U16). */
+#error-list { font-size: 28px; color: var(--text); padding-left: 24px; }
+#error-list li::marker { color: var(--bad); }
 /* An unbroken 80-char key wraps instead of running off the screen (Task 20). */
 #error-list li { overflow-wrap: anywhere; }
 /* Board (Task 20): exactly one viewport tall, full width. Scoreboard,
@@ -158,6 +171,14 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
    pill's top-right corner (absolutely placed: they move nothing). Green
    and red as for the marks; the sign carries it too. */
 .scoreboard .score-team { position: relative; }
+.score-points.neg { color: var(--muted); }
+/* Six teams take two rows at most, whatever the names and scores: a pill
+   is at most a third of the row, and a long name shortens ("…") — the
+   score never does (Task 25: 4-digit scores and long names wrapped to a
+   third row at 960x540). */
+.scoreboard .score-team { max-width: calc((100% - 2 * 28 * var(--u)) / 3); min-width: 0; }
+.score-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scoreboard .score-points { flex: none; }
 .score-badge {
   position: absolute; top: -0.75em; right: -0.6em; padding: 0.05em 0.45em; border-radius: 999px;
   font-size: max(14px, calc(24 * var(--u))); font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums;
@@ -202,7 +223,9 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .board-header.clickable, .board-cell.clickable { width: 100%; transition: none; }
 .board-header.clickable:hover, .board-header.clickable:active,
 .board-cell.clickable:hover, .board-cell.clickable:active { filter: none; transform: none; }
-.board-header.clickable:hover, .board-header.clickable:focus-visible { background: var(--blue); border-color: var(--blue); }
+.board-header.clickable:hover { background: var(--blue); border-color: var(--blue); }
+.board-header.clickable:focus-visible { background: var(--blue); border-color: var(--blue); }
+.no-fv .board-header.clickable:focus { outline: 3px solid var(--text); outline-offset: 2px; } /* a ring, not a fill: focus is set by code after every question */
 /* Row position IS difficulty: subtle 5-step ramp easy (top) to hard (bottom). */
 .board-cell.tier-0 { background: #111f2a; }
 .board-cell.tier-1 { background: #13242f; }
@@ -217,11 +240,25 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
 }
 .clickable { cursor: pointer; }
-.board-cell.clickable:hover, .board-cell.clickable:focus-visible { background: var(--orange); border-color: var(--orange); color: #0a1620; }
+.board-cell.clickable:hover { background: var(--orange); border-color: var(--orange); color: #0a1620; }
+.board-cell.clickable:focus-visible { background: var(--orange); border-color: var(--orange); color: #0a1620; }
+.no-fv .board-cell.clickable:focus { outline: 3px solid var(--text); outline-offset: 2px; } /* a ring, not the fill */
 .board-cell.used { color: var(--muted); background: transparent; border: 2px dashed var(--edge); }
 .board-gap { visibility: hidden; }
-/* Trivia: the header is the click target; cells are inert (Task 7.8). */
-.board-grid.trivia .board-cell { opacity: 0.45; }
+/* Trivia: the header is the click target; cells are inert (Task 7.8).
+   Task 25, U14: live headers are filled like buttons; played cells fade
+   further than unplayed ones, so the two read apart. */
+.board-grid.trivia .board-cell { opacity: 0.6; }
+.board-grid.trivia .board-cell.used { opacity: 0.35; }
+.board-grid.trivia .board-header.clickable { background: var(--blue); border-color: var(--blue); }
+.board-grid.trivia .board-header.clickable:hover { background: #2c76b0; border-color: #2c76b0; }
+/* "3 left" sits on the header's corner like a score badge: no height. */
+.board-grid.trivia .board-header.clickable { position: relative; }
+.col-left {
+  position: absolute; top: -0.7em; right: -0.4em; padding: 0.05em 0.5em; border-radius: 999px;
+  font-size: max(13px, calc(22 * var(--u))); font-weight: 800; line-height: 1.2;
+  background: var(--panel); color: var(--text); border: 1px solid var(--edge);
+}
 .board-header.dim { opacity: 0.45; }
 .board-hint { color: var(--muted); font-size: max(18px, calc(26 * var(--u))); line-height: 1.3; margin: 0 0 calc(14 * var(--u)); text-align: center; }
 /* Question screens (Task 25 layout, on Tasks 20/21): one viewport tall, a
@@ -337,11 +374,22 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 .has-images .question-text { font-size: max(24px, calc(48 * var(--u))); }
 .has-images .answer-text { font-size: max(22px, calc(40 * var(--u))); }
-.tally-row {
-  display: flex; align-items: baseline; gap: 16px;
-  background: var(--panel); border: 1px solid var(--edge);
-  padding: 18px 36px; border-radius: 14px; font-size: 32px;
+/* Column tally (Task 25, U15): a title card, centred on one screen and
+   sized in --u like the rest — the round, then a card per team. */
+#screen-tally { max-width: none; height: 100vh; height: 100dvh; display: flex; align-items: center; justify-content: center; padding: calc(32 * var(--u)); }
+.tally-wrap { display: flex; flex-direction: column; align-items: center; gap: calc(32 * var(--u)); width: 100%; }
+.tally-title { margin: 0; text-align: center; font-size: max(28px, calc(64 * var(--u))); line-height: 1.15; text-wrap: balance; }
+.tally-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(20 * var(--u)); max-width: calc(1700 * var(--u)); }
+.tally-card {
+  display: grid; justify-items: center; gap: calc(4 * var(--u)); min-width: calc(300 * var(--u));
+  background: var(--panel); border: 1px solid var(--edge); border-radius: 14px;
+  padding: calc(18 * var(--u)) calc(32 * var(--u));
 }
+.tally-name { font-size: max(20px, calc(34 * var(--u))); font-weight: 700; text-align: center; }
+.tally-round { font-size: max(24px, calc(48 * var(--u))); font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tally-round.up { color: var(--orange); }
+.tally-total { font-size: max(16px, calc(26 * var(--u))); color: var(--muted); font-variant-numeric: tabular-nums; }
+.tally-wrap button { font-size: max(20px, calc(34 * var(--u))); padding: calc(16 * var(--u)) calc(44 * var(--u)); }
 
 /* Motion: responds to action, <=240ms; off under prefers-reduced-motion. */
 @keyframes screen-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -351,7 +399,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .screen:not(.hidden) { animation: screen-in 200ms ease; }
 /* Full-height screens (Task 20) fade only: the 10px rise would push them
    past the viewport bottom and flash a scrollbar on the way in. */
-#screen-board:not(.hidden), #screen-question:not(.hidden), #screen-confirm:not(.hidden) { animation-name: fade-in; }
+#screen-board:not(.hidden), #screen-question:not(.hidden), #screen-confirm:not(.hidden), #screen-tally:not(.hidden) { animation-name: fade-in; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   /* The boot note's animation is a delay-reveal, not motion: keep it. */
