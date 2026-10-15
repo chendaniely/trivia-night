@@ -9,7 +9,9 @@ batches and the UI pass are merged into `main` as
 commit `150e6a8`) and live. The deploy gate passed (unit tests 8/8, the
 question file 6 rounds / 29 questions), and `make smoke` passed against
 the live site (134 checks). The app as the audit found it is release
-`v0.2.0`; the release after these fixes will be `v1.0.0`.*
+`v0.2.0`; the release with these fixes is
+[`v1.0.0`](https://github.com/chendaniely/trivia-night/releases/tag/v1.0.0)
+(`150e6a8`, Oct 15).*
 
 ## The request
 

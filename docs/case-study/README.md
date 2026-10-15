@@ -71,7 +71,9 @@ or hurt. This folder is meant as raw material for a blog post.
 - Releases mark the stages: [`v0.1.0`](https://github.com/chendaniely/trivia-night/releases/tag/v0.1.0)
   is Qwen's final build (`f603230`), [`v0.2.0`](https://github.com/chendaniely/trivia-night/releases/tag/v0.2.0)
   is the app after the Claude pass (`e9ccb0b`). Both were tagged after the
-  fact, on Oct 14. `v1.0.0` will follow the UX fixes in chapter 8.
+  fact, on Oct 14. [`v1.0.0`](https://github.com/chendaniely/trivia-night/releases/tag/v1.0.0)
+  (`150e6a8`, Oct 15) is the night's version: the UX fixes and the UI
+  pass in chapter 8.
 - Qwen's commits carry `Co-Authored-By: Qwen 3.8 27B`; Claude's carry the
   specific Claude model that wrote them. That attribution is what makes
   the per-model numbers possible — the partner set it up on day one.
