@@ -110,7 +110,8 @@ A week before, on the Mac and TV you'll actually use:
      line under the teams shows what Done will bank.
    - **Trivia** — click a category name to start the round (the point
      cells aren't clickable), mark a team green when they answer,
-     **Reveal** to show the answer, **Next** to move on.
+     **Reveal** to show the answer, **Next** to move on. The line under
+     the teams shows what Next will bank.
    No mouse needed: a TV remote's D-pad (or Tab / Shift-Tab) moves
    between cells, categories and buttons, and OK (Enter / Space) presses
    them.

@@ -1203,6 +1203,12 @@ YAML syntax errors keep their real line numbers (unchanged).
 
 ### Task 16: Create new — picker first, never overwrite
 
+> Superseded order (Task 25, U7, 2026-10-14): `prompt()` is gone. The name
+> is typed first on the app's confirm screen, and its OK click (or Enter
+> in the name field) opens the readwrite picker straight away, so the
+> activation is always fresh. Never-overwrite is unchanged. Verified with
+> a stubbed picker in `make smoke` (activation live at the call).
+
 Chrome 155 runs 2026-10-14 (real FSA handles from OPFS behind a stubbed
 picker; the real picker for the gesture check):
 1. `prompt()` runs BEFORE `showDirectoryPicker()`. If the host takes
@@ -1791,7 +1797,7 @@ including U6 as the board's own scoreboard turning into Final scores (no
 new screen). Keyboard shortcuts stay parked. Inline execution
 (executing-plans) with TDD; a council (backward + forward) per Step.
 
-- [ ] **Step 2: Batch 1 — scores you can trust**
+- [x] **Step 2: Batch 1 — scores you can trust**
   - 2a `tools/fit.mjs` + `make fit` (needs `make serve`): fit at 960×540,
     1280×720, 1440×900, 1920×1080 for setup (4 teams + Resume), board (4
     and 6 long names), worst questions Oscar 300 / Music 400 / Words 500
@@ -1826,6 +1832,33 @@ new screen). Keyboard shortcuts stay parked. Inline execution
     buttons ("Done: +500 A · −500 B" / "Done: no one scores"; trivia
     "Next: …"), ellipsis if too long, from `deltasFor`.
   - README + About: Undo, the confirm screen, the preview.
+
+> Council 2026-10-15 (Task 25 Step 2, `9c417d1`): backward (sonnet) — 2a–2e
+> as specified, no regressions; Important: chapter 8 / plan boxes not
+> updated; half the same-spot checks guarded nothing (a mutant with the
+> guard off still passed them); Back on a confirm left the app when no
+> game was running; smoke never drove discard / team-list / Load folder /
+> Create new / trivia Undo / Undo after Resume; `make fit` 89/90 without a
+> waiver. Forward (opus) — Important: a held-back click still moved focus
+> (mousedown) onto the button under the pointer, so Enter could bank; on
+> touch the guard was never cleared by a tap elsewhere (Done dead for
+> 2.5 s); a confirm left pending by a folder load let Esc bring back the
+> old board and crash on Done; Minor: guard armed by a 100 ms window (slow
+> TV), double-click Remove removed two teams, `detail > 0` alone treats a
+> remote's synthetic click as a pointer, a confirm asked from a confirm
+> could wedge. Fix commit: pointerdown-gated pointer clicks, mousedown
+> held back too, a press elsewhere ends the guard, arming inside the
+> click's dispatch, `dropConfirm()` on any other screen, Esc only on the
+> confirm screen, `from` kept for a nested confirm, Back cancels with no
+> game (guard armed by the confirm), Remove locks; smoke grew to cover
+> every confirm path, Undo after Resume, trivia Undo and the four fixes
+> (each RED on the old code, GREEN after). Moved to Step 3 (they depend on
+> its layout): the same-spot checks split into "guard" and "still" cases
+> and mutation-tested; Oscar 400 into the worst cases; overlap asserts in
+> `make fit`; the 6-team preview clipping; mark suffix width; Play/Pause
+> double-click. Waiver: the 6-team image question at 960×540 scrolls
+> until Step 3a's layout (fixed there). Ruling: Enter in Create new's
+> name field means OK (a text field, not a button).
 - [ ] **Step 3: Batch 2 — what the room sees**
   - 3a question layout: header "Round · 500" / "Round · question 2 of 5
     · 200" on one line (round name ellipsised, points never); the answer

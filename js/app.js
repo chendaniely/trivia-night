@@ -4,7 +4,7 @@ import { createScoring, restoreScoring } from "./scoring.js";
 import { renderBoard, focusBoard, setCellClick, setColumnClick } from "./board.js";
 import { startQuestion, startColumn, resetFlow, leaveQuestion } from "./question.js";
 import { randomTeamName } from "./teams.js";
-import { askConfirm, cancelConfirm } from "./confirm.js";
+import { askConfirm, cancelConfirm, dropConfirm } from "./confirm.js";
 import {
   loadFromDirHandle,
   loadFromFileList,
@@ -35,6 +35,9 @@ export const state = {
 const SCREENS = ["setup", "board", "question", "tally", "error", "about", "confirm"];
 
 export function showScreen(id) {
+  // Leaving the confirm screen any other way (a folder load, an error)
+  // forgets the question, so a late Esc can't bring back an old screen.
+  if (id !== "confirm") dropConfirm();
   document.getElementById("boot")?.classList.add("hidden");
   for (const s of SCREENS) {
     document.getElementById(`screen-${s}`).classList.toggle("hidden", s !== id);
@@ -60,17 +63,41 @@ let inputLockedUntil = 0;
 // GUARD_MS pass. Keyboard / remote clicks (detail 0) are never guarded.
 const GUARD_PX = 8;
 const GUARD_MS = 2500;
-let lastPointer = null; // { x, y, t } of the last trusted pointer click
+let pointerDown = null; // { t } of the last trusted pointerdown
+let clickPt = null; // { x, y } while a trusted pointer click is being handled
 let guard = null; // { x, y, until }
 const near = (e, p) => Math.hypot(e.clientX - p.x, e.clientY - p.y) <= GUARD_PX;
+const guarded = (e, now) => guard !== null && now < guard.until && near(e, guard);
+// A pointer click follows a real pointerdown: a TV browser may turn the
+// remote's OK into a click with detail 1, and that is not a pointer.
+const fromPointer = (e, now) => e.detail > 0 && pointerDown !== null && now - pointerDown.t < 1500;
 export function lockInput() {
-  const now = performance.now();
-  inputLockedUntil = now + INPUT_LOCK_MS;
-  // Called from inside the click that changed the screen: guard its spot.
-  if (lastPointer && now - lastPointer.t < 100) {
-    guard = { x: lastPointer.x, y: lastPointer.y, until: now + GUARD_MS };
-  }
+  inputLockedUntil = performance.now() + INPUT_LOCK_MS;
+  // Called while a pointer click is being handled (that click changed the
+  // screen): guard its spot.
+  if (clickPt) guard = { x: clickPt.x, y: clickPt.y, until: performance.now() + GUARD_MS };
 }
+document.addEventListener(
+  "pointerdown",
+  (e) => {
+    if (!e.isTrusted) return;
+    pointerDown = { t: performance.now() };
+    // A press anywhere else ends the guard — touch has no pointermove
+    // between taps.
+    if (guard && !near(e, guard)) guard = null;
+  },
+  true
+);
+// A held-back click must not move focus either: mousedown focuses the
+// button under the pointer, and Enter would then press it (Done, Next).
+document.addEventListener(
+  "mousedown",
+  (e) => {
+    const now = performance.now();
+    if (e.isTrusted && (now < inputLockedUntil || guarded(e, now))) e.preventDefault();
+  },
+  true
+);
 document.addEventListener(
   "click",
   (e) => {
@@ -78,13 +105,19 @@ document.addEventListener(
     // folder input must always get through.
     if (!e.isTrusted) return;
     const now = performance.now();
-    const pointer = e.detail > 0;
-    if (now < inputLockedUntil || (pointer && guard && now < guard.until && near(e, guard))) {
+    const pointer = fromPointer(e, now);
+    if (now < inputLockedUntil || (pointer && guarded(e, now))) {
       e.preventDefault();
       e.stopImmediatePropagation();
       return;
     }
-    lastPointer = pointer ? { x: e.clientX, y: e.clientY, t: now } : null;
+    if (pointer) {
+      // Marks the click's own dispatch, for lockInput; gone right after it.
+      clickPt = { x: e.clientX, y: e.clientY };
+      setTimeout(() => {
+        clickPt = null;
+      }, 0);
+    }
   },
   true
 );
@@ -281,6 +314,7 @@ function renderSetup(rows) {
       rm.textContent = "Remove";
       rm.disabled = rows.length <= 2; // 2 teams is the playable minimum
       rm.addEventListener("click", () => {
+        lockInput(); // a double-click must not remove the next team too
         renderSetup(setupRows().filter((_, j) => j !== i));
       });
       row.append(input, rm);
@@ -426,7 +460,9 @@ window.addEventListener("beforeunload", (e) => {
 });
 
 let backGuarded = false; // is the current history entry our pushed one?
-function armBackGuard() {
+// Also armed by the confirm screen (confirm.js), so Back cancels it even
+// before a game is running.
+export function armBackGuard() {
   if (backGuarded) return;
   try {
     history.pushState({ triviaNight: "guard" }, "");
@@ -438,12 +474,15 @@ function armBackGuard() {
 
 window.addEventListener("popstate", () => {
   backGuarded = false;
+  if (visibleScreen() === "confirm") {
+    cancelConfirm(); // Back on the confirm screen means Cancel, game or not
+    if (state.scoring !== null) armBackGuard();
+    return;
+  }
   if (state.scoring === null) return; // no game running: Back works normally
   armBackGuard();
   const on = visibleScreen();
-  if (on === "confirm") {
-    cancelConfirm(); // Back on the confirm screen means Cancel
-  } else if (on === "question") {
+  if (on === "question") {
     leaveQuestion();
   } else if (on === "tally") {
     renderBoard();

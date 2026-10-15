@@ -10,19 +10,21 @@
 // Esc and Back (app.js popstate) cancel; OK runs onOk synchronously inside
 // its own click, so a folder picker opened there keeps its user activation.
 // Either way the opener's screen comes back first, with focus on the opener.
-import { showScreen, visibleScreen } from "./app.js";
+import { showScreen, visibleScreen, armBackGuard } from "./app.js";
 
 let pending = null; // { from, opener, onOk, onCancel }
 
 const el = (id) => document.getElementById(id);
 
 export function askConfirm({ title, text, ok, input, onOk, onCancel }) {
-  pending = { from: visibleScreen(), opener: document.activeElement, onOk, onCancel };
+  // A confirm asked from a confirm returns to the first one's screen.
+  pending = { from: pending ? pending.from : visibleScreen(), opener: document.activeElement, onOk, onCancel };
   el("confirm-title").textContent = title;
   el("confirm-text").textContent = text;
   el("confirm-input").classList.toggle("hidden", input === undefined);
   el("confirm-input").value = input ?? "";
   el("confirm-ok").textContent = ok;
+  armBackGuard(); // Back cancels, even before a game is running
   showScreen("confirm");
   (input === undefined ? el("confirm-cancel") : el("confirm-input")).focus();
 }
@@ -41,13 +43,19 @@ export function cancelConfirm() {
   close(false);
 }
 
+// Forget the question without answering it (app.js showScreen: another
+// screen took over — a folder load, an error).
+export function dropConfirm() {
+  pending = null;
+}
+
 el("confirm-ok").addEventListener("click", () => close(true));
 el("confirm-cancel").addEventListener("click", () => close(false));
 // Esc cancels — the one key handler besides the held-Enter swallow (an
 // exception to Task 21's "no keydown handlers"); a TV remote's Back
 // arrives as popstate instead. Enter in the text field means OK.
 document.addEventListener("keydown", (e) => {
-  if (!pending) return;
+  if (!pending || visibleScreen() !== "confirm") return;
   if (e.key === "Escape") {
     e.preventDefault();
     close(false);

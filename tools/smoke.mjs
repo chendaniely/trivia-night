@@ -4,6 +4,9 @@
 // Serves nothing itself. Exits non-zero on a failed check or on any console
 // error / page error other than a missing audio / image file (404).
 import { chromium } from "playwright";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const URL_ = process.argv[2] || "http://127.0.0.1:8080/";
 const failures = [];
@@ -96,6 +99,15 @@ try {
   await page.waitForSelector("#screen-setup:not(.hidden)");
   await settle();
   check(await page.isVisible("#resume-btn"), "reload offers Resume");
+  // Start over a saved game asks first; with no game running yet, Back
+  // still means Cancel and stays in the app (Task 25 council).
+  await click("#start-btn");
+  await settle();
+  check((await screen()) === "confirm" && /saved game/.test(await page.textContent("#confirm-title")), "Start over a saved game asks first");
+  await page.goBack();
+  await settle();
+  check(page.url().startsWith(URL_) && (await screen()) === "setup", "Back on that confirm cancels and stays in the app");
+
   await click("#resume-btn");
   await settle();
   check((await scores()).join() === played.join(), "Resume restores the scores");
@@ -113,6 +125,9 @@ try {
   let n = 0;
   while ((await screen()) === "question" && n < 12) {
     if (n % 2 === 0) await click("#screen-question .team-btns button >> nth=0");
+    if (n === 0)
+      check(/^Next: Hazy Bagpipes \+\d+$/.test(await page.textContent("#screen-question .bank-preview")), "the trivia preview says what Next banks");
+
     await click("#screen-question button:text-is('Next')");
     await settle();
     n++;
@@ -121,6 +136,16 @@ try {
   await click("#screen-tally button");
   await settle();
   check((await screen()) === "board", "the tally returns to the board");
+  // Trivia Undo takes back the column's last question and reopens the column.
+  await click("#undo-btn");
+  await settle();
+  await click("#confirm-ok");
+  await settle();
+  check(
+    (await page.$$('.board-header.clickable[data-ri="0"]')).length === 1 &&
+      (await page.evaluate(() => document.activeElement.dataset.ri)) === "0",
+    "trivia Undo reopens the column, focus on its header"
+  );
 
   // Reset game asks on the app's confirm screen: Cancel, Esc and Back keep
   // the game; OK resets it.
@@ -194,6 +219,154 @@ try {
   check((await page.$$(cell(1, 1))).length === 1, "Undo reopens the cell");
   check(await page.isDisabled("#undo-btn"), "Undo is one level: disabled again");
   check((await page.evaluate(() => document.activeElement.dataset.ri + ":" + document.activeElement.dataset.qi)) === "1:1", "focus returns to the reopened cell");
+  // Undo is saved with the game: after a reload and Resume it still works.
+  await click(cell(1, 1));
+  await settle();
+  await click("#screen-question .team-btns button >> nth=0");
+  await click("#screen-question button:text-is('Done')");
+  await settle();
+  await page.reload();
+  await page.waitForSelector("#resume-btn:not(.hidden)");
+  await settle();
+  await click("#resume-btn");
+  await settle();
+  check(await page.isEnabled("#undo-btn"), "Undo survives a reload");
+  await click("#undo-btn");
+  await settle();
+  await click("#confirm-ok");
+  await settle();
+  check((await scores()).join() === beforeQ.join() && (await page.$$(cell(1, 1))).length === 1, "Undo after Resume takes the points back");
+  // The other confirms (Task 25, U7): a team-list change mid-game, Load
+  // folder mid-game and Create new — the folder picker stubbed, so the
+  // check is that OK (or Enter in the name field) opens it with the
+  // click's user activation still live.
+  const cf = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+  cf.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
+  cf.on("dialog", (d) => {
+    if (d.type() !== "beforeunload") problems.push(`native ${d.type()}: ${d.message()}`);
+    d.accept();
+  });
+  await cf.addInitScript(() => {
+    window.__picks = [];
+    window.showDirectoryPicker = async (opts) => {
+      window.__picks.push({ mode: opts && opts.mode, active: navigator.userActivation.isActive });
+      throw new DOMException("stub", "AbortError");
+    };
+  });
+  const cfClick = async (sel) => {
+    await cf.mouse.move(1, 1);
+    await cf.click(sel);
+    await cf.waitForTimeout(450);
+  };
+  const cfScreen = () => cf.evaluate(() => ["setup", "board", "confirm"].find((s) => !document.getElementById(`screen-${s}`).classList.contains("hidden")));
+  await cf.goto(URL_);
+  await cf.waitForSelector("#screen-setup:not(.hidden)");
+  await cf.waitForTimeout(450);
+  await cfClick("#start-btn");
+  await cfClick(".board-cell.clickable[data-ri='0'][data-qi='0']");
+  await cfClick("#screen-question .team-btns button >> nth=0");
+  await cfClick("#screen-question button:text-is('Done')");
+  await cfClick("#setup-btn");
+  await cfClick("#add-team-btn");
+  await cfClick("#start-btn");
+  check((await cfScreen()) === "confirm" && /fresh game/.test(await cf.textContent("#confirm-text")), "a team-list change mid-game asks first");
+  await cfClick("#confirm-cancel");
+  check((await cfScreen()) === "setup", "Cancel returns to setup");
+  await cfClick("#load-folder-btn");
+  check((await cfScreen()) === "confirm", "Load folder mid-game asks first");
+  await cfClick("#confirm-ok");
+  let picks = await cf.evaluate(() => window.__picks);
+  check(picks.length === 1 && picks[0].active, "its OK opens the folder picker in the same click");
+  await cfClick("#create-new-btn");
+  check((await cf.evaluate(() => document.activeElement.id)) === "confirm-input", "Create new asks for the folder name first");
+  await cf.keyboard.press("Enter");
+  await cf.waitForTimeout(450);
+  picks = await cf.evaluate(() => window.__picks);
+  check(picks.length === 2 && picks[1].active && picks[1].mode === "readwrite", "Enter in the name field opens the readwrite picker");
+  await cf.close();
+
+  // Council fixes (Task 25 Step 2). A touch tap elsewhere ends the
+  // same-spot guard (touch has no pointermove); a held-back click doesn't
+  // move focus; a folder load while a confirm is open doesn't leave a
+  // stale confirm behind; a double-click on Remove removes one team.
+  const tc = await (await browser.newContext({ viewport: { width: 1280, height: 720 }, hasTouch: true })).newPage();
+  tc.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
+  const centre = async (p, sel) => {
+    const b = await p.locator(sel).first().boundingBox();
+    return [b.x + b.width / 2, b.y + b.height / 2];
+  };
+  const tcScreen = () => tc.evaluate(() => ["setup", "board", "question", "confirm"].find((s) => !document.getElementById(`screen-${s}`).classList.contains("hidden")));
+  await tc.goto(URL_);
+  await tc.waitForSelector("#screen-setup:not(.hidden)");
+  await tc.waitForTimeout(450);
+  await tc.tap("#start-btn");
+  await tc.waitForTimeout(450);
+  const [gx, gy] = await centre(tc, ".board-cell.clickable[data-ri='0'][data-qi='0']");
+  await tc.touchscreen.tap(gx, gy); // opens the question, guards (gx, gy)
+  await tc.waitForTimeout(450);
+  await tc.tap("#screen-question .team-btns button >> nth=0"); // a tap elsewhere (marks never lock)
+  await tc.waitForTimeout(100);
+  await tc.tap("#screen-question .team-btns button >> nth=0"); // clear the mark again
+  await tc.focus("#screen-question button:text-is('Back to board')");
+  await tc.keyboard.press("Enter");
+  await tc.waitForTimeout(450);
+  await tc.touchscreen.tap(gx, gy); // within 2.5 s of the first tap
+  await tc.waitForTimeout(450);
+  check((await tcScreen()) === "question", "on touch, a tap elsewhere ends the same-spot guard");
+  await tc.close();
+
+  const fg = await (await browser.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+  fg.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
+  const fgClick = async (sel) => {
+    await fg.mouse.move(1, 1);
+    await fg.click(sel);
+    await fg.waitForTimeout(450);
+  };
+  await fg.goto(URL_);
+  await fg.waitForSelector("#screen-setup:not(.hidden)");
+  await fg.waitForTimeout(450);
+  // double-click Remove: one team goes
+  await fgClick("#add-team-btn");
+  await fgClick("#add-team-btn");
+  await fg.mouse.move(1, 1);
+  await fg.dblclick(".team-remove >> nth=0");
+  await fg.waitForTimeout(450);
+  check((await fg.$$("#team-inputs .team-row")).length === 3, "a double-click on Remove removes one team");
+  await fgClick("#start-btn");
+  // a held-back click moves no focus: trivia Next, then the same spot again
+  await fgClick("#setup-btn");
+  await fg.check("input[name=mode][value=trivia]");
+  await fgClick("#start-btn");
+  await fgClick('.board-header.clickable[data-ri="5"]');
+  const [nx, ny] = await centre(fg, "#screen-question button:text-is('Next')");
+  await fg.mouse.click(nx, ny); // passes question 1: guards (nx, ny)
+  await fg.waitForTimeout(600);
+  const focusBefore = await fg.evaluate(() => document.activeElement.outerHTML);
+  const qBefore = await fg.textContent("#screen-question .question-text");
+  await fg.mouse.click(nx, ny);
+  await fg.waitForTimeout(450);
+  check(
+    (await fg.evaluate(() => document.activeElement.outerHTML)) === focusBefore &&
+      (await fg.textContent("#screen-question .question-text")) === qBefore,
+    "a held-back click changes nothing and moves no focus"
+  );
+  await fgClick("#screen-question button:text-is('Back to board')");
+  // a folder load while the Reset confirm is open, then Esc
+  const dir = mkdtempSync(join(tmpdir(), "trivia-smoke-"));
+  mkdirSync(join(dir, "night"));
+  writeFileSync(join(dir, "night", "questions.yaml"), 'title: "Folder board"\nrounds:\n  - name: "Only"\n    questions:\n      - q: "Q?"\n        a: "A"\n');
+  await fgClick("#reset-btn");
+  await fg.setInputFiles("#folder-input", join(dir, "night"));
+  await fg.waitForTimeout(800);
+  await fg.keyboard.press("Escape");
+  await fg.waitForTimeout(450);
+  check(
+    (await fg.evaluate(() => ["setup", "board", "confirm"].find((s) => !document.getElementById(`screen-${s}`).classList.contains("hidden")))) === "setup" &&
+      (await fg.textContent("#screen-setup h1")) === "Folder board",
+    "a folder load closes an open confirm; Esc doesn't bring back the old board"
+  );
+  rmSync(dir, { recursive: true, force: true });
+  await fg.close();
 } catch (err) {
   failures.push(`exception: ${err.message}`);
   console.log("FAIL exception:", err.message);
