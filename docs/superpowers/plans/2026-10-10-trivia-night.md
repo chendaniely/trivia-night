@@ -1686,8 +1686,12 @@ tie up loose ends — this is the list:
    Chrome's history intervention can't be scripted).
 7. **Run `make serve` once on the event Mac before the night** (the first
    `uv run` may fetch Python if none >= 3.9 is installed).
-8. **The deploy workflow's first run after merging:** watch the Actions
-   tab; the gate runs tests + bank validation.
+8. **DONE 2026-10-14** — **The deploy workflow's first run after merging:** watch the Actions
+   tab; the gate runs tests + bank validation. Evidence: merged as PR #1
+   (`e9ccb0b`, 16:25); run 38653991063 green — unit tests 5/5, bank
+   validation "6 rounds, 29 questions"; Pages built from `gh-pages`
+   `e7e34d3`; `make smoke URL=https://chendaniely.github.io/trivia-night/`
+   → SMOKE OK.
 
 ---
 
