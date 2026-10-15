@@ -54,7 +54,7 @@ are all different).
   its own screen, and Cancel keeps the game.
 - Audio: `.m4a`/`.mp3` play best on TV browsers; `.wav` works.
 
-The app needs a reasonably recent browser (about Chrome 86 / Safari 14).
+The app needs a reasonably recent browser (about Chrome 86 / Safari 14.1).
 On an older one you'll see a "Loading…" note that never goes away: mirror
 the Mac instead.
 
@@ -113,9 +113,11 @@ A week before, on the Mac and TV you'll actually use:
      **Reveal** to show the answer, **Next** to move on. The line under
      the teams shows what Next will bank.
    The top of each question shows its category and what it's worth. A
-   question with a clip has a big **▶ Play clip** button (on a remote,
-   OK plays it). When the last question is played, the scoreboard turns
-   into **Final scores**: ranked, with the winner (or a tie) named.
+   question with a clip has a big **▶ Play clip** button at the top right
+   (on a remote, OK plays it). After **Done**, small +/− badges on the
+   scoreboard show who just gained or lost points. When the last
+   question is played, the scoreboard turns into **Final scores**:
+   ranked, with the winner (or a tie) named.
    No mouse needed: a TV remote's D-pad (or Tab / Shift-Tab) moves
    between cells, categories and buttons, and OK (Enter / Space) presses
    them.

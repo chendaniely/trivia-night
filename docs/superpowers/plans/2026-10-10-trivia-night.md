@@ -1859,7 +1859,7 @@ new screen). Keyboard shortcuts stay parked. Inline execution
 > double-click. Waiver: the 6-team image question at 960×540 scrolls
 > until Step 3a's layout (fixed there). Ruling: Enter in Create new's
 > name field means OK (a text field, not a button).
-- [ ] **Step 3: Batch 2 — what the room sees**
+- [x] **Step 3: Batch 2 — what the room sees**
   - 3a question layout: header "Round · 500" / "Round · question 2 of 5
     · 200" on one line (round name ellipsised, points never); the answer
     rendered from the start with `visibility: hidden` and an inline
@@ -1879,6 +1879,26 @@ new screen). Keyboard shortcuts stay parked. Inline execution
   - 3d U6 + U18: when no playable cell remains, the scoreboard becomes
     "Final scores": ranked, leader(s) highlighted, ties named, sized to
     fit 6 teams at 960×540; focus goes to Setup.
+> Council 2026-10-15 (Task 25 Step 3, `3b40a7f`): backward (sonnet) — 3a–3d
+> and the carried items as specified, no regressions; Important: chapter /
+> plan not updated; three claims survived a mutant (mark slot, clip
+> double-click, trivia tally badges) and "badges gone" was only checked
+> after a reload; Minor: About lacked the stakes header and badges, badge
+> over the digits at 960, all-team ties listed every name, image
+> questions are top-aligned (now stated). Forward (opus) — Important: a
+> long question with a clip scrolled at every size (the clip had a row of
+> its own; 1080p newly so after the --qf retune) and `make fit` had no
+> clip + long text case; Minor: a clip failing after OK put focus on team
+> 0 (the next OK marked it), a slow clip said Pause while silent, the
+> hidden answer relied only on styles.css (a stale cache could show it),
+> Setup from the final board left focus nowhere, the preview fallback
+> never re-measured, Safari 14.0 has no flex gap (floor restated as
+> 14.1). Fix commit: the clip moves to the header line, "Loading…" until
+> playing, focus to the "no clip" note, inline visibility on the hidden
+> answer, Setup focuses Back to board, the preview re-measures on resize
+> and fonts, trivia badges show the run's own gains, "everyone ties" /
+> "no one scored", the badge sits higher; smoke + fit cover each (RED
+> before, GREEN after); README/About/chapter/plan updated.
 - [ ] **Step 4: Batch 3 — polish**: U12 (the subtitle turns into "Every
   team needs a name." while Start is disabled), U13 (one-line mode
   descriptions), U14 (live trivia headers styled as buttons with "N

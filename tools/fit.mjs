@@ -8,6 +8,8 @@
 // Serves nothing itself; exits non-zero on any failure.
 import { chromium } from "playwright";
 import { finishedSave } from "./finished-save.mjs";
+import { readFileSync } from "node:fs";
+import { parseBank } from "../js/validate.js";
 
 const URL_ = process.argv[2] || "http://127.0.0.1:8080/";
 const SIZES = [[960, 540], [1280, 720], [1440, 900], [1920, 1080]];
@@ -20,7 +22,7 @@ const NAMES = [
   "Quiz Khalifa and Friends",
 ];
 // Worst shipped questions: the longest questions (Oscar 300, Music 400,
-// Words 500) and the longest answer (Oscar 400).
+// Words 500, with the longest answer) and Oscar 400 (as tall revealed).
 const WORST = [[0, 2], [3, 3], [5, 4], [0, 3]];
 const MEDIA_BANK = `title: "Fit check"
 rounds:
@@ -39,6 +41,14 @@ rounds:
         a: "A4"
         audio: "audio/demo/note-440.wav"
 `;
+
+// The worst questions again, each with a clip (Task 25 council: a clip
+// row above a long question). JSON is YAML, so the bank can be built here.
+const SHIPPED = parseBank(readFileSync(new URL("../questions.yaml", import.meta.url), "utf8")).bank;
+const CLIP_BANK = JSON.stringify({
+  title: "Clips",
+  rounds: [{ name: "Music", questions: WORST.map(([ri, qi]) => ({ ...SHIPPED.rounds[ri].questions[qi], audio: "audio/demo/note-440.wav" })) }],
+});
 
 const failures = [];
 let checks = 0;
@@ -186,6 +196,35 @@ for (const [w, h] of SIZES) {
     await settle(page);
     // Setup is the host's screen: Task 20's contract is 4 teams + Resume.
     if (n === 4) await fits(page, `${tag} ${n} teams: setup with Resume`);
+    await page.context().close();
+  }
+  // the worst questions with a clip, 6 long names, both modes
+  {
+    const page = await open(w, h, CLIP_BANK);
+    await start(page, 6);
+    for (let qi = 0; qi < WORST.length; qi++) {
+      await tap(page, `.board-cell.clickable[data-ri="0"][data-qi="${qi}"]`);
+      await settle(page);
+      await markAll(page);
+      await reveal(page);
+      await fits(page, `${tag} 6 teams: clip question ${qi + 1} marked + revealed`);
+      await tap(page, "#screen-question button:text-is('Back to board')");
+      await settle(page);
+    }
+    await tap(page, "#setup-btn");
+    await settle(page);
+    await page.check("input[name=mode][value=trivia]");
+    await tap(page, "#start-btn");
+    await settle(page);
+    await tap(page, `.board-header.clickable[data-ri="0"]`);
+    await settle(page);
+    for (let qi = 0; qi < WORST.length; qi++) {
+      await markAll(page);
+      await reveal(page);
+      await fits(page, `${tag} 6 teams: trivia clip question ${qi + 1} marked + revealed`);
+      await tap(page, "#screen-question button:text-is('Next')");
+      await settle(page);
+    }
     await page.context().close();
   }
   // the finished board: Final scores, 6 long names

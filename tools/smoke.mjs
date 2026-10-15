@@ -85,6 +85,12 @@ try {
   const preview = () =>
     page.$eval("#screen-question .bank-preview", (e) => ({ text: e.textContent, h: e.getBoundingClientRect().height }));
   const p0 = await preview();
+  // Marking moves nothing (Task 25 council): the ✓ / ✕ slot is reserved.
+  const targetsNow = () =>
+    page.$$eval("#screen-question .team-btns button, #screen-question .controls", (els) =>
+      els.map((e) => { const r = e.getBoundingClientRect(); return [r.x, r.y, r.width].map(Math.round).join(); }).join("|")
+    );
+  const t0 = await targetsNow();
   check(p0.text === "Done: no one scores", `the preview starts at "no one scores" (${p0.text})`);
   await click("#screen-question .team-btns button >> nth=0");
   await click("#screen-question .team-btns button >> nth=1");
@@ -92,6 +98,7 @@ try {
   const p1 = await preview();
   check(p1.text === "Done: +100 Hazy Bagpipes · \u2212100 Misty Goblins", `the preview names the points (${p1.text})`);
   check(p1.h === p0.h, "the preview keeps its height");
+  check((await targetsNow()) === t0, "marking teams moves no button");
   await click("#screen-question button:text-is('Reveal answer')");
   await settle();
   check((await page.textContent("#screen-question .answer-text")).trim() !== "", "Reveal shows the answer");
@@ -104,6 +111,11 @@ try {
   // gone at the next board.
   const badges = () => page.$$eval("#screen-board .score-badge", (e) => e.map((x) => x.textContent));
   check((await badges()).join() === "+100,\u2212100", `badges show what Done changed (${await badges()})`);
+  await click(cell(0, 1));
+  await settle();
+  await click("#screen-question button:text-is('Back to board')");
+  await settle();
+  check((await badges()).length === 0, "badges are gone when the board is drawn again");
 
   // Reload -> Resume
   await page.reload();
@@ -146,6 +158,7 @@ try {
   await click("#screen-tally button");
   await settle();
   check((await screen()) === "board", "the tally returns to the board");
+  check(/^\+\d+$/.test((await badges()).join()), `the board shows the column's points as badges (${await badges()})`);
   // Trivia Undo takes back the column's last question and reopens the column.
   await click("#undo-btn");
   await settle();
@@ -275,13 +288,17 @@ try {
   await clips.waitForTimeout(1500); // the demo clip is 1 s
   check((await clips.textContent(clipBtn)) === "\u21BA Replay", "after the clip ends the button says Replay");
   await clips.mouse.move(1, 1);
+  await clips.dblclick(clipBtn);
+  await clips.waitForTimeout(300);
+  check((await clips.textContent(clipBtn)) === "\u275A\u275A Pause", "a double-click on the clip button is one press");
+  await clips.mouse.move(1, 1);
   await clips.click("#screen-question button:text-is('Back to board')");
   await clips.waitForTimeout(450);
   await clips.mouse.move(1, 1);
   await clips.click(".board-cell.clickable[data-ri='0'][data-qi='1']");
   await clips.waitForTimeout(900);
   check((await clips.$$(clipBtn)).length === 0 && (await clips.isVisible("#screen-question .no-clip")), "a missing clip shows a note, not the button");
-  check((await clips.evaluate(() => document.activeElement.dataset.focus)) === "team-0", "focus moves to the first team");
+  check((await clips.evaluate(() => document.activeElement.classList.contains("no-clip"))), "focus moves to the note, so a stray OK marks no team");
   await clips.close();
 
   // The other confirms (Task 25, U7): a team-list change mid-game, Load
@@ -341,6 +358,9 @@ try {
   for (const [teams, title] of [
     [[["Bouncy Gophers", 900], ["Silky Marmots", 600], ["Feral Pickles", 900]], "Final scores · a tie between Bouncy Gophers and Feral Pickles"],
     [[["Bouncy Gophers", 300], ["Silky Marmots", 600], ["Feral Pickles", -100]], "Final scores · Silky Marmots wins"],
+    [[["A", 500], ["B", 500], ["C", 500], ["D", 100]], "Final scores · a tie between A, B and C"],
+    [[["A", 700], ["B", 700], ["C", 700]], "Final scores · everyone ties"],
+    [[["A", 0], ["B", 0], ["C", 0]], "Final scores · no one scored"],
   ]) {
     const { key, json } = await finishedSave(URL_, teams);
     await fin.goto(URL_);
@@ -359,6 +379,9 @@ try {
     const top = Math.max(...teams.map((t) => t[1]));
     check((await fin.$$("#screen-board .score-team.leader")).length === teams.filter((t) => t[1] === top).length, "the leader(s) stand out");
     check((await fin.evaluate(() => document.activeElement.id)) === "setup-btn", "focus is on Setup when the game is over");
+    await fin.keyboard.press("Enter");
+    await fin.waitForTimeout(450);
+    check((await fin.evaluate(() => document.activeElement.id)) === "setup-back-btn", "Setup from the final board starts on Back to board");
   }
   // Undo from the Final scores: the last question reopens and the normal
   // board comes back.

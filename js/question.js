@@ -39,8 +39,12 @@ function audioBlock(question) {
   const btn = document.createElement("button");
   btn.className = "btn-secondary clip-btn";
   btn.dataset.focus = "clip";
+  // "Loading…" until the clip really plays (a slow clip that said Pause
+  // while silent invited a second press that paused it).
   const label = () => {
-    btn.textContent = !a.paused ? "\u275A\u275A Pause" : a.ended ? "\u21BA Replay" : "\u25B6 Play clip";
+    btn.textContent = a.paused
+      ? a.ended ? "\u21BA Replay" : "\u25B6 Play clip"
+      : a.readyState >= 3 ? "\u275A\u275A Pause" : "Loading\u2026";
   };
   label();
   btn.addEventListener("click", (e) => {
@@ -48,14 +52,16 @@ function audioBlock(question) {
     if (a.paused) a.play().catch(() => {}); // an ended clip plays from the start
     else a.pause();
   });
-  for (const ev of ["play", "pause", "ended"]) a.addEventListener(ev, label);
+  for (const ev of ["play", "playing", "waiting", "pause", "ended"]) a.addEventListener(ev, label);
   a.addEventListener("error", () => {
     const hadFocus = document.activeElement === btn;
     const note = document.createElement("p");
     note.className = "no-clip";
+    note.tabIndex = -1;
     note.textContent = "no clip — play it from any device";
     wrap.replaceChildren(note);
-    if (hadFocus) document.querySelector('#screen-question [data-focus="team-0"]')?.focus();
+    // Focus on the note, not a team: an OK pressed for the clip marks no one.
+    if (hadFocus) note.focus();
   });
   wrap.append(btn, a);
   return wrap;
@@ -131,6 +137,7 @@ let col = null; // { ri, qi } — active trivia column
 let colMarks = new Map(); // teamIdx -> "green" (trivia marks)
 let lastColumn = null; // the column whose tally was just shown (Task 21)
 let colRevealed = false; // per-question (Task 13: host may need the answer)
+let colGains = []; // [{ teamIdx, points }] banked in this run through the column (badges)
 
 // Team buttons shared by both renderers: colored by mark state, ✓ / ✕ suffix.
 function teamButtons(markMap, onMark) {
@@ -156,6 +163,15 @@ function teamButtons(markMap, onMark) {
     })
   );
   return btns;
+}
+
+// The header line: the stakes, and the clip's controls at its right end —
+// a row of its own cost long questions their room (Task 25 council).
+function questionTop(head, clip) {
+  const top = document.createElement("div");
+  top.className = "q-top";
+  top.append(head, ...(clip ? [clip] : []));
+  return top;
 }
 
 // The question screen's parts (Task 25 layout). The header says what is at
@@ -190,6 +206,7 @@ function questionAndAnswer(question, shown, animate) {
   ans.className = "answer-text";
   if (!shown) {
     ans.classList.add("pending");
+    ans.style.visibility = "hidden"; // also inline: a stale cached styles.css can't show it
     ans.setAttribute("aria-hidden", "true");
   } else if (animate) {
     ans.classList.add("reveal-now");
@@ -238,13 +255,20 @@ function bankPreview(verb, markMap, points) {
   p.dataset.compact = groups.length
     ? `${verb}: ` + groups.map((g) => `${signedPoints(g.v)} for ${g.names.length} team${g.names.length === 1 ? "" : "s"}`).join(" · ")
     : p.textContent;
+  p.dataset.full = p.textContent;
   return p;
 }
 
 function fitPreview(root) {
   const p = root.querySelector(".bank-preview");
-  if (p && p.scrollWidth > p.clientWidth) p.textContent = p.dataset.compact;
+  if (!p) return;
+  p.textContent = p.dataset.full;
+  if (p.scrollWidth > p.clientWidth) p.textContent = p.dataset.compact;
 }
+// Measured again when the window changes size or the font arrives.
+const refitPreview = () => fitPreview(document.getElementById("screen-question"));
+window.addEventListener("resize", refitPreview);
+document.fonts?.ready.then(refitPreview);
 
 export function resetFlow() {
   endMedia(); // also drops nodes pointing at a revoked blob: URL
@@ -334,8 +358,7 @@ function renderQuestion(focusKey) {
   const { ab, ib } = mediaFor("j", ri, qi, question);
   if (ib) wrap.classList.add("has-images"); // image beside the text (Task 20)
   wrap.append(
-    questionHead(round.name, pts),
-    ...(ab ? [ab] : []),
+    questionTop(questionHead(round.name, pts), ab),
     questionAndAnswer(question, revealed, justRevealed),
     ...(ib ? [ib] : []),
     teamButtons(marks, (idx) => cycleMark(idx)),
@@ -380,6 +403,7 @@ export function startColumn(ri) {
   col = { ri, qi };
   colMarks = new Map();
   colRevealed = false;
+  colGains = [];
   showScreen("question");
   renderColumn(firstFocus(round.questions[qi]));
 }
@@ -404,7 +428,9 @@ function nextQuestion() {
   endMedia(); // advance or tally: the finished question's clip stops
   const { ri, qi } = col;
   const round = state.bank.rounds[ri];
-  state.scoring.bank(`${ri}:${qi}`, round.name, deltasFor(colMarks, pointsFor(round, qi)));
+  const deltas = deltasFor(colMarks, pointsFor(round, qi));
+  state.scoring.bank(`${ri}:${qi}`, round.name, deltas);
+  colGains.push(...deltas);
   state.used.set(`${ri}:${qi}`, true);
   saveGame(); // mid-column refresh keeps the awarded questions (Task 18)
   colMarks = new Map();
@@ -457,8 +483,7 @@ function renderColumn(focusKey) {
   const { ab, ib } = mediaFor("c", ri, qi, question);
   if (ib) wrap.classList.add("has-images"); // image beside the text (Task 20)
   wrap.append(
-    questionHead(round.name, pts, `question ${qi + 1} of ${round.questions.length}`),
-    ...(ab ? [ab] : []),
+    questionTop(questionHead(round.name, pts, `question ${qi + 1} of ${round.questions.length}`), ab),
     questionAndAnswer(question, colRevealed, justRevealed),
     ...(ib ? [ib] : []),
     teamButtons(colMarks, (idx) => cycleColMark(idx)),
@@ -506,10 +531,10 @@ function renderTally(roundName) {
   const back = document.createElement("button");
   back.textContent = "Back to board";
   back.addEventListener("click", () => {
-    // The column's points per team, as badges on the board (Task 25, U5).
-    renderBoard({
-      badges: state.scoring.teams.map((_, idx) => ({ teamIdx: idx, points: state.scoring.roundTeamTotal(roundName, idx) })),
-    });
+    // What this run through the column added, as badges (Task 25, U5) —
+    // not the round's whole total, which can hold Jeopardy play from
+    // before a mode switch.
+    renderBoard({ badges: colGains });
     showScreen("board");
     focusBoard({ ri: lastColumn ?? 0 });
   });

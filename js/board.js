@@ -110,7 +110,11 @@ export function renderBoard({ badges = [] } = {}) {
   setupBtn.id = "setup-btn";
   setupBtn.className = "btn-secondary";
   setupBtn.textContent = "Setup";
-  setupBtn.addEventListener("click", () => showScreen("setup"));
+  setupBtn.addEventListener("click", () => {
+    showScreen("setup");
+    // Focus where a remote can act: Back to board (a game is running).
+    document.getElementById("setup-back-btn").focus();
+  });
   // Destructive, so quiet, last in the row and behind a confirm (Task 18):
   // it clears every score AND every played cell.
   const resetBtn = document.createElement("button");
@@ -168,9 +172,14 @@ export function renderBoard({ badges = [] } = {}) {
     const leaders = scoring.teams.filter((t) => t.points === top).map((t) => t.name);
     title = document.createElement("p");
     title.className = "final-title";
+    const all = leaders.length === scoring.teams.length;
     title.textContent =
       leaders.length === 1
         ? `Final scores · ${leaders[0]} wins`
+        : all && top === 0
+        ? "Final scores · no one scored"
+        : all && leaders.length > 2
+        ? "Final scores · everyone ties"
         : `Final scores · a tie between ${leaders.slice(0, -1).join(", ")} and ${leaders[leaders.length - 1]}`;
   }
 

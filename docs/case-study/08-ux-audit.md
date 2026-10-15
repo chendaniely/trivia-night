@@ -4,7 +4,8 @@
 merge and before any UX change, and checked by a two-seat council. As
 fixes land, the **Status** column in the tracker and the
 [Fix log](#fix-log) are updated. Status as of Oct 15, early morning:
-Batch 1 (scores you can trust) fixed on the branch, not merged yet. The app as the audit found it is release
+Batches 1 and 2 (scores you can trust, what the room sees) fixed on the
+branch, not merged yet. The app as the audit found it is release
 `v0.2.0`; the release after these fixes will be `v1.0.0`.*
 
 ## The request
@@ -85,15 +86,15 @@ behavior.
 | # | Finding | Sev. | Origin | Status |
 |---|---|---|---|---|
 | U1 | A banked score can't be corrected | 🔴 | Qwen `05fcb4d` (Done), spec | fixed `9c417d1` |
-| U2 | Screens change under the pointer, so a second click hits a different button | 🔴 | Qwen `05fcb4d`; Claude `cf26ed4` patched the symptom | part 1 (guard) fixed `9c417d1`; part 2 (layout) in Batch 2 |
+| U2 | Screens change under the pointer, so a second click hits a different button | 🔴 | Qwen `05fcb4d`; Claude `cf26ed4` patched the symptom | fixed: guard `9c417d1`, layout `3b40a7f` |
 | U3 | Done doesn't show what it will bank | 🟠 | Qwen `05fcb4d` | fixed `9c417d1` |
-| U4 | The question screen hides what it's worth | 🟠 | Qwen `05fcb4d` | open |
-| U5 | Score changes are silent | 🟠 | Qwen `c0aa8b8` | open |
-| U6 | The game has no ending, and the scoreboard is the smallest thing on the board | 🟠 | Qwen `c0aa8b8`, spec | needs the partner's call |
+| U4 | The question screen hides what it's worth | 🟠 | Qwen `05fcb4d` | fixed `3b40a7f` |
+| U5 | Score changes are silent | 🟠 | Qwen `c0aa8b8` | fixed `3b40a7f` |
+| U6 | The game has no ending, and the scoreboard is the smallest thing on the board | 🟠 | Qwen `c0aa8b8`, spec | fixed `3b40a7f` (partner: yes, on the board itself) |
 | U7 | Native `confirm()` / `prompt()` dialogs | 🟠 | Claude `cf26ed4` (confirms); Qwen `35e2b32` (prompt) | fixed `9c417d1` |
-| U8 | The music clip uses the browser's small player | 🟠 | Qwen `d8eb078` | open |
-| U9 | Questions hug the top of the screen | 🟡 | Qwen's layout; Claude `e9a092c` kept it | open |
-| U10 | The answer is smaller than the question, with no label | 🟡 | Qwen `05fcb4d` | open |
+| U8 | The music clip uses the browser's small player | 🟠 | Qwen `d8eb078` | fixed `3b40a7f` |
+| U9 | Questions hug the top of the screen | 🟡 | Qwen's layout; Claude `e9a092c` kept it | fixed `3b40a7f` |
+| U10 | The answer is smaller than the question, with no label | 🟡 | Qwen `05fcb4d` | fixed `3b40a7f` |
 | U11 | Disabled buttons look more clickable than enabled ones | 🟡 | Qwen `1630f28` | fixed `9c417d1` |
 | U12 | Start is disabled with no reason given | 🟡 | Qwen `add404e` | open |
 | U13 | Setup doesn't explain the two modes | 🟡 | Qwen `870b49a` | open |
@@ -101,7 +102,7 @@ behavior.
 | U15 | The column tally is a bare list | 🟡 | Qwen `127ee57` | open |
 | U16 | Error messages use schema language | 🟡 | Qwen; Claude `a91b6e7` improved the locator | open |
 | U17 | Negative scores look like positive ones | 🟡 | Qwen `c0aa8b8` | open |
-| U18 | Focus is lost when the game ends | 🟡 | Claude Sonnet `7a8cb84` | open |
+| U18 | Focus is lost when the game ends | 🟡 | Claude Sonnet `7a8cb84` | fixed `3b40a7f` |
 | U19 | Older TV browsers lose the focus ring and cell highlight | 🟡 | Qwen `1630f28`; Claude Sonnet `7a8cb84` | open |
 
 U2 and U3 let a wrong score through, and U1 means it then stays wrong
@@ -296,7 +297,9 @@ top left, with a play button the size of a grain of rice. A code comment
 redraws. A music round is planned.
 
 **Fix:** a large **▶ Play clip** / **❚❚ Pause** / **↺ Replay** button
-in the controls row, with the native element kept for its progress bar.
+at the right end of the header line (as built: a row of its own pushed
+long questions off the screen), with the native element kept for its
+progress bar.
 The button has a fixed width, because labels of different widths would
 slide neighbors under the pointer, and it doesn't sit next to Reveal. It
 is built and cached with the clip, so its state survives redraws. If the
@@ -550,8 +553,19 @@ Chrome.
 | U11 | A disabled button keeps its own look at 40% opacity. | `make smoke`: a disabled Remove has the quiet button's fill, faded |
 | U7 | The app's own confirm screen replaces all four `confirm()`s and the `prompt()`. Cancel, Esc and Back cancel, even before a game is running. OK opens the folder picker in the same click. | `make smoke`: no native dialog anywhere; Reset (Cancel, Esc, Back, OK); a discarded saved game; a team-list change; Load folder and Create new with a stubbed picker that records a live user activation |
 | U1 | **Undo last question** on the board: one level, asks first and names the points, reopens the cell, and is saved with the game. The save format stays `v: 1`. | `test/undo.test.mjs` (round trip, a pass, interleaved rounds, reset, old and malformed saves); `make smoke` (Undo, Undo after a reload, trivia Undo) |
-| U3 | A one-line, fixed-height preview under the team buttons: "Done: Hazy Bagpipes +100 · Misty Goblins −100", or "no one scores". | `make smoke`: text, and a height that never changes |
+| U3 | A one-line, fixed-height preview under the team buttons: "Done: Hazy Bagpipes +100 · Misty Goblins −100", or "no one scores" (grouped by sign in Batch 2: "Done: +100 Hazy Bagpipes · −100 Misty Goblins"). | `make smoke`: text, and a height that never changes |
 
 `make fit` was new in this batch and found one failure that predates it:
 a six-team image question at 960×540 scrolled. The Batch 2 layout fixes
 it.
+
+### Batch 2: what the room sees (`3b40a7f`, council fixes after it)
+
+| # | What changed | Verified by |
+|---|---|---|
+| U2, part 2 | The answer is laid out (hidden, also inline) before Reveal; Reveal becomes a same-size disabled "Answer shown"; the team buttons and controls are pinned at the bottom; each ✓ / ✕ has a reserved slot. Revealing or marking moves no button. | `make fit`: "Reveal moves no button" for the worst questions at four sizes; same-spot cases split into "guard" and "still", with a guard-off mutant failing every guard case; `make smoke`: marking moves no button |
+| U4 | The header reads "Movies: Oscar · 500" (trivia: "· question 2 of 5 · 200"); a long round name shortens, the points never do. | `make smoke` |
+| U9, U10 | Question and answer centred in the space above the host's band (image questions stay top-aligned beside the picture); the answer is labelled and 0.9× the question; the question is 8.2% of the screen height at 720p and 1080p alike. | `make fit` (310+ checks: no scroll, the question clear of the team buttons, no text cut) |
+| U8 | A big **▶ Play clip** / **❚❚ Pause** / **↺ Replay** button at the right end of the header line; "Loading…" until the clip really plays; first focus on clip questions; a failed clip leaves focus on its note, so a stray OK marks no one; a double-click is one press. | `make smoke`; `make fit`: the worst questions with a clip, 6 teams, both modes |
+| U5 | +/− badges on the score pills after Done, and after a trivia column (what that run added), gone when the board is drawn again. | `make smoke` |
+| U6, U18 | When no question is left, the scoreboard is **Final scores**: ranked, the leader outlined, the winner, a tie, "everyone ties" or "no one scored" named; focus on Setup, and Setup opens on Back to board. Undo still works from there. | `make smoke` (five endings, Undo from Final scores); `make fit`: a finished board with six long names at four sizes |
