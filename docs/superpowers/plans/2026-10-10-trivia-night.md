@@ -1963,3 +1963,35 @@ newer than ~Chrome 86 / Safari 14; motion ≤240 ms with no information
 lost under reduced motion; no timers or buzzers; `make test` + `make
 smoke` + `make fit` pass; README + About in the same task when
 host-visible behaviour changes.
+
+### Task 26: UI pass — a lit board and a real finish — partner request 2026-10-15
+
+Partner request (2026-10-15, after the UX fixes): "do a UI pass to see if
+there's anything to make things look better (i have no real compalints
+right now, but i'm looking for your opinion)". Mock-ups of three
+proposals on a private comparison page; the partner chose: "A C both look
+good. let's go for it. push the PR and merge into main". B (a boxless
+scoreboard) was not recommended and is not built.
+
+**Files:** `styles.css` (+ `tools/smoke.mjs` checks), the spec's visual
+theme note, chapter 8's closing note.
+
+- [ ] **Step 1: A — the lit board.** Jeopardy: unplayed cells in NYC blue
+  `#236192`, a little lighter each row down (the difficulty ramp);
+  played cells drop into the background (no fill, a faint outline, faint
+  numbers); category names unboxed over a 4-unit orange rule. Trivia:
+  the live headers are lit (as today) and the cells stay dark — what's
+  lit is what you press. Hover/focus on a cell stays the orange fill.
+  No size changes beyond the header's rule (fit unchanged).
+- [ ] **Step 2: C — the finish.** On Final scores the leader's pill is
+  filled orange with dark text; the title is a little larger with a NYC
+  tricolor stripe (blue, white, orange) under it; the setup title's
+  orange bar becomes the same stripe.
+- [ ] **Step 3: Ship.** Council, then push, open the PR and merge into
+  `main` (merge commit, as PRs #1 and #2); watch the gated deploy; run
+  `make smoke` against the live URL. Release `v1.0.0` after (Task 25
+  Step 5), when the partner says so.
+
+Guardrails: Task 25's (fit at four sizes, same-spot, focus, colour roles:
+orange = action, scores, answer, the winner; blue = surfaces and what you
+press; green/red = marks and badges).
